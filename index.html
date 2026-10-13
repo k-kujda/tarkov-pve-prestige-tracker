@@ -1,0 +1,2049 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarkov PvE Prestige Tracker</title>
+<style>
+  :root {
+    --bg: #12110f; --panel: #1c1b18; --panel2: #24221e; --line: #3a362e;
+    --text: #e6e0d4; --muted: #9a927f; --accent: #c7b07a; --good: #6fae5f;
+    --warn: #d9a441; --bad: #c25b4a; --blue: #6c9bd2; --purple: #a982d6;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+  a { color: var(--accent); }
+  button, select, input { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #1a1710; border-color: var(--accent); font-weight: 600; }
+  button.danger:hover { border-color: var(--bad); color: var(--bad); }
+  input[type=number] { width: 64px; }
+  input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; vertical-align: middle; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 16px 0; }
+  h1 { margin: 0 0 8px; font-size: 18px; color: var(--accent); letter-spacing: .5px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .settings label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  .spacer { flex: 1; }
+  nav { display: flex; gap: 2px; margin-top: 10px; }
+  nav button { border: none; border-radius: 6px 6px 0 0; background: transparent; padding: 8px 14px; color: var(--muted); }
+  nav button.on { background: var(--panel); color: var(--accent); }
+  .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; max-width: 1600px; margin: 0 auto; padding: 0 16px; }
+  .layout.side-hidden { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .layout.side-hidden aside { display: none; }
+  main { padding: 16px 0; min-width: 0; }
+  aside { position: sticky; top: var(--hdr, 150px); align-self: start; max-height: calc(100vh - var(--hdr, 150px)); overflow-y: auto; padding: 16px 0; }
+  .side-item { display: flex; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .side-item.complete { opacity: .45; }
+  .side-item img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+  .side-item .info { flex: 1; min-width: 0; }
+  .side-item .for { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .side-item .count { white-space: nowrap; font-size: 12px; }
+  .side-item button { padding: 0 6px; }
+  #sideShow { display: none; }
+  .side-hidden ~ #sideShow, body.side-off #sideShow { display: inline-block; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } aside { position: static; max-height: none; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .bar { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; margin: 4px 0; }
+  .bar > div { height: 100%; background: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; background: var(--panel2); font-size: 13px; }
+  .chip.on { border-color: var(--accent); color: var(--accent); }
+  .chip .n { color: var(--muted); margin-left: 4px; }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); margin-left: 4px; white-space: nowrap; }
+  .badge.path { color: #1a1710; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .badge.kappa { color: var(--purple); border-color: var(--purple); }
+  .badge.lk { color: var(--blue); border-color: var(--blue); }
+  .badge.fir { color: var(--warn); border-color: var(--warn); }
+  .badge.lock { color: var(--bad); border-color: var(--bad); }
+  .badge.ok { color: var(--good); border-color: var(--good); }
+  .badge.gate { color: var(--warn); border-color: var(--warn); }
+  .task { border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); margin-bottom: 6px; }
+  .task.done { opacity: .55; }
+  .task-head { display: flex; gap: 10px; align-items: center; padding: 8px 10px; cursor: pointer; }
+  .task-head .name { font-weight: 600; }
+  .task-head .meta { color: var(--muted); font-size: 12px; }
+  .task-body { padding: 4px 12px 12px 38px; border-top: 1px solid var(--line); }
+  .obj { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+  .obj.done .desc { text-decoration: line-through; color: var(--muted); }
+  .obj .detail { color: var(--muted); font-size: 12px; }
+  .item { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px 1px 2px; margin: 2px 4px 2px 0; font-size: 12px; }
+  .item img { width: 22px; height: 22px; object-fit: contain; }
+  .sec { margin-top: 10px; }
+  .sec h4 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  tr.complete { opacity: .5; }
+  .station h3 { margin: 0 0 6px; font-size: 15px; }
+  .lvl { border-top: 1px solid var(--line); padding: 6px 0; }
+  .lvl.built { opacity: .5; }
+  .group-title { margin: 16px 0 6px; font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: .6px; }
+  #toast { position: fixed; bottom: 16px; right: 16px; background: var(--panel2); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 6px; display: none; z-index: 20; }
+  .loading { padding: 40px; text-align: center; color: var(--muted); }
+  #traderLL { padding: 8px 0; }
+  .search { min-width: 220px; }
+  #raidMapBox { height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); border: 1px solid var(--line); border-radius: 8px; background: #0d0c0a; }
+  #raidMapBox:fullscreen { height: 100vh; border: none; border-radius: 0; }
+  #raidMapBox .leaflet-container { background: #0d0c0a; }
+  .leaflet-tooltip { background: var(--panel2); color: var(--text); border-color: var(--line); }
+  .leaflet-control-layers, .leaflet-control-layers-expanded { background: rgba(28, 27, 24, .92) !important; color: var(--text) !important; border: 1px solid var(--line) !important; font: 12px "Segoe UI", sans-serif; }
+  .leaflet-control-layers-toggle { filter: invert(.85); }
+  .leaflet-control-layers label { margin: 2px 0; }
+  .map-label { white-space: nowrap; font: 600 11px/1.2 "Segoe UI", sans-serif; color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000; }
+  .map-label .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; border: 1px solid #000; }
+  .map-label.ext-pmc .dot { background: #6fdc5f; }
+  .map-label.ext-scav .dot { background: #e6c84f; }
+  .map-label.ext-shared .dot { background: #c77ae6; }
+  .map-label.transit .dot { background: #4fb4e6; border-radius: 50%; }
+  .route-num { background: #fff; color: #111; border-radius: 50%; font: 700 11px/20px "Segoe UI", sans-serif; text-align: center; box-shadow: 0 0 0 2px #000; }
+  .route-num.static { display: inline-block; width: 20px; height: 20px; flex: none; }
+  .map-label.route-start .dot { background: #3fa9f5; border-radius: 50%; width: 12px; height: 12px; }
+  .map-label.route-end .dot { background: #fff; }
+  .map-icon { font-size: 15px; line-height: 1; text-shadow: 0 0 3px #000; }
+  .map-icon small { font: 600 10px "Segoe UI", sans-serif; color: #fff; margin-left: 2px; }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .raid-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; }
+  .raid-grid > .panel { max-height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); overflow-y: auto; }
+  @media (max-width: 1200px) { .raid-grid { grid-template-columns: 1fr; } }
+  table.rank td, table.rank th { white-space: nowrap; }
+  .badge.squad { color: #4fc1c9; border-color: #4fc1c9; }
+  .item.key { cursor: pointer; user-select: none; }
+  .item.key.have { border-color: var(--good); }
+  .item.key.missing { border-color: var(--bad); }
+  .keys-line { margin-top: 3px; }
+  #friendCode { width: 100%; min-height: 54px; font: 12px monospace; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tarkov PvE Prestige Tracker</h1>
+  <div class="row settings">
+    <label>Level <input id="lvl" type="number" min="1" max="79"></label>
+    <label>Faction <select id="faction"><option>USEC</option><option>BEAR</option></select></label>
+    <label>Game mode <select id="mode"><option value="pve">PvE</option><option value="regular">PvP</option></select></label>
+    <label>Focus <select id="focus">
+      <option value="prestige">Prestige path only</option>
+      <option value="kappa">Prestige + Kappa</option>
+      <option value="all">All quests</option>
+    </select></label>
+    <button id="traderBtn">Trader loyalty levels</button>
+    <span class="spacer"></span>
+    <span id="prestigeNo" class="badge path"></span>
+    <button id="sideShow" title="Show the accepted-quest items sidebar">Accepted items ▸</button>
+    <button id="syncBtn" class="primary" title="Read your quest progress from the game's log files">Sync from game</button>
+    <button id="refreshBtn" title="Re-download quest/hideout data from tarkov.dev">Refresh data</button>
+    <button id="exportBtn">Export</button>
+    <button id="importBtn">Import</button>
+    <button id="prestigeBtn" class="danger" title="Wipe quests/hideout/items and bump prestige counter">Start new prestige</button>
+  </div>
+  <div id="traderLL" class="row" hidden></div>
+  <nav id="tabs">
+    <button data-tab="next">Next up</button>
+    <button data-tab="raid" id="raidTab">Raid planner</button>
+    <button data-tab="quests">All quests</button>
+    <button data-tab="prestige">Prestige requirements</button>
+    <button data-tab="hideout">Hideout</button>
+    <button data-tab="items">Items needed</button>
+    <button data-tab="story">Story</button>
+    <button data-tab="completed">Completed quests</button>
+  </nav>
+</header>
+<div class="layout" id="layout">
+  <aside id="side"></aside>
+  <main id="view"><div class="loading">Loading quest data from tarkov.dev…</div></main>
+</div>
+<div id="toast"></div>
+<input type="file" id="importFile" accept="application/json" hidden>
+
+<script>
+'use strict';
+
+// Data comes from the local server (server.js), which repackages the public json.tarkov.dev datasets.
+const LS_STATE = 'tpt-state-v1';
+// Variants of the same location share quests, so group them together for raid planning.
+const MAP_ALIASES = { 'ground-zero-21': 'ground-zero', 'ground-zero-tutorial': 'ground-zero', 'night-factory': 'factory', 'the-lab-dark': 'the-lab' };
+
+// ---------- state ----------
+const defaultState = () => ({
+  level: 1, faction: 'USEC', mode: 'pve', focus: 'prestige', prestige: 0,
+  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, story: {}, storyStarted: {}, rep: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
+  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true },
+});
+let S = loadState();
+let D = null;
+let memo = new Map();
+const openTasks = new Set();
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_STATE));
+    if (s) {
+      const d = defaultState();
+      return { ...d, ...s, ui: { ...d.ui, ...(s.ui || {}) } };
+    }
+  } catch (e) { /* corrupt state falls through to defaults */ }
+  return defaultState();
+}
+function save() { localStorage.setItem(LS_STATE, JSON.stringify(S)); }
+
+// ---------- data ----------
+async function loadData(force) {
+  if (location.protocol === 'file:') throw new Error('Open the tracker through start-tracker.bat (http://localhost:4747), not as a file.');
+  const res = await fetch(`/api/data?mode=${encodeURIComponent(S.mode)}${force ? '&refresh=1' : ''}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+  if (json.status === 'stale') toast('json.tarkov.dev unreachable — using cached data');
+  return json;
+}
+
+function indexData(raw) {
+  const d = { ...raw, byId: {}, children: {}, stationById: {}, levelById: {} };
+  for (const t of raw.tasks) { d.byId[t.id] = t; d.children[t.id] = []; }
+  for (const t of raw.tasks) {
+    for (const r of t.taskRequirements || []) {
+      if (r.task && d.children[r.task.id]) d.children[r.task.id].push(t.id);
+    }
+  }
+  for (const s of raw.hideoutStations) {
+    d.stationById[s.id] = s;
+    for (const l of s.levels) d.levelById[l.id] = { ...l, station: s };
+  }
+  d.traders = (raw.traders || []).filter(tr => raw.tasks.some(t => t.trader && t.trader.id === tr.id));
+  d.descendants = {};
+  const desc = id => {
+    if (d.descendants[id]) return d.descendants[id];
+    const set = new Set();
+    d.descendants[id] = set; // guards against cycles
+    for (const c of d.children[id]) { set.add(c); for (const x of desc(c)) set.add(x); }
+    return set;
+  };
+  for (const t of raw.tasks) desc(t.id);
+  d.storyChapters = raw.storyChapters || [];
+  d.chapterById = {};
+  d.chapterOfStep = {};
+  for (const c of d.storyChapters) { d.chapterById[c.id] = c; for (const o of c.objectives) d.chapterOfStep[o.id] = c; }
+  // Story steps that gate quests: step id -> quest ids.
+  d.stepQuests = {};
+  for (const t of raw.tasks) for (const o of t.otherRequirements || []) {
+    if (o.type === 'storyObjective' && o.objective) (d.stepQuests[o.objective.id] = d.stepQuests[o.objective.id] || []).push(t.id);
+  }
+  d.gateGroups = {};
+  for (const t of raw.tasks) for (const g of gatesOf(t)) (d.gateGroups[g] = d.gateGroups[g] || []).push(t.id);
+  return d;
+}
+
+// Prestige level you're working towards = current prestige + 1.
+function currentPrestige() {
+  if (!D.prestige || !D.prestige.length) return null;
+  const sorted = [...D.prestige].sort((a, b) => a.prestigeLevel - b.prestigeLevel);
+  return sorted.find(p => p.prestigeLevel === S.prestige + 1) || sorted[sorted.length - 1];
+}
+
+function prestigeRootTasks() {
+  const p = currentPrestige();
+  return p ? p.conditions.filter(c => c.task && D.byId[c.task.id]).map(c => c.task.id) : [];
+}
+
+const stationLevel = (stationId, level) => {
+  const st = D.stationById[stationId];
+  const l = st && st.levels.find(x => x.level === level);
+  return l ? D.levelById[l.id] : null;
+};
+
+// Hideout levels the next prestige needs, plus everything they depend on (lower levels, other stations).
+function prestigeHideoutLevels() {
+  const out = new Set();
+  const walk = l => {
+    if (!l || out.has(l.id)) return;
+    out.add(l.id);
+    walk(stationLevel(l.station.id, l.level - 1));
+    for (const r of l.stationLevelRequirements || []) if (r.station) walk(stationLevel(r.station.id, r.level));
+  };
+  const p = currentPrestige();
+  for (const c of p ? p.conditions : []) {
+    if (c.type === 'hideoutStation' && c.station) walk(stationLevel(c.station.id, c.stationLevel));
+  }
+  return out;
+}
+
+const stationBuilt = (stationId, level) => {
+  const st = D.stationById[stationId];
+  return !!st && st.levels.some(l => l.level >= level && S.hideout[l.id]);
+};
+
+// playerLevels[].exp is the XP needed to go from the previous level to this one.
+const xpBetween = (from, to) => (D.playerLevels || []).filter(p => p.level > from && p.level <= to).reduce((sum, p) => sum + p.exp, 0);
+
+const SKILL_TIPS = {
+  Strength: 'Sprint or jump while carrying weight, throw grenades, melee.',
+  Endurance: 'Sprint and jump (works best while not overweight).',
+  Charisma: 'Levels automatically as you raise Attention, Perception and Intellect (searching, looting, examining and repairing items).',
+};
+
+function ancestorsOf(ids) {
+  const out = new Set();
+  const walk = id => {
+    if (out.has(id)) return;
+    out.add(id);
+    const t = D.byId[id];
+    if (!t) return;
+    for (const r of t.taskRequirements || []) if (r.task) walk(r.task.id);
+  };
+  ids.forEach(walk);
+  return out;
+}
+
+function computeSets() {
+  D.pathSet = ancestorsOf(prestigeRootTasks());
+  D.kappaSet = ancestorsOf(D.tasks.filter(t => t.kappaRequired).map(t => t.id));
+  D.hideoutPath = prestigeHideoutLevels();
+}
+
+// ---------- task logic ----------
+const gatesOf = t => (t.otherRequirements || []).filter(o => o.type === 'globalVariable' && o.variableId && !o.counter).map(o => o.variableId);
+const storyReqsOf = t => (t.otherRequirements || []).filter(o => o.type === 'storyObjective' && o.objective);
+const counterProgress = o => o.counter.taskIds.filter(id => S.tasks[id] === 'done').length;
+const gateOpen = g => S.ui.ignoreGates || !!S.gates[g];
+const factionOk = t => !t.factionName || t.factionName === 'Any' || t.factionName === S.faction;
+
+function inFocus(t) {
+  // When the prestige needs no quests, every quest is just a source of XP and money.
+  if (S.focus === 'all' || (S.focus === 'prestige' && !D.pathSet.size)) return true;
+  if (D.pathSet.has(t.id)) return true;
+  return S.focus === 'kappa' && D.kappaSet.has(t.id);
+}
+
+function cmp(a, method, b) {
+  switch (method) {
+    case '>': return a > b;
+    case '<': return a < b;
+    case '<=': return a <= b;
+    case '=': case '==': return a === b;
+    default: return a >= b;
+  }
+}
+
+// Returns { status: 'done'|'failed'|'available'|'locked', reasons: [] }
+function taskState(t) {
+  if (memo.has(t.id)) return memo.get(t.id);
+  memo.set(t.id, { status: 'locked', reasons: ['circular requirement'] });
+  let res;
+  const st = S.tasks[t.id];
+  if (st === 'done' || st === 'failed') {
+    res = { status: st, reasons: [] };
+  } else {
+    const reasons = [];
+    for (const r of t.taskRequirements || []) {
+      const p = r.task && D.byId[r.task.id];
+      if (!p) continue;
+      const want = r.status && r.status.length ? r.status : ['complete'];
+      const ps = S.tasks[p.id];
+      const ok = (want.includes('complete') && ps === 'done')
+        || (want.includes('failed') && ps === 'failed')
+        || (want.includes('active') && (ps === 'done' || taskState(p).status === 'available'));
+      if (!ok) reasons.push(`${want.includes('active') ? 'Start' : 'Finish'} “${p.name}”`);
+    }
+    if ((t.minPlayerLevel || 0) > S.level) reasons.push(`Level ${t.minPlayerLevel}`);
+    if (gatesOf(t).some(g => !gateOpen(g))) reasons.push('Unlocks in game');
+    for (const o of t.otherRequirements || []) {
+      // Server-side unlock counters: the variable rises as you finish a known set of quests.
+      if (o.type === 'globalVariable' && o.counter) {
+        const n = counterProgress(o);
+        if (!cmp(n, o.compareMethod, o.value)) reasons.push(`Finish ${o.value - n} more ${t.trader.name} quest${o.value - n > 1 ? 's' : ''} (${n}/${o.value})`);
+      }
+    }
+    for (const o of storyReqsOf(t)) if (!S.story[o.objective.id]) reasons.push(`Story: ${o.storyChapter.name} — ${o.objective.name}`);
+    for (const r of t.traderRequirements || []) {
+      if (!r.trader) continue;
+      if (r.requirementType === 'level' && !cmp(S.traders[r.trader.id] || 1, r.compareMethod, r.value)) reasons.push(`${r.trader.name} LL${r.value}`);
+      if (r.requirementType === 'reputation' && !cmp(S.rep[r.trader.id] || 0, r.compareMethod, r.value)) reasons.push(`${r.trader.name} rep ${r.compareMethod} ${r.value}`);
+    }
+    res = { status: reasons.length && !S.active[t.id] ? 'locked' : 'available', reasons: S.active[t.id] ? [] : reasons };
+  }
+  memo.set(t.id, res);
+  return res;
+}
+
+function remainingDescendants(t) {
+  let n = 0;
+  for (const id of D.descendants[t.id]) if (!S.tasks[id]) n++;
+  return n;
+}
+
+function setTaskDone(id, done) {
+  if (!done) { delete S.tasks[id]; return 0; }
+  // Marking a quest done implies its prerequisites are done — handy when catching up mid-prestige.
+  let auto = 0;
+  const walk = tid => {
+    const t = D.byId[tid];
+    for (const r of t.taskRequirements || []) {
+      const want = r.status && r.status.length ? r.status : ['complete'];
+      if (!r.task || !D.byId[r.task.id] || S.tasks[r.task.id] || !want.includes('complete')) continue;
+      S.tasks[r.task.id] = 'done'; auto++;
+      walk(r.task.id);
+    }
+  };
+  S.tasks[id] = 'done';
+  walk(id);
+  markUnlocksProven();
+  return auto;
+}
+
+// A quest that was started or finished proves its unlock batch / story step is open.
+function markUnlocksProven() {
+  for (const tid of [...Object.keys(S.tasks), ...Object.keys(S.active)]) {
+    const t = D.byId[tid] || {};
+    for (const g of gatesOf(t)) S.gates[g] = true;
+    for (const o of storyReqsOf(t)) S.story[o.objective.id] = true;
+  }
+}
+
+// ---------- game log sync ----------
+let pendingSync = null;
+const AUTO_SYNC_MS = 60 * 1000;
+
+async function fetchGameProgress() {
+  const res = await fetch(`/api/game-progress?mode=${encodeURIComponent(S.mode)}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+  return json;
+}
+
+const syncCounts = r => {
+  const known = Object.entries(r.quests).filter(([id]) => D.byId[id]);
+  const n = st => known.filter(([, v]) => v === st).length;
+  return { done: n('done'), failed: n('failed'), active: n('active') };
+};
+
+// replace: the tracker's quest ticks become exactly the game's; merge: only add what the game reports.
+function applyGameProgress(r, replace) {
+  const before = Object.keys(S.tasks).length;
+  if (replace) S.tasks = {};
+  S.active = {};
+  for (const [id, st] of Object.entries(r.quests)) {
+    if (!D.byId[id]) continue;
+    if (st === 'done' || st === 'failed') { S.tasks[id] = st; delete S.snoozed[id]; }
+    if (st === 'active' && !S.tasks[id]) { S.active[id] = true; delete S.snoozed[id]; }
+  }
+  markUnlocksProven();
+  S.logSync = { since: r.since, lastEventAt: r.lastEventAt, at: new Date().toISOString(), auto: S.logSync ? S.logSync.auto : true };
+  return Object.keys(S.tasks).length - before;
+}
+
+async function syncFromGame(interactive) {
+  if (!D) return;
+  let r;
+  try { r = await fetchGameProgress(); } catch (e) { if (interactive) toast('Game log sync failed: ' + e.message); return; }
+  const resetChanged = !!S.logSync && S.logSync.since !== r.since;
+  // Only ask when applying could throw away something: tracker ticks the logs don't confirm, or a new reset.
+  if (resetChanged || syncConflicts(r) > 0) {
+    if (!interactive) {
+      if (!pendingSync) toast(resetChanged ? 'Game logs show a new reset (prestige?) — press “Sync from game” to review' : 'Game progress found — press “Sync from game” to review');
+      return;
+    }
+    pendingSync = r;
+    S.ui.tab = 'next';
+    update();
+    return;
+  }
+  if (!interactive && S.logSync && r.lastEventAt === S.logSync.lastEventAt) return;
+  const first = !S.logSync;
+  const added = applyGameProgress(r, false);
+  update();
+  const c = syncCounts(r);
+  toast(first ? `Imported from game logs: ${c.done} done, ${c.active} active quests`
+    : added > 0 ? `Synced from game: +${added} quest${added > 1 ? 's' : ''}` : `Up to date with the game (${c.done} done, ${c.active} active)`);
+}
+
+// Quests ticked in the tracker that the game logs don't show as done/failed for this run.
+const syncConflicts = r => Object.keys(S.tasks).filter(id => !(r.quests[id] === 'done' || r.quests[id] === 'failed')).length;
+
+function syncPanel() {
+  if (!pendingSync) return '';
+  const r = pendingSync, c = syncCounts(r);
+  const manual = Object.keys(S.tasks).filter(id => !(r.quests[id] === 'done' || r.quests[id] === 'failed')).length;
+  return `<div class="panel" style="border-color:var(--accent)">
+    <b>Game progress found</b> <span class="small muted">(${esc(r.logsPath)} · ${r.folders} log folders)</span>
+    <div style="margin:6px 0">Current run ${r.since ? `since <b>${esc(r.since)}</b> (last prestige/wipe detected in the logs)` : 'from the start of your logs'}:
+      <b>${c.done}</b> done · <b>${c.active}</b> active in game · <b>${c.failed}</b> failed. Last quest event: ${esc(r.lastEventAt || '—')}.</div>
+    ${manual ? `<div class="small muted">${manual} quest(s) ticked in the tracker aren't in the game logs for this run — “Replace” unticks them, “Merge” keeps them.</div>` : ''}
+    <div class="row" style="margin-top:8px">
+      <button class="primary" data-act="syncApply" data-id="replace">Replace with game progress</button>
+      <button data-act="syncApply" data-id="merge">Merge</button>
+      <button data-act="syncApply" data-id="cancel">Cancel</button>
+      <label class="small muted"><input type="checkbox" id="autoSync" ${!S.logSync || S.logSync.auto ? 'checked' : ''}> keep syncing automatically every minute</label>
+    </div></div>`;
+}
+
+function taskMaps(t) {
+  const m = new Map();
+  const add = mp => {
+    const key = MAP_ALIASES[mp.normalizedName] || mp.normalizedName;
+    if (!m.has(key)) m.set(key, key === mp.normalizedName ? mp : (D.maps.find(x => x.normalizedName === key) || mp));
+  };
+  if (t.map) add(t.map);
+  for (const o of t.objectives) for (const mp of o.maps || []) add(mp);
+  return [...m.values()];
+}
+
+// ---------- render helpers ----------
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const itemChip = (it, count, fir) => `<span class="item">${it.iconLink ? `<img loading="lazy" src="${esc(it.iconLink)}" alt="">` : ''}${count ? `<b>${count}×</b>` : ''} ${esc(it.name)}${fir ? '<span class="badge fir">FIR</span>' : ''}</span>`;
+
+function objectiveDetail(o) {
+  const b = [];
+  if (o.items && o.items.length) {
+    const shown = o.items.slice(0, 4).map(it => itemChip(it, null, false)).join('');
+    b.push(`${o.count ? `<b>${o.count}×</b> ` : ''}${o.foundInRaid ? '<span class="badge fir">Found in raid</span> ' : ''}${shown}${o.items.length > 4 ? ` <span class="muted">+${o.items.length - 4} alternatives</span>` : ''}`);
+  }
+  if (o.questItem) b.push(`Quest item: <b>${esc(o.questItem.name)}</b>`);
+  if (o.markerItem) b.push(`Use: <b>${esc(o.markerItem.name)}</b>`);
+  if (o.targetNames && o.targetNames.length) b.push(`Target: ${esc(o.targetNames.join(', '))}${o.count ? ` ×${o.count}` : ''}`);
+  if (o.zoneNames && o.zoneNames.length) b.push(`Zone: ${esc(o.zoneNames.join(', '))}`);
+  if (o.bodyParts && o.bodyParts.length) b.push(`Body parts: ${esc(o.bodyParts.join(', '))}`);
+  if (o.usingWeapon && o.usingWeapon.length) b.push(`Weapon: ${esc(o.usingWeapon.slice(0, 5).map(w => w.name).join(', '))}${o.usingWeapon.length > 5 ? '…' : ''}`);
+  if (o.exitName) b.push(`Exit: <b>${esc(o.exitName)}</b>`);
+  if (o.useAny && o.useAny.length) b.push(`Use: ${esc(o.useAny.map(x => x.name).join(' / '))}`);
+  if (o.skillLevel) b.push(`Skill: ${esc(o.skillLevel.name)} ${o.skillLevel.level}`);
+  if (o.trader && o.level) b.push(`${esc(o.trader.name)} LL${o.level}`);
+  if (o.playerLevel) b.push(`Reach level ${o.playerLevel}`);
+  if (o.item && o.type === 'buildWeapon') b.push(`Build: <b>${esc(o.item.name)}</b> (see wiki for required parts)`);
+  if (o.requiredKeys && o.requiredKeys.length) b.push(`Keys: ${esc(o.requiredKeys.flat().map(k => k.name).join(', '))}`);
+  if (o.maps && o.maps.length) b.push(`Map: ${o.maps.map(m => `<a href="https://tarkov.dev/map/${esc(m.normalizedName)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join(', ')}`);
+  return b.join(' · ');
+}
+
+function rewardsText(t) {
+  const r = t.finishRewards || {};
+  const parts = [];
+  if (t.experience) parts.push(`${t.experience.toLocaleString()} XP`);
+  for (const s of r.traderStanding || []) parts.push(`${esc(s.trader.name)} ${s.standing > 0 ? '+' : ''}${s.standing}`);
+  for (const i of r.items || []) parts.push(`${i.count > 1 ? i.count.toLocaleString() + '× ' : ''}${esc(i.item.name)}`);
+  for (const o of r.offerUnlock || []) parts.push(`Unlocks ${esc(o.item.name)} @ ${esc(o.trader.name)} LL${o.level}`);
+  for (const s of r.skillLevelReward || []) parts.push(`${esc(s.name)} +${s.level}`);
+  for (const u of r.traderUnlock || []) parts.push(`Unlocks trader ${esc(u.name)}`);
+  return parts.join(' · ');
+}
+
+function taskCard(t) {
+  const st = taskState(t);
+  const open = openTasks.has(t.id);
+  const maps = taskMaps(t);
+  const badges = [
+    D.pathSet.has(t.id) ? '<span class="badge path">PRESTIGE</span>' : '',
+    t.kappaRequired ? '<span class="badge kappa">Kappa</span>' : '',
+    t.lightkeeperRequired ? '<span class="badge lk">LK</span>' : '',
+    st.status === 'locked' ? `<span class="badge lock" title="${esc(st.reasons.join(', '))}">🔒 ${esc(st.reasons[0])}${st.reasons.length > 1 ? ` +${st.reasons.length - 1}` : ''}</span>` : '',
+    st.status === 'failed' ? '<span class="badge lock">Failed</span>' : '',
+    S.snoozed[t.id] && !S.tasks[t.id] ? '<span class="badge">hidden</span>' : '',
+    S.active[t.id] && !S.tasks[t.id] ? '<span class="badge ok" title="Started in game (from your game logs)">active in game</span>' : '',
+    (t.otherRequirements || []).some(o => o.type === 'dialogue') ? '<span class="badge gate" title="Offered through trader dialogue">dialogue</span>' : '',
+  ].join('');
+  const unlocks = remainingDescendants(t);
+  let html = `<div class="task ${st.status === 'done' || st.status === 'failed' ? 'done' : ''}" data-task="${t.id}">
+    <div class="task-head" data-act="toggle" data-id="${t.id}">
+      <input type="checkbox" data-act="done" data-id="${t.id}" ${st.status === 'done' ? 'checked' : ''} title="Mark quest complete">
+      <div style="flex:1">
+        <div><span class="name">${esc(t.name)}</span>${badges}</div>
+        <div class="meta">${esc(t.trader ? t.trader.name : '?')} · ${maps.length ? maps.map(m => esc(m.name)).join(', ') : 'Any map'} · Lvl ${t.minPlayerLevel || 1} · ${(t.experience || 0).toLocaleString()} XP${moneyText(t) ? ` · ${moneyText(t)}` : ''}${unlocks ? ` · unlocks ${unlocks} more` : ''}</div>
+      </div>
+      ${st.status === 'available' && !S.active[t.id] && !S.snoozed[t.id] ? `<button class="small" data-act="snooze" data-id="${t.id}" title="Not offered at the trader in game — hide it until the game shows you accepted it">hide</button>` : ''}
+      <span class="muted">${open ? '▾' : '▸'}</span>
+    </div>`;
+  if (open) {
+    const objs = t.objectives.map(o => {
+      const done = !!S.objs[o.id];
+      return `<div class="obj ${done ? 'done' : ''}">
+        <input type="checkbox" data-act="obj" data-id="${o.id}" ${done ? 'checked' : ''}>
+        <div><div class="desc">${esc(o.description)}${o.optional ? ' <span class="badge">optional</span>' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div>
+      </div>`;
+    }).join('');
+    const keys = (t.neededKeys || []).map(k => `<div>${esc(k.map ? k.map.name : '')}: ${k.keys.map(x => itemChip(x)).join(' or ')}</div>`).join('');
+    const reqs = (t.taskRequirements || []).filter(r => r.task && D.byId[r.task.id]).map(r => {
+      const p = D.byId[r.task.id];
+      return `<a href="#" data-act="goto" data-id="${p.id}">${esc(p.name)}</a>${S.tasks[p.id] ? ' ✓' : ''}`;
+    }).join(', ');
+    const traderReqs = (t.traderRequirements || []).map(r => `${esc(r.trader.name)} ${r.requirementType === 'level' ? 'LL' : r.requirementType + ' '}${r.compareMethod && r.compareMethod !== '>=' ? r.compareMethod : ''}${r.value}${r.source === 'wiki' ? ' (wiki)' : ''}`).join(', ');
+    const counterNotes = (t.otherRequirements || []).filter(o => o.type === 'globalVariable' && o.counter).map(o =>
+      `Unlocks after ${o.value} of these are done (${counterProgress(o)}/${o.value}): ${o.counter.taskIds.filter(id => D.byId[id]).map(id => `<a href="#" data-act="goto" data-id="${id}">${esc(D.byId[id].name)}</a>${S.tasks[id] === 'done' ? ' ✓' : ''}`).join(', ')}`);
+    const storyNotes = storyReqsOf(t).map(o => `Story step: <b>${esc(o.storyChapter.name)}</b> — ${esc(o.objective.name)}${S.story[o.objective.id] ? ' ✓' : ''}`);
+    const gateNote = gatesOf(t).length ? `Unlocked server-side (story / trader progress) together with ${gatesOf(t).map(g => D.gateGroups[g].length - 1).reduce((a, b) => a + b, 0)} other quest(s) — mark it available once it shows up in game.` : '';
+    const next = D.children[t.id].map(id => D.byId[id]).filter(factionOk).map(c => `<a href="#" data-act="goto" data-id="${c.id}">${esc(c.name)}</a>`).join(', ');
+    const links = [
+      t.wikiLink ? `<a href="${esc(t.wikiLink)}" target="_blank" rel="noopener">Wiki guide</a>` : '',
+      `<a href="https://tarkov.dev/task/${esc(t.normalizedName)}" target="_blank" rel="noopener">tarkov.dev (map markers)</a>`,
+      ...maps.map(m => `<a href="https://tarkov.dev/map/${esc(m.normalizedName)}" target="_blank" rel="noopener">${esc(m.name)} map</a>`),
+    ].filter(Boolean).join(' · ');
+    html += `<div class="task-body">
+      <div class="sec"><h4>Objectives</h4>${objs}</div>
+      ${keys ? `<div class="sec"><h4>Keys needed</h4>${keys}</div>` : ''}
+      <div class="sec"><h4>Rewards</h4><div class="small">${rewardsText(t) || '—'}</div></div>
+      ${reqs || traderReqs || gateNote || counterNotes.length || storyNotes.length ? `<div class="sec"><h4>Requires</h4><div class="small">${[reqs, traderReqs, ...counterNotes, ...storyNotes, gateNote].filter(Boolean).join('<br>')}</div></div>` : ''}
+      ${next ? `<div class="sec"><h4>Leads to</h4><div class="small">${next}</div></div>` : ''}
+      <div class="sec small">${links}</div>
+      ${st.status === 'available' || S.snoozed[t.id] ? `<div class="sec"><button data-act="snooze" data-id="${t.id}">${S.snoozed[t.id] ? 'Show in Next up again' : 'Not offered in game yet — hide'}</button></div>` : ''}
+    </div>`;
+  }
+  return html + '</div>';
+}
+
+// Rough trader exchange rates — only used to rank quests by cash reward.
+const RUB_PER = { RUB: 1, USD: 140, EUR: 155 };
+const moneyValue = t => Object.entries((t.finishRewards || {}).money || {}).reduce((s, [cur, n]) => s + n * (RUB_PER[cur] || 0), 0);
+const moneyText = t => Object.entries((t.finishRewards || {}).money || {}).map(([cur, n]) => `${n.toLocaleString()} ${{ RUB: '₽', USD: '$', EUR: '€' }[cur] || cur}`).join(' + ');
+
+// "fastest": prestige-required quests first (ordered by how much they unblock), then the rest by XP.
+function byPriority(a, b) {
+  const by = {
+    xp: () => (b.experience || 0) - (a.experience || 0),
+    money: () => moneyValue(b) - moneyValue(a),
+    unlocks: () => remainingDescendants(b) - remainingDescendants(a),
+  };
+  let r = 0;
+  if (S.ui.sort === 'fastest') {
+    const pa = D.pathSet.has(a.id), pb = D.pathSet.has(b.id);
+    if (pa !== pb) return pa ? -1 : 1;
+    r = pa ? by.unlocks() || by.xp() : by.xp() || by.unlocks();
+  } else {
+    r = (by[S.ui.sort] || by.xp)();
+  }
+  return r || (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0);
+}
+
+function prestigeSummary() {
+  const p = currentPrestige();
+  if (!p) return '<div class="panel muted">No prestige data for this game mode.</div>';
+  const met = p.conditions.filter(conditionMet).length;
+  const lvlCond = p.conditions.find(c => c.type === 'playerLevel');
+  let xpLine = '';
+  if (lvlCond && S.level < lvlCond.playerLevel) {
+    const need = xpBetween(S.level, lvlCond.playerLevel);
+    if (need > 0) xpLine = ` · ~${need.toLocaleString()} XP from the start of level ${S.level} to level ${lvlCond.playerLevel}`;
+  }
+  const items = p.conditions.map(c => `<span class="badge ${conditionMet(c) ? 'ok' : ''}">${conditionMet(c) ? '✓ ' : ''}${esc(c.description)}</span>`).join(' ');
+  const pp = pathProgress();
+  return `<div class="panel">
+      <div class="row"><b>Prestige ${p.prestigeLevel} checklist</b><span class="spacer"></span><span class="muted">${met} / ${p.conditions.length} met${xpLine}</span></div>
+      <div class="bar"><div style="width:${(100 * met / Math.max(1, p.conditions.length)).toFixed(1)}%"></div></div>
+      <div style="margin:6px 0">${items}</div>
+      <div class="small muted">${D.pathSet.size
+        ? `Quest chain to the required quest(s): <b>${pp.done} / ${pp.total}</b> done. Path quests are listed first.`
+        : `No quests required for this prestige — the fastest route is XP and roubles, so quests are sorted by XP. Build the hideout levels marked PRESTIGE.`}
+        Only quests you can do <i>right now</i> are shown. Pick a map to plan a raid around every quest you can do there.</div>
+    </div>`;
+}
+
+function pathProgress() {
+  const path = [...D.pathSet].map(id => D.byId[id]).filter(factionOk);
+  const done = path.filter(t => S.tasks[t.id]).length;
+  return { done, total: path.length };
+}
+
+// ---------- views ----------
+function viewNext() {
+  const visible = D.tasks.filter(t => factionOk(t) && inFocus(t));
+  const avail = visible.filter(t => taskState(t).status === 'available' && !S.snoozed[t.id]).sort(byPriority);
+  const snoozedCount = visible.filter(t => S.snoozed[t.id] && !S.tasks[t.id]).length;
+  const mapCounts = new Map();
+  let anyCount = 0;
+  for (const t of avail) {
+    const ms = taskMaps(t);
+    if (!ms.length) anyCount++;
+    for (const m of ms) mapCounts.set(m.normalizedName, { m, n: (mapCounts.get(m.normalizedName) || { n: 0 }).n + 1 });
+  }
+  const sel = S.ui.map;
+  const chips = [`<span class="chip ${sel === 'all' ? 'on' : ''}" data-act="map" data-id="all">All<span class="n">${avail.length}</span></span>`]
+    .concat([...mapCounts.values()].sort((a, b) => b.n - a.n).map(({ m, n }) => `<span class="chip ${sel === m.normalizedName ? 'on' : ''}" data-act="map" data-id="${esc(m.normalizedName)}">${esc(m.name)}<span class="n">${n}</span></span>`))
+    .concat(anyCount ? [`<span class="chip ${sel === 'any' ? 'on' : ''}" data-act="map" data-id="any">Any map<span class="n">${anyCount}</span></span>`] : [])
+    .join('');
+
+  let list;
+  if (sel === 'all') {
+    list = avail.map(taskCard).join('');
+  } else {
+    const onMap = avail.filter(t => sel === 'any' ? !taskMaps(t).length : taskMaps(t).some(m => m.normalizedName === sel));
+    const anywhere = sel === 'any' ? [] : avail.filter(t => !taskMaps(t).length);
+    const keys = new Map();
+    for (const t of onMap) for (const k of t.neededKeys || []) if (!k.map || k.map.normalizedName === sel || sel === 'any') k.keys.forEach(x => keys.set(x.id, x));
+    list = `<div class="group-title">Quests on this map (${onMap.length})</div>${onMap.map(taskCard).join('') || '<div class="muted">None</div>'}
+      ${keys.size ? `<div class="group-title">Bring these keys</div><div>${[...keys.values()].map(k => itemChip(k)).join('')}</div>` : ''}
+      ${anywhere.length ? `<div class="group-title">Also progress anywhere (${anywhere.length})</div>${anywhere.map(taskCard).join('')}` : ''}`;
+  }
+
+  const gated = gatedBatches(visible);
+  const story = storyPanel(visible);
+  const nextLocked = visible.filter(t => D.pathSet.has(t.id) && taskState(t).status === 'locked').sort((a, b) => (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0)).slice(0, 5);
+  const sorts = { fastest: 'Fastest prestige', xp: 'Most XP', money: 'Most money', unlocks: 'Unlocks most quests' };
+  return `${syncPanel()}
+    ${prestigeSummary()}
+    ${correctionsWarning()}
+    ${story}
+    <div class="row">
+      <div class="chips" style="flex:1">${chips}</div>
+      <label class="muted">Sort <select id="sortSel">${Object.entries(sorts).map(([k, v]) => `<option value="${k}" ${S.ui.sort === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    </div>
+    ${list || '<div class="panel muted">Nothing available — check your level / trader levels, or see the upcoming quests below.</div>'}
+    ${gated}
+    ${snoozedCount ? `<div class="small muted" style="margin-top:8px">${snoozedCount} quest(s) hidden as “not offered in game yet” — un-hide them from the All quests tab.</div>` : ''}
+    ${nextLocked.length ? `<div class="group-title">Coming up on the prestige path</div>${nextLocked.map(taskCard).join('')}` : ''}`;
+}
+
+const correctionsWarning = () => D.corrections ? '' : '<div class="panel small" style="border-color:var(--warn)">⚠ Couldn’t load quest unlock corrections from tarkovtracker.org — story, loyalty and unlock-counter gates are missing, so some quests show too early. Try “Refresh data” later.</div>';
+
+// ---------- story ----------
+const chapterStarted = c => c.autoStart || !!S.storyStarted[c.id] || c.objectives.some(o => S.story[o.id]);
+const chapterDone = c => c.objectives.length > 0 && c.objectives.every(o => o.optional || S.story[o.id]);
+const nextStep = c => c.objectives.find(o => !o.optional && !S.story[o.id]);
+const chapterStatus = c => chapterDone(c) ? 'done' : chapterStarted(c) ? 'active' : 'new';
+
+// Story steps that gate quests you still need, grouped by chapter, with how to get there.
+function storyPanel(visible) {
+  const needed = new Map();
+  for (const t of visible) {
+    if (S.tasks[t.id]) continue;
+    for (const o of storyReqsOf(t)) {
+      if (S.story[o.objective.id]) continue;
+      const key = o.objective.id;
+      const e = needed.get(key) || { o, quests: [] };
+      e.quests.push(t.name);
+      needed.set(key, e);
+    }
+  }
+  if (!needed.size) return '';
+  const byChapter = new Map();
+  for (const e of needed.values()) {
+    const key = e.o.storyChapter.id;
+    if (!byChapter.has(key)) byChapter.set(key, { chapter: e.o.storyChapter, gates: [] });
+    byChapter.get(key).gates.push(e);
+  }
+  const rows = [...byChapter.values()].map(({ chapter, gates }) => {
+    const c = D.chapterById[chapter.id];
+    const stepIndex = e => (c ? c.objectives.findIndex(o => o.id === e.o.objective.id) : -1);
+    gates.sort((a, b) => stepIndex(a) - stepIndex(b));
+    const gateRows = gates.map(e => `<div class="obj"><input type="checkbox" data-act="story" data-id="${esc(e.o.objective.id)}">
+      <div><div>Step needed: ${esc(e.o.objective.name)}${c ? ` <span class="muted small">(step ${stepIndex(e) + 1} of ${c.objectives.length})</span>` : ''}</div>
+      <div class="detail">Unlocks: ${e.quests.map(esc).join(', ')}</div></div></div>`).join('');
+    if (!c) return `<div class="sec"><b>${esc(chapter.name)}</b>${gateRows}</div>`;
+    const how = chapterStarted(c)
+      ? `Next step: <b>${esc((nextStep(c) || {}).description || '—')}</b>`
+      : `<span class="badge gate">not started</span> To start: ${esc(c.activation || 'see wiki')}`;
+    return `<div class="sec"><b>${esc(c.name)}</b> <a href="#" data-act="chapter" data-id="${esc(c.id)}" class="small">open chapter</a>
+      <div class="small">${how}</div>${gateRows}</div>`;
+  }).join('');
+  return `<div class="panel"><b>Story progress needed for quests</b> <span class="small muted">— chapters start by picking up items/notes or talking to traders; track steps in the Story tab.</span>${rows}</div>`;
+}
+
+const openChapters = new Set();
+
+function viewStory() {
+  if (!D.storyChapters.length) return '<div class="panel muted">Story chapter data couldn’t be loaded from tarkovtracker.org. Try “Refresh data” later.</div>';
+  const label = { done: '<span class="badge ok">done</span>', active: '<span class="badge gate">in progress</span>', new: '<span class="badge">not started</span>' };
+  const cards = D.storyChapters.map(c => {
+    const st = chapterStatus(c);
+    const main = c.objectives.filter(o => !o.optional);
+    const doneMain = main.filter(o => S.story[o.id]).length;
+    const reqs = c.requires.map(id => D.chapterById[id]).filter(Boolean)
+      .map(r => `${esc(r.name)}${chapterDone(r) ? ' ✓' : ''}`).join(', ');
+    const gates = c.objectives.filter(o => D.stepQuests[o.id]).map(o => `<div class="small">🔓 “${esc(o.description)}” unlocks ${D.stepQuests[o.id].map(id => D.byId[id]).filter(Boolean).map(t => esc(t.name)).join(', ')}</div>`).join('');
+    const open = openChapters.has(c.id);
+    // Collapsed view: the next few steps from where you are.
+    const first = c.objectives.findIndex(o => !S.story[o.id]);
+    const shown = open ? c.objectives : c.objectives.slice(Math.max(0, first), Math.max(0, first) + 6);
+    const steps = shown.map(o => `<div class="obj ${S.story[o.id] ? 'done' : ''}">
+        <input type="checkbox" data-act="story" data-id="${esc(o.id)}" ${S.story[o.id] ? 'checked' : ''}>
+        <div class="desc">${esc(o.description)}${o.optional ? ' <span class="badge">optional</span>' : ''}${D.stepQuests[o.id] ? ' <span class="badge path">unlocks quests</span>' : ''}
+          <button class="small" data-act="storyUpTo" data-id="${esc(o.id)}" title="Tick every step up to this one">✓ up to here</button></div>
+      </div>`).join('');
+    return `<div class="panel">
+      <div class="row"><b>${c.order}. ${esc(c.name)}</b> ${label[st]}<span class="spacer"></span><span class="muted small">${doneMain}/${main.length} steps</span>
+        ${c.wikiLink ? `<a class="small" href="${esc(c.wikiLink)}" target="_blank" rel="noopener">wiki</a>` : ''}</div>
+      ${c.description ? `<div class="small">${esc(c.description)}</div>` : ''}
+      <div class="sec small"><b>How to start:</b> ${c.autoStart ? 'starts automatically' : esc(c.activation || 'see wiki')}${reqs ? ` · <b>Requires:</b> ${reqs}` : ''}
+        ${!c.autoStart ? ` · <label><input type="checkbox" data-act="chapterStart" data-id="${esc(c.id)}" ${chapterStarted(c) ? 'checked' : ''}> started</label>` : ''}</div>
+      ${c.notes ? `<div class="small muted">Note: ${esc(c.notes)}</div>` : ''}
+      ${c.mapUnlocks.length || c.traderUnlocks.length ? `<div class="small muted">Unlocks: ${[...c.mapUnlocks, ...c.traderUnlocks].map(esc).join(', ')}</div>` : ''}
+      ${gates ? `<div class="sec">${gates}</div>` : ''}
+      <div class="sec"><h4>Steps</h4>${steps || '<div class="muted small">All steps done</div>'}
+        <button class="small" data-act="chapterAll" data-id="${esc(c.id)}">${open ? 'Show fewer steps' : `Show all ${c.objectives.length} steps`}</button></div>
+    </div>`;
+  }).join('');
+  return `<div class="panel small muted">Storyline chapters from tarkovtracker.org. Steps are in story order; tick them as you complete them in game (or use “✓ up to here”). Some chapters branch, so not every step applies to every playthrough.</div>${cards}`;
+}
+
+// ---------- completed quests (bulk entry) ----------
+function viewCompleted() {
+  const q = S.ui.search.trim().toLowerCase();
+  const all = D.tasks.filter(factionOk);
+  const cols = D.traders.map(tr => {
+    const ts = all.filter(t => t.trader.id === tr.id).sort((a, b) => a.name.localeCompare(b.name));
+    if (!ts.length) return '';
+    const done = ts.filter(t => S.tasks[t.id] === 'done').length;
+    const shown = q ? ts.filter(t => t.name.toLowerCase().includes(q)) : ts;
+    if (!shown.length) return '';
+    return `<div class="panel"><div class="row"><b>${esc(tr.name)}</b><span class="spacer"></span><span class="muted small">${done}/${ts.length}</span></div>
+      ${shown.map(t => `<label class="obj ${S.tasks[t.id] === 'done' ? 'done' : ''}" style="cursor:pointer">
+        <input type="checkbox" data-act="done" data-id="${t.id}" ${S.tasks[t.id] === 'done' ? 'checked' : ''}>
+        <span class="desc">${esc(t.name)}</span></label>`).join('')}
+    </div>`;
+  }).join('');
+  return `<div class="panel row">
+      <input class="search" id="search" placeholder="Search quest names…" value="${esc(S.ui.search)}">
+      <span class="spacer"></span><span class="small muted">Open the game's completed quests list and tick what you've finished. Ticking a quest also ticks its prerequisites.</span>
+    </div><div class="grid2">${cols}</div>`;
+}
+
+// Quest batches that only wait on a server-side unlock: the player confirms them from the game.
+function gatedBatches(visible) {
+  const rows = [];
+  for (const [g, ids] of Object.entries(D.gateGroups)) {
+    if (gateOpen(g)) continue;
+    const ts = ids.map(id => D.byId[id]).filter(t => visible.includes(t) && !S.tasks[t.id]);
+    // Only offer batches where the gate is the last thing missing for at least one quest.
+    const ready = ts.filter(t => taskState(t).reasons.every(r => r === 'Unlocks in game'));
+    if (!ready.length) continue;
+    const traders = [...new Set(ts.map(t => t.trader.name))].join(', ');
+    const xp = ts.reduce((a, t) => a + (t.experience || 0), 0);
+    rows.push({ xp, html: `<div class="task"><div class="task-head">
+      <button data-act="gate" data-id="${esc(g)}" title="Mark this batch as available">Available in game ✓</button>
+      <div style="flex:1"><div><span class="name">${esc(traders)}</span> <span class="badge gate">${ts.length} quests</span></div>
+      <div class="meta">${ts.map(t => esc(t.name)).join(' · ')} · ${xp.toLocaleString()} XP total</div></div></div></div>` });
+  }
+  if (!rows.length) return '';
+  rows.sort((a, b) => b.xp - a.xp);
+  return `<div class="group-title">Unlocked by the game — tick a batch when its quests appear at the trader</div>
+    <div class="small muted" style="margin-bottom:6px">In 1.x many quests unlock through server-side story/progress flags the public data can't resolve. One flag opens the whole batch.
+    <label><input type="checkbox" id="ignoreGates" ${S.ui.ignoreGates ? 'checked' : ''}> treat all as available</label></div>
+    ${rows.map(r => r.html).join('')}`;
+}
+
+// ---------- raid planner ----------
+const mapKey = n => MAP_ALIASES[n] || n;
+// Objectives that happen at a trader / in the menus rather than in raid.
+const OUT_OF_RAID = new Set(['giveItem', 'giveQuestItem', 'buildWeapon', 'traderLevel', 'traderStanding', 'skill', 'playerLevel', 'taskStatus', 'sellItem', 'dialogue', 'globalVariable']);
+const objMaps = (o, t) => (o.maps && o.maps.length ? o.maps : t.map ? [t.map] : []);
+const objOnMap = (o, t, key) => objMaps(o, t).some(m => mapKey(m.normalizedName) === key);
+const objAnywhere = (o, t) => !objMaps(o, t).length;
+const raidObjectives = t => t.objectives.filter(o => !o.optional && !S.objs[o.id] && !OUT_OF_RAID.has(o.type));
+const RAID_COLORS = ['#e6b450', '#6c9bd2', '#6fae5f', '#d9705a', '#a982d6', '#4fc1c9', '#d6d26a', '#e08bc0', '#9aa7b8', '#c98a4f'];
+
+function raidCandidates() {
+  return D.tasks.filter(t => (factionOk(t) && !S.tasks[t.id] && (S.active[t.id] || (taskState(t).status === 'available' && !S.snoozed[t.id])))
+    || squadWith(t).length);
+}
+
+// For one map: quests you can fully finish there, and quests you can progress.
+function mapPlan(key) {
+  const finish = [], progress = [];
+  let objectives = 0;
+  for (const t of raidCandidates()) {
+    const objs = raidObjectives(t);
+    const here = objs.filter(o => objOnMap(o, t, key));
+    if (!here.length) continue;
+    objectives += here.length;
+    (objs.every(o => objOnMap(o, t, key) || objAnywhere(o, t)) ? finish : progress).push(t);
+  }
+  const score = q => q.reduce((n, t) => n + (S.active[t.id] ? 3 : S.tasks[t.id] ? 0 : 1) + 2 * squadWith(t).length, 0);
+  const squad = [...finish, ...progress].reduce((n, t) => n + squadWith(t).length, 0);
+  return { key, finish, progress, objectives, squad, score: score(finish) * 2 + score(progress) };
+}
+
+function rankedMaps() {
+  const keys = [...new Set(D.maps.map(m => mapKey(m.normalizedName)))].filter(k => D.mapDefs && D.mapDefs[k] || D.maps.some(m => m.normalizedName === k));
+  return keys.map(mapPlan).filter(p => p.finish.length || p.progress.length).sort((a, b) => b.score - a.score);
+}
+const mapName = key => (D.maps.find(m => m.normalizedName === key) || { name: key }).name;
+
+let raidSelection = null; // planner checkboxes: Set of quest ids for S.ui.raidMap
+
+// ---------- squad (friends' progress from their sync codes) ----------
+const squadMembers = () => (S.squad || []).filter(n => S.friends[n]);
+const squadWith = t => squadMembers().filter(n => S.friends[n].quests[t.id] === 'active');
+const ageText = iso => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${m} min ago` : m < 2880 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`; };
+
+async function gunzipBase64(b64) {
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).text();
+}
+async function gzipBase64(text) {
+  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+// Codes look like "TPTF1.<base64 gzip JSON>" — made by share-progress.bat or by “Copy my sync code”.
+async function importFriendCode(text) {
+  const m = String(text).match(/TPTF1\.([A-Za-z0-9+/=]+)/);
+  if (!m) throw new Error('no sync code found (it starts with TPTF1.)');
+  const p = JSON.parse(await gunzipBase64(m[1]));
+  if (p.v !== 1 || !p.n) throw new Error('unsupported sync code');
+  if (p.m && p.m !== S.mode) throw new Error(`that code is for ${p.m}, the tracker is on ${S.mode}`);
+  const quests = {};
+  for (const [k, st] of [['d', 'done'], ['a', 'active'], ['f', 'failed']]) for (const id of p[k] || []) quests[id] = st;
+  const name = String(p.n).slice(0, 40);
+  S.friends[name] = { quests, since: p.s || null, exportedAt: p.x || new Date().toISOString() };
+  if (!S.squad.includes(name)) S.squad.push(name);
+  save();
+  return { name, active: (p.a || []).length, done: (p.d || []).length };
+}
+
+async function myFriendCode() {
+  const pick = st => Object.keys(S.tasks).filter(id => S.tasks[id] === st);
+  const payload = { v: 1, n: S.myName || 'Friend', m: S.mode, s: S.logSync ? S.logSync.since : null, x: new Date().toISOString(),
+    d: pick('done'), a: Object.keys(S.active).filter(id => !S.tasks[id]), f: pick('failed') };
+  return 'TPTF1.' + await gzipBase64(JSON.stringify(payload));
+}
+
+// Minimal zip reader (central directory + deflate via DecompressionStream) for zips made by Windows "Send to → Compressed folder".
+async function unzipEntries(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const dv = new DataView(buf.buffer);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error(`${file.name} is not a zip file`);
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const out = [];
+  for (let n = 0; n < count; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('corrupt zip directory');
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true), extraLen = dv.getUint16(p + 30, true), commentLen = dv.getUint16(p + 32, true);
+    const local = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nameLen));
+    p += 46 + nameLen + extraLen + commentLen;
+    if (!/\.log$/i.test(name)) continue;
+    const start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+    const data = buf.subarray(start, start + csize);
+    let text;
+    if (method === 0) text = new TextDecoder().decode(data);
+    else if (method === 8) text = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    else throw new Error(`unsupported zip compression in ${name}`);
+    out.push({ name, text });
+  }
+  return out;
+}
+
+async function readLogFiles(files) {
+  const entries = [];
+  for (const f of files) {
+    if (/\.zip$/i.test(f.name)) entries.push(...await unzipEntries(f));
+    else if (/\.log$/i.test(f.name)) entries.push({ name: f.webkitRelativePath || f.name, text: await f.text() });
+  }
+  return entries;
+}
+
+// Same rules as the server's gamelogs.js: quest chat notifications (type 10/11/12), session mode from application logs,
+// and a prestige/wipe = 5+ finished quests started again within 30 minutes (only the current run is kept).
+function progressFromLogs(entries, wanted, assumeMode) {
+  const sessions = new Map();
+  for (const e of entries) {
+    const base = e.name.split(/[\\/]/).pop();
+    const m = base.match(/^(.*?)\s*(push-notifications|notifications|application)(_\d+)?\.log$/i);
+    if (!m) continue;
+    const key = m[1] || base;
+    const sess = sessions.get(key) || { notif: '', app: '' };
+    if (/application/i.test(m[2])) sess.app += e.text + '\n'; else sess.notif += e.text + '\n';
+    sessions.set(key, sess);
+  }
+  const events = [];
+  let unknownSessions = 0;
+  for (const sess of sessions.values()) {
+    const modes = [...sess.app.matchAll(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\|[^\n]*?Session mode: (\w+)/gm)].map(m => ({ at: m[1], mode: m[2] }));
+    if (!modes.length && sess.notif) unknownSessions++;
+    for (const m of sess.notif.matchAll(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\|[^\n]*\n(\{[\s\S]+?^\})/gm)) {
+      const t = m[2].match(/"type":\s*(1[012]),/), q = m[2].match(/"templateId":\s*"([0-9a-f]{24}) /);
+      if (!t || !q) continue;
+      const mode = modes.length ? (modes.filter(x => x.at <= m[1]).pop() || modes[0]).mode : assumeMode;
+      if (mode !== wanted) continue;
+      events.push({ at: m[1], id: q[1], st: { 10: 'active', 11: 'failed', 12: 'done' }[t[1]] });
+    }
+  }
+  events.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  let since = null, finished = new Set(), window = [];
+  const ms = at => Date.parse(at.replace(' ', 'T'));
+  for (const e of events) {
+    if (e.st === 'done') finished.add(e.id);
+    if (e.st !== 'active' || !finished.has(e.id)) continue;
+    window = window.filter(w => ms(e.at) - w < 30 * 60 * 1000).concat(ms(e.at));
+    if (window.length >= 5) {
+      since = events.find(x => ms(x.at) >= window[0] && x.st === 'active' && finished.has(x.id)).at;
+      finished = new Set(); window = [];
+    }
+  }
+  const quests = {};
+  for (const e of events) if (!since || e.at >= since) quests[e.id] = e.st;
+  return { quests, since, sessions: sessions.size, unknownSessions, events: events.length, lastAt: events.length ? events[events.length - 1].at : null };
+}
+
+async function importFriendLogs(files) {
+  const name = (document.getElementById('friendName').value || '').trim();
+  if (!name) throw new Error('enter your friend\'s name first');
+  const entries = await readLogFiles(files);
+  if (!entries.length) throw new Error('no .log files found');
+  const assume = document.getElementById('assumeMode').value;
+  const r = progressFromLogs(entries, S.mode === 'regular' ? 'Regular' : 'Pve', assume);
+  if (!r.events) throw new Error(`no ${S.mode === 'regular' ? 'PvP' : 'PvE'} quest events in ${r.sessions} session(s) — did they include the push-notifications logs?`);
+  S.friends[name] = { quests: r.quests, since: r.since, exportedAt: r.lastAt ? new Date(r.lastAt.replace(' ', 'T')).toISOString() : new Date().toISOString(), fromLogs: true };
+  if (!S.squad.includes(name)) S.squad.push(name);
+  save();
+  const v = Object.values(r.quests);
+  return `Added ${name} from ${r.sessions} log session(s): ${v.filter(x => x === 'active').length} active, ${v.filter(x => x === 'done').length} done${r.since ? ` (since reset ${r.since})` : ''}${r.unknownSessions ? ` · ${r.unknownSessions} session(s) had no application log` : ''}`;
+}
+
+let friendNameDraft = '';
+function squadPanel() {
+  const names = Object.keys(S.friends);
+  const rows = names.map(n => {
+    const f = S.friends[n], v = Object.values(f.quests);
+    return `<div class="row" style="margin:4px 0"><label><input type="checkbox" data-act="squadToggle" data-id="${esc(n)}" ${S.squad.includes(n) ? 'checked' : ''}> <b>${esc(n)}</b></label>
+      <span class="small muted">${v.filter(x => x === 'active').length} active · ${v.filter(x => x === 'done').length} done · ${f.fromLogs ? 'from log files' : 'sync code'}, data from ${esc(ageText(f.exportedAt))}</span>
+      <span class="spacer"></span><button class="small" data-act="friendRemove" data-id="${esc(n)}">remove</button></div>`;
+  }).join('');
+  return `<div class="panel"><div class="row"><b>Squad</b><span class="small muted">— tick who's raiding with you; their accepted quests count in the ranking and can go on the map.</span></div>
+    ${rows || '<div class="small muted" style="margin:6px 0">No friends added yet.</div>'}
+    <textarea id="friendCode" placeholder="Paste a friend's sync code here (or drop their message.txt) and press Add"></textarea>
+    <div class="row" style="margin-top:6px"><button class="primary" data-act="friendAdd">Add / update friend</button>
+      <button data-act="myCode" title="Copy your own progress as a sync code for a friend who uses this tracker">Copy my sync code</button>
+      <input id="myName" placeholder="your name" value="${esc(S.myName || '')}" style="width:120px">
+      <span class="spacer"></span><a class="small" href="/share-progress.bat" download>⬇ share-progress.bat</a>
+      <span class="small muted">— send this to friends; it copies their code from their game logs.</span></div>
+    <details style="margin-top:8px" ${friendNameDraft ? 'open' : ''}><summary class="small" style="cursor:pointer">…or import a friend's raw log files</summary>
+      <div class="small muted" style="margin:6px 0">Your friend opens their Tarkov install folder → <b>Logs</b>, types <b>push-notifications</b> in Explorer's search box, selects all (Ctrl+A),
+        then searches <b>application</b> and adds those too, and zips them (right-click → Send to → Compressed (zipped) folder).
+        Each session folder <code>log_YYYY.MM.DD_…</code> holds <code>… push-notifications_000.log</code> (quest events) and <code>… application_000.log</code> (PvE/PvP mode).
+        Send the zip — you can also drop loose .log files or pick an unzipped folder.</div>
+      <div class="row">
+        <input id="friendName" placeholder="friend's name" style="width:140px" value="${esc(friendNameDraft)}">
+        <label class="small muted">sessions without application log <select id="assumeMode"><option value="Pve">count as PvE</option><option value="Regular">count as PvP</option><option value="">skip</option></select></label>
+        <label class="primary" style="cursor:pointer;padding:4px 8px;border-radius:4px;background:var(--accent);color:#1a1710;font-weight:600">Choose zip / .log files<input type="file" id="friendLogFiles" multiple accept=".zip,.log" hidden></label>
+        <label style="cursor:pointer;padding:4px 8px;border:1px solid var(--line);border-radius:4px">Choose folder<input type="file" id="friendLogDir" webkitdirectory hidden></label>
+      </div>
+      <div id="friendLogDrop" class="small muted" style="margin-top:6px;border:1px dashed var(--line);border-radius:6px;padding:14px;text-align:center">…or drop the zip / log files here</div>
+    </details>
+  </div>`;
+}
+
+function viewRaid() {
+  if (!S.logSync) return '<div class="panel">Sync your progress first (“Sync from game”) so the planner knows which quests you have accepted.</div>' + viewRaidPlanner();
+  return S.raid ? viewRaidInProgress() : viewRaidPlanner();
+}
+
+function viewRaidPlanner() {
+  const ranked = rankedMaps();
+  if (!S.ui.raidMap && ranked.length) S.ui.raidMap = ranked[0].key;
+  const rows = ranked.map((p, i) => `<tr class="${p.key === S.ui.raidMap ? 'on' : ''}">
+      <td>${i === 0 ? '⭐ ' : ''}<b>${esc(mapName(p.key))}</b></td>
+      <td><b>${p.finish.length}</b> <span class="muted small">(${p.finish.filter(t => S.active[t.id]).length} accepted)</span></td>
+      <td>${p.progress.length}</td><td>${p.objectives}</td>${squadMembers().length ? `<td>${p.squad}</td>` : ''}
+      <td>${p.finish.reduce((n, t) => n + (t.experience || 0), 0).toLocaleString()}</td>
+      <td><button data-act="raidPick" data-id="${esc(p.key)}" ${p.key === S.ui.raidMap ? 'class="primary"' : ''}>Plan</button></td></tr>`).join('');
+  let plan = '';
+  const key = S.ui.raidMap;
+  if (key) {
+    const p = mapPlan(key);
+    const quests = [...p.finish, ...p.progress];
+    if (!raidSelection || raidSelection.key !== key) raidSelection = { key, ids: new Set(quests.filter(t => S.active[t.id] || squadWith(t).length).map(t => t.id)) };
+    const list = quests.map(t => {
+      const objs = raidObjectives(t).filter(o => objOnMap(o, t, key) || objAnywhere(o, t));
+      return `<label class="obj" style="cursor:pointer"><input type="checkbox" data-act="raidSel" data-id="${t.id}" ${raidSelection.ids.has(t.id) ? 'checked' : ''}>
+        <div><div><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
+          ${p.finish.includes(t) ? '<span class="badge ok">can finish</span>' : '<span class="badge">progress</span>'}
+          ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}
+          ${S.active[t.id] ? '' : S.tasks[t.id] || !factionOk(t) || taskState(t).status !== 'available' ? `<span class="badge squad">for squad</span>`
+            : '<span class="badge gate" title="Not accepted yet — pick it up from the trader before the raid">accept first</span>'}</div>
+          <div class="detail">${objs.map(o => esc(o.description)).join(' · ')}</div>${questKeysHtml(t, key)}</div></label>`;
+    }).join('');
+    plan = `<div class="panel"><div class="row"><b>${esc(mapName(key))}</b><span class="spacer"></span>
+        <button class="primary" data-act="raidStart" ${raidSelection.ids.size ? '' : 'disabled'}>Start raid with ${raidSelection.ids.size} quest${raidSelection.ids.size === 1 ? '' : 's'}</button></div>
+      <div class="small muted">Accepted quests are pre-selected. “Can finish” = every remaining in-raid objective can be done on this map.</div>
+      <div class="sec">${list || '<div class="muted">No quests here.</div>'}</div>
+      ${bringList(key, [...raidSelection.ids].map(id => D.byId[id]).filter(Boolean))}</div>`;
+  }
+  return `${squadPanel()}<div class="panel"><b>Best maps right now</b> <span class="small muted">— accepted quests count triple; quests you can finish count double.</span>
+      <table class="rank"><thead><tr><th>Map</th><th>Can finish</th><th>Can progress</th><th>Objectives</th>${squadMembers().length ? '<th>Squad quests</th>' : ''}<th>XP (finishable)</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="muted">No quest objectives on any map — sync from game or accept quests.</td></tr>'}</tbody></table></div>
+    ${plan}`;
+}
+
+function questKeyGroups(t, key) {
+  const groups = new Map();
+  for (const k of t.neededKeys || []) if (!k.map || mapKey(k.map.normalizedName) === key) groups.set(k.keys.map(x => x.id).sort().join('|'), k.keys);
+  for (const o of raidObjectives(t)) {
+    if (!(objOnMap(o, t, key) || objAnywhere(o, t))) continue;
+    for (const g of o.requiredKeys || []) if (g.length) groups.set(g.map(x => x.id).sort().join('|'), g);
+  }
+  return [...groups.values()];
+}
+const haveKey = k => (S.have[k.id] || 0) > 0;
+
+// Key chips next to a quest: click to mark owned; the badge says whether you can do it right now.
+function questKeysHtml(t, key) {
+  const groups = questKeyGroups(t, key);
+  if (!groups.length) return '';
+  const ok = groups.every(g => g.some(haveKey));
+  const chips = groups.map(g => g.map(k => `<span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}"
+      title="${haveKey(k) ? 'You have this key — click to unmark' : 'Click if you have this key'}">${k.iconLink ? `<img loading="lazy" src="${esc(k.iconLink)}" alt="">` : ''}${esc(k.shortName || k.name)} ${haveKey(k) ? '✓' : '✗'}</span>`).join(' or ')).join(' ');
+  return `<div class="keys-line">${ok ? '<span class="badge ok">🔑 keys ok</span>' : '<span class="badge lock">🔑 missing key</span>'} ${chips}</div>`;
+}
+
+function bringList(key, quests) {
+  const items = new Map(), keys = new Map();
+  for (const t of quests) {
+    for (const o of raidObjectives(t)) {
+      if (!(objOnMap(o, t, key) || objAnywhere(o, t))) continue;
+      if (o.type === 'plantItem' && o.items && o.items.length) items.set(o.items[0].id, { item: o.items[0], n: (items.get(o.items[0].id) || { n: 0 }).n + (o.count || 1), note: 'plant' });
+      if (o.type === 'mark' && o.markerItem) items.set(o.markerItem.id, { item: o.markerItem, n: (items.get(o.markerItem.id) || { n: 0 }).n + 1, note: 'mark' });
+    }
+    for (const k of t.neededKeys || []) if (!k.map || mapKey(k.map.normalizedName) === key) keys.set(k.keys.map(x => x.id).join('|'), k.keys);
+  }
+  if (!items.size && !keys.size) return '';
+  return `<div class="sec"><h4>Bring</h4>
+    ${[...items.values()].map(e => `<span title="${e.note}">${itemChip(e.item, e.n)}</span>`).join('')}
+    ${[...keys.values()].map(ks => `<span title="key">${ks.map(k => `<span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}">${k.iconLink ? `<img loading="lazy" src="${esc(k.iconLink)}" alt="">` : ''}${esc(k.name)} ${haveKey(k) ? '✓' : '✗'}</span>`).join(' or ')}</span>`).join(' ')}</div>`;
+}
+
+function viewRaidInProgress() {
+  const r = S.raid, key = r.map;
+  const quests = r.quests.map(id => D.byId[id]).filter(Boolean);
+  const mins = Math.max(0, Math.round((Date.now() - Date.parse(r.startedAt)) / 60000));
+  const blocks = quests.map((t, i) => {
+    const color = RAID_COLORS[i % RAID_COLORS.length];
+    if (S.tasks[t.id] === 'done') return `<div class="sec"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="badge ok">completed ✓</span></div>`;
+    const objs = t.objectives.filter(o => !o.optional && !OUT_OF_RAID.has(o.type) && (objOnMap(o, t, key) || objAnywhere(o, t)));
+    const after = t.objectives.filter(o => !o.optional && !S.objs[o.id] && OUT_OF_RAID.has(o.type));
+    return `<div class="sec"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
+      ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}${S.active[t.id] ? '' : ' <span class="badge squad">for squad</span>'}
+      ${questKeysHtml(t, key)}
+      ${objs.map(o => `<div class="obj ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
+        <div><div class="desc">${esc(o.description)}${(o.points || []).some(p => mapKey(p.map) === key) ? ' 📍' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div></div>`).join('')}
+      ${after.length ? `<div class="small muted">After the raid: ${after.map(o => esc(o.description)).join(' · ')}</div>` : ''}</div>`;
+  }).join('');
+  const legend = quests.map((t, i) => `<span class="small" style="margin-right:10px"><span class="swatch" style="background:${RAID_COLORS[i % RAID_COLORS.length]}"></span>${esc(t.name)}</span>`).join('');
+  return `<div class="panel row"><b>Raid in progress: ${esc(mapName(key))}</b><span class="muted small">started ${mins} min ago · ${quests.filter(t => S.tasks[t.id] === 'done').length}/${quests.length} quests completed</span>
+      <span class="spacer"></span><button data-act="raidFull" title="Show the map fullscreen (Esc to leave)">⛶ Fullscreen map</button><button class="primary" data-act="raidEnd">End raid</button><button data-act="raidCancel">Cancel raid</button></div>
+    <div class="raid-grid">
+      <div><div id="raidMapSlot"></div><div style="margin-top:6px">${legend}</div>
+        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
+      <div class="panel" style="margin:0">${routePanel(key)}${bringList(key, quests)}${blocks}</div>
+    </div>`;
+}
+
+// Leaflet map, kept alive across re-renders so zoom/pan survive ticking objectives.
+let leafletReady = null, raidMap = null, raidMapKey = null, raidMapEl = null, raidMarkers = null;
+document.addEventListener('fullscreenchange', () => { if (raidMap) setTimeout(() => raidMap.invalidateSize(), 50); });
+window.addEventListener('resize', () => { if (raidMap) raidMap.invalidateSize(); });
+function ensureLeaflet() {
+  if (window.L) return Promise.resolve();
+  if (!leafletReady) {
+    leafletReady = new Promise((resolve, reject) => {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(css);
+      const js = document.createElement('script');
+      js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      js.onload = resolve;
+      js.onerror = () => { leafletReady = null; reject(new Error('could not load the map library (Leaflet)')); };
+      document.head.appendChild(js);
+    });
+  }
+  return leafletReady;
+}
+
+// Same projection as tarkov.dev's interactive maps: game (x, z) -> rotated -> affine transform.
+function tarkovCRS(def) {
+  const rotate = (latLng, deg) => {
+    if (!deg) return latLng;
+    const a = deg * Math.PI / 180, x = latLng.lng, y = latLng.lat;
+    return L.latLng(x * Math.sin(a) + y * Math.cos(a), x * Math.cos(a) - y * Math.sin(a));
+  };
+  return L.extend({}, L.CRS.Simple, {
+    transformation: new L.Transformation(def.transform[0], def.transform[1], def.transform[2] * -1, def.transform[3]),
+    projection: L.extend({}, L.Projection.LonLat, {
+      project: ll => L.Projection.LonLat.project(rotate(ll, def.coordinateRotation)),
+      unproject: p => rotate(L.Projection.LonLat.unproject(p), -def.coordinateRotation),
+    }),
+  });
+}
+const gameBounds = b => L.latLngBounds([b[0][1], b[0][0]], [b[1][1], b[1][0]]);
+
+// Map overlays (extracts, transits, keys, hazards, bosses…), toggleable and remembered.
+const MAP_LAYER_DEFAULTS = { 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
+  'Hazards': true, 'Bosses': true, 'Locked doors (keys)': false, 'Stationary weapons': false, 'Loot containers': false };
+const LOOT_COLORS = { safe: '#ffd24a', 'weapon-box': '#d9705a', medcase: '#6fdc5f', 'medical-supply-crate': '#6fdc5f', 'ground-cache': '#c98a4f',
+  'buried-barrel-cache': '#c98a4f', 'pc-block': '#4fc1c9', 'technical-supply-crate': '#9aa7b8', toolbox: '#9aa7b8', 'grenade-box': '#e08bc0',
+  'ration-supply-crate': '#d6d26a', 'wooden-ammo-box': '#d9a441', jacket: '#888' };
+
+function addFeatureLayers(map, key, questLayer) {
+  const f = D.mapFeatures && D.mapFeatures[key];
+  const label = (p, cls, text) => L.marker([p.z, p.x], { icon: L.divIcon({ className: 'map-label ' + cls, html: `<span class="dot"></span>${esc(text)}`, iconSize: null, iconAnchor: [6, 6] }) });
+  const icon = (p, glyph, text, tip) => L.marker([p.z, p.x], { icon: L.divIcon({ className: 'map-icon', html: `${glyph}${text ? `<small>${esc(text)}</small>` : ''}`, iconSize: null, iconAnchor: [8, 8] }) }).bindTooltip(tip);
+  const groups = {};
+  const group = name => (groups[name] = groups[name] || L.layerGroup());
+  if (f) {
+    for (const e of f.extracts) {
+      const name = e.faction === 'pmc' ? 'PMC extracts' : e.faction === 'scav' ? 'Scav extracts' : 'Shared / co-op extracts';
+      group(name).addLayer(label(e, 'ext-' + (e.faction === 'pmc' || e.faction === 'scav' ? e.faction : 'shared'), e.name).bindTooltip(`Extract: ${esc(e.name)} (${esc(e.faction)})`));
+    }
+    for (const t of f.transits) group('Transits').addLayer(label(t, 'transit', t.name).bindTooltip(esc(t.name)));
+    for (const h of f.hazards) {
+      if (h.outline && h.outline.length > 2) group('Hazards').addLayer(L.polygon(h.outline.map(([x, z]) => [z, x]), h.type === 'minefield'
+        ? { color: '#ff4040', weight: 2, dashArray: '4 3', fillOpacity: 0.25 }
+        : { color: '#e09a40', weight: 1, dashArray: '2 6', fillOpacity: 0.08 }).bindTooltip(h.type === 'minefield' ? 'Minefield — deadly' : 'Scav sniper zone'));
+      group('Hazards').addLayer(icon(h, h.type === 'sniper' ? '🎯' : '⚠️', '', esc(h.name || h.type)));
+    }
+    for (const b of f.bosses) for (const p of b.points) group('Bosses').addLayer(icon(p, '💀', '', `<b>${esc(b.name)}</b> — ${Math.round(b.chance * 100)}% spawn chance${p.zone ? `<br>${esc(p.zone)}` : ''}`));
+    for (const l of f.locks) group('Locked doors (keys)').addLayer(icon(l, '🔑', '', `${esc(l.key.name)}${l.needsPower ? ' (needs power)' : ''}`));
+    for (const w of f.stationary) group('Stationary weapons').addLayer(icon(w, '🔫', '', esc(w.name)));
+    for (const c of f.loot) group('Loot containers').addLayer(L.circleMarker([c.z, c.x], { radius: 4, color: '#000', weight: 1, fillColor: LOOT_COLORS[c.kind] || '#aaa', fillOpacity: 0.9 }).bindTooltip(esc(c.name)));
+  }
+  const saved = S.ui.mapLayers || {};
+  const overlays = { 'Quest objectives': questLayer };
+  for (const name of Object.keys(MAP_LAYER_DEFAULTS)) {
+    if (!groups[name]) continue;
+    overlays[name] = groups[name];
+    if (saved[name] ?? MAP_LAYER_DEFAULTS[name]) groups[name].addTo(map);
+  }
+  L.control.layers(null, overlays, { collapsed: true, position: 'topright' }).addTo(map);
+  const remember = on => e => { if (e.name === 'Quest objectives') return; S.ui.mapLayers = { ...(S.ui.mapLayers || {}), [e.name]: on }; save(); };
+  map.on('overlayadd', remember(true));
+  map.on('overlayremove', remember(false));
+}
+
+async function attachRaidMap() {
+  const slot = document.getElementById('raidMapSlot');
+  if (!slot) return;
+  const key = S.raid.map, def = D.mapDefs && D.mapDefs[key];
+  if (!def) { slot.innerHTML = '<div class="panel muted">No interactive map available for this location.</div>'; return; }
+  try { await ensureLeaflet(); } catch (e) { slot.innerHTML = `<div class="panel muted">Map unavailable: ${esc(e.message)}</div>`; return; }
+  const live = document.getElementById('raidMapSlot');
+  if (!live) return;
+  if (!raidMap || raidMapKey !== key) {
+    if (raidMap) raidMap.remove();
+    raidMapEl = document.createElement('div');
+    raidMapEl.id = 'raidMapBox';
+    live.appendChild(raidMapEl);
+    raidMap = L.map(raidMapEl, { crs: tarkovCRS(def), minZoom: def.minZoom, maxZoom: def.maxZoom + 2, zoomSnap: 0.25, attributionControl: false });
+    const bounds = gameBounds(def.bounds);
+    if (def.tilePath) L.tileLayer(def.tilePath, { tileSize: def.tileSize, bounds, maxNativeZoom: def.maxZoom, maxZoom: def.maxZoom + 2 }).addTo(raidMap);
+    else if (def.svgPath) L.imageOverlay(def.svgPath, gameBounds(def.svgBounds || def.bounds)).addTo(raidMap);
+    raidMap.fitBounds(bounds);
+    raidMarkers = L.layerGroup().addTo(raidMap);
+    addFeatureLayers(raidMap, key, raidMarkers);
+    raidRouteLayer = L.layerGroup().addTo(raidMap);
+    raidSpawnLayer = L.layerGroup();
+    raidMap.on('click', onRaidMapClick);
+    raidMapKey = key;
+  } else {
+    live.appendChild(raidMapEl);
+    raidMap.invalidateSize();
+  }
+  raidMarkers.clearLayers();
+  const quests = S.raid.quests.map(id => D.byId[id]).filter(Boolean);
+  const pts = [];
+  quests.forEach((t, i) => {
+    const color = RAID_COLORS[i % RAID_COLORS.length];
+    for (const o of t.objectives) {
+      if (o.optional || OUT_OF_RAID.has(o.type)) continue;
+      const done = !!S.objs[o.id] || S.tasks[t.id] === 'done';
+      for (const p of (o.points || []).filter(p => mapKey(p.map) === key)) {
+        if (p.outline) {
+          raidMarkers.addLayer(L.polygon(p.outline.map(([x, z]) => [z, x]), {
+            color: done ? '#555' : color, weight: 1, fillOpacity: done ? 0.05 : 0.18, interactive: false,
+          }));
+        }
+        const m = L.circleMarker([p.z, p.x], {
+          radius: p.kind === 'item' ? 5 : 9, color: done ? '#555' : color, fillColor: done ? '#333' : color,
+          fillOpacity: done ? 0.3 : 0.75, weight: 2,
+        }).bindTooltip(`<b>${esc(t.name)}</b><br>${esc(o.description)}${done ? ' ✓' : ''}`);
+        raidMarkers.addLayer(m);
+        if (!done) pts.push([p.z, p.x]);
+      }
+    }
+  });
+  if (pts.length && !raidMapEl.dataset.fitted) { raidMap.fitBounds(L.latLngBounds(pts).pad(0.25)); raidMapEl.dataset.fitted = '1'; }
+  // Spawn picking: show the PMC spawn points and let a click choose one.
+  raidSpawnLayer.clearLayers();
+  if (pickingSpawn) {
+    const spawns = (D.mapFeatures && D.mapFeatures[key] && D.mapFeatures[key].spawns) || [];
+    for (const sp of spawns) {
+      raidSpawnLayer.addLayer(L.circleMarker([sp.z, sp.x], { radius: 6, color: '#fff', weight: 1, fillColor: '#3fa9f5', fillOpacity: 0.85 })
+        .bindTooltip('PMC spawn — click to set').on('click', ev => { L.DomEvent.stopPropagation(ev); setSpawn(sp); }));
+    }
+    raidSpawnLayer.addTo(raidMap);
+    raidMapEl.style.cursor = 'crosshair';
+  } else {
+    raidSpawnLayer.remove();
+    raidMapEl.style.cursor = '';
+  }
+  drawRoute(key);
+}
+
+// ---------- route planning ----------
+// Straight-line routing: there is no walkable-path data, so this orders stops sensibly rather than giving turn-by-turn directions.
+const ROUTE_SPEED = 4; // m/s — a mix of sprinting and walking with stamina breaks
+const dist2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+let pickingSpawn = false, raidRouteLayer = null, raidSpawnLayer = null, routeCache = { sig: null, route: null };
+
+// One stop per unfinished in-raid objective with a map position; quest items list every possible spot as a candidate.
+function raidStopGroups(key) {
+  const groups = [];
+  S.raid.quests.map(id => D.byId[id]).filter(Boolean).forEach((t, i) => {
+    if (S.tasks[t.id] === 'done') return;
+    for (const o of t.objectives) {
+      if (o.optional || OUT_OF_RAID.has(o.type) || S.objs[o.id]) continue;
+      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z }));
+      if (cands.length) groups.push({ t, o, color: RAID_COLORS[i % RAID_COLORS.length], cands });
+    }
+  });
+  return groups;
+}
+
+function raidExtractOptions(key) {
+  const f = D.mapFeatures && D.mapFeatures[key];
+  const seen = new Set();
+  return (f ? f.extracts : []).filter(e => e.faction !== 'scav' && !seen.has(e.name) && seen.add(e.name));
+}
+
+// Shortest open path from the spawn through one spot of every stop group, ending at the best of the given extracts.
+// Exact (Held–Karp over groups × candidate spots) when small enough, otherwise a heuristic with restarts.
+const EXACT_ROUTE_LIMIT = 2e7; // ~ DP operations
+
+// Legs crossing a minefield (not sniper zones) cost 3x, so the planner goes around them when there's a reasonable alternative.
+let routeMinefields = [];
+const cross = (a, b, c) => (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x);
+const segmentsCross = (p1, p2, q1, q2) => cross(p1, p2, q1) * cross(p1, p2, q2) < 0 && cross(q1, q2, p1) * cross(q1, q2, p2) < 0;
+const insidePolygon = (p, poly) => {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a.z > p.z) !== (b.z > p.z) && p.x < (b.x - a.x) * (p.z - a.z) / (b.z - a.z) + a.x) inside = !inside;
+  }
+  return inside;
+};
+function crossesMinefield(a, b) {
+  for (const poly of routeMinefields) {
+    if (insidePolygon(a, poly) || insidePolygon(b, poly)) continue; // the stop itself is in it: unavoidable
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) if (segmentsCross(a, b, poly[i], poly[j])) return true;
+  }
+  return false;
+}
+const legCost = (a, b) => { const d = dist2(a, b); return routeMinefields.length && crossesMinefield(a, b) ? d * 3 : d; };
+
+function planRoute(start, groups, ends) {
+  if (!groups.length) {
+    const e = ends.reduce((b, x) => (!b || legCost(start, x) < legCost(start, b) ? x : b), null);
+    return { stops: [], total: e ? legCost(start, e) : 0, end: e };
+  }
+  const nodes = [];
+  groups.forEach((g, gi) => g.cands.forEach(c => nodes.push({ gi, c })));
+  const N = groups.length, M = nodes.length;
+  if (N <= 16 && (1 << N) * M * M <= EXACT_ROUTE_LIMIT) return routeExact(start, groups, ends, nodes);
+  let best = null;
+  for (const e of ends) {
+    const r = routeHeuristic(start, groups, e);
+    if (!best || r.total < best.total) best = { ...r, end: e };
+  }
+  return best;
+}
+
+function routeExact(start, groups, ends, nodes) {
+  const N = groups.length, M = nodes.length, FULL = (1 << N) - 1;
+  const dp = new Float64Array((FULL + 1) * M).fill(Infinity);
+  const parent = new Int32Array((FULL + 1) * M).fill(-1);
+  nodes.forEach((nd, j) => { dp[(1 << nd.gi) * M + j] = legCost(start, nd.c); });
+  for (let mask = 1; mask <= FULL; mask++) {
+    for (let j = 0; j < M; j++) {
+      const v = dp[mask * M + j];
+      if (v === Infinity) continue;
+      for (let k = 0; k < M; k++) {
+        const bit = 1 << nodes[k].gi;
+        if (mask & bit) continue;
+        const idx = (mask | bit) * M + k, nv = v + legCost(nodes[j].c, nodes[k].c);
+        if (nv < dp[idx]) { dp[idx] = nv; parent[idx] = j; }
+      }
+    }
+  }
+  let best = { total: Infinity };
+  for (const e of ends) {
+    for (let j = 0; j < M; j++) {
+      const v = dp[FULL * M + j] + legCost(nodes[j].c, e);
+      if (v < best.total) best = { total: v, last: j, end: e };
+    }
+  }
+  const seq = [];
+  for (let mask = FULL, j = best.last; j >= 0;) {
+    seq.push(j);
+    const pj = parent[mask * M + j];
+    mask &= ~(1 << nodes[j].gi);
+    j = pj;
+  }
+  seq.reverse();
+  return { stops: seq.map(j => ({ g: groups[nodes[j].gi], p: nodes[j].c })), total: best.total, end: best.end };
+}
+
+// Randomised nearest-neighbour starts, each improved by 2-opt, or-opt (move one stop) and spot re-selection.
+function routeHeuristic(start, groups, end, restarts = 24) {
+  let best = null;
+  for (let r = 0; r < restarts; r++) {
+    const stops = [], left = groups.slice();
+    let cur = start;
+    while (left.length) {
+      const opts = [];
+      left.forEach((g, i) => g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })));
+      opts.sort((a, b) => a.d - b.d);
+      const pick = r === 0 ? opts[0] : opts[Math.min(opts.length - 1, Math.floor(Math.random() * 3))];
+      stops.push({ g: left[pick.i], p: pick.c });
+      cur = pick.c;
+      left.splice(pick.i, 1);
+    }
+    improveRoute(start, stops, end);
+    const total = routeLength(start, stops, end);
+    if (!best || total < best.total) best = { stops, total };
+  }
+  return best;
+}
+
+function routeLength(start, stops, end) {
+  let total = 0, prev = start;
+  for (const st of stops) { total += legCost(prev, st.p); prev = st.p; }
+  return total + legCost(prev, end);
+}
+
+function improveRoute(start, stops, end) {
+  const at = i => (i < 0 ? start : i >= stops.length ? end : stops[i].p);
+  for (let pass = 0; pass < 20; pass++) {
+    let improved = false;
+    for (let i = 0; i < stops.length - 1; i++) {
+      for (let k = i + 1; k < stops.length; k++) {
+        const delta = legCost(at(i - 1), at(k)) + legCost(at(i), at(k + 1)) - legCost(at(i - 1), at(i)) - legCost(at(k), at(k + 1));
+        if (delta < -0.01) { stops.splice(i, k - i + 1, ...stops.slice(i, k + 1).reverse()); improved = true; }
+      }
+    }
+    for (let i = 0; i < stops.length; i++) {
+      const [moved] = stops.splice(i, 1);
+      const base = routeLength(start, stops, end);
+      let bestPos = i, bestCost = Infinity;
+      for (let k = 0; k <= stops.length; k++) {
+        const a = k === 0 ? start : stops[k - 1].p, b = k === stops.length ? end : stops[k].p;
+        const cost = legCost(a, moved.p) + legCost(moved.p, b) - legCost(a, b);
+        if (cost < bestCost - 0.01) { bestCost = cost; bestPos = k; }
+      }
+      stops.splice(bestPos, 0, moved);
+      if (bestPos !== i && routeLength(start, stops, end) < base + bestCost + 0.01) improved = true;
+    }
+    stops.forEach((st, i) => {
+      let bestP = st.p, cost = legCost(at(i - 1), st.p) + legCost(st.p, at(i + 1));
+      for (const c of st.g.cands) { const v = legCost(at(i - 1), c) + legCost(c, at(i + 1)); if (v < cost - 0.01) { cost = v; bestP = c; } }
+      if (bestP !== st.p) { st.p = bestP; improved = true; }
+    });
+    if (!improved) break;
+  }
+}
+
+function raidRoute(key) {
+  if (!S.raid || !S.raid.spawn) return null;
+  const groups = raidStopGroups(key);
+  const options = raidExtractOptions(key);
+  const forced = S.raid.extract && S.raid.extract !== 'auto' ? options.filter(e => e.name === S.raid.extract) : [];
+  const ends = forced.length ? forced : options.filter(e => e.faction === 'pmc');
+  const sig = JSON.stringify([key, S.raid.spawn, S.raid.extract, groups.map(g => g.o.id)]);
+  if (routeCache.sig === sig) return routeCache.route;
+  const f = D.mapFeatures && D.mapFeatures[key];
+  routeMinefields = f ? f.hazards.filter(h => h.type === 'minefield' && h.outline && h.outline.length > 2).map(h => h.outline.map(([x, z]) => ({ x, z }))) : [];
+  const r = planRoute(S.raid.spawn, groups, ends.length ? ends : [S.raid.spawn]);
+  // Report real walking distance, not the penalised planning cost.
+  let total = 0, prev = S.raid.spawn;
+  for (const st of r.stops) { total += dist2(prev, st.p); prev = st.p; }
+  if (ends.length && r.end) total += dist2(prev, r.end);
+  const minefieldLegs = [S.raid.spawn, ...r.stops.map(st => st.p), ...(ends.length && r.end ? [r.end] : [])].reduce((n, p, i, arr) => n + (i && crossesMinefield(arr[i - 1], p) ? 1 : 0), 0);
+  const best = { stops: r.stops, total, extract: ends.length ? r.end : null, minefieldLegs };
+  routeCache = { sig, route: best };
+  return best;
+}
+
+function setSpawn(p) {
+  pickingSpawn = false;
+  S.raid.spawn = { x: Math.round(p.x * 10) / 10, z: Math.round(p.z * 10) / 10 };
+  update();
+}
+
+function onRaidMapClick(e) {
+  if (!pickingSpawn) return;
+  const p = { x: e.latlng.lng, z: e.latlng.lat };
+  const spawns = (D.mapFeatures && D.mapFeatures[raidMapKey] && D.mapFeatures[raidMapKey].spawns) || [];
+  let best = null, bd = 30; // snap to a known spawn within 30 m
+  for (const sp of spawns) { const d = dist2(p, sp); if (d < bd) { bd = d; best = sp; } }
+  setSpawn(best || p);
+}
+
+function drawRoute(key) {
+  raidRouteLayer.clearLayers();
+  if (!S.raid.spawn) return;
+  raidRouteLayer.addLayer(L.marker([S.raid.spawn.z, S.raid.spawn.x], { zIndexOffset: 1000,
+    icon: L.divIcon({ className: 'map-label route-start', html: '<span class="dot"></span>Spawn', iconSize: null, iconAnchor: [7, 7] }) }));
+  const r = raidRoute(key);
+  if (!r) return;
+  const path = [S.raid.spawn, ...r.stops.map(st => st.p), ...(r.extract ? [r.extract] : [])];
+  raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#000', weight: 6, opacity: 0.5, interactive: false }));
+  raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#fff', weight: 3, opacity: 0.9, dashArray: '8 6', interactive: false }));
+  r.stops.forEach((st, i) => raidRouteLayer.addLayer(L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
+    icon: L.divIcon({ className: 'route-num', html: String(i + 1), iconSize: [20, 20] }) })
+    .bindTooltip(`<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}`)));
+  if (r.extract) raidRouteLayer.addLayer(L.marker([r.extract.z, r.extract.x], { zIndexOffset: 1000,
+    icon: L.divIcon({ className: 'map-label route-end', html: `<span class="dot"></span>🏁 ${esc(r.extract.name)}`, iconSize: null, iconAnchor: [7, 7] }) }));
+}
+
+function routePanel(key) {
+  const options = raidExtractOptions(key);
+  const select = `<select id="raidExtract"><option value="auto">Best PMC extract (auto)</option>${options.map(e =>
+    `<option value="${esc(e.name)}" ${S.raid.extract === e.name ? 'selected' : ''}>${esc(e.name)}${e.faction === 'shared' ? ' (co-op)' : ''}</option>`).join('')}</select>`;
+  const pick = `<button data-act="raidSpawnPick" class="${pickingSpawn ? 'primary' : ''}">${pickingSpawn ? 'Click your spawn on the map… (cancel)' : S.raid.spawn ? '📍 Change spawn' : '📍 Set spawn'}</button>`;
+  let body;
+  const r = raidRoute(key);
+  if (!r) {
+    body = '<div class="small muted">Press “Set spawn”, then click where you spawned (blue dots are PMC spawns). The tracker plans the shortest route through your objectives to the best extract.</div>';
+  } else {
+    let prev = S.raid.spawn;
+    const steps = r.stops.map((st, i) => {
+      const d = dist2(prev, st.p); prev = st.p;
+      return `<div class="obj"><span class="route-num static">${i + 1}</span><div><div class="small"><span class="swatch" style="background:${st.g.color}"></span><b>${esc(st.g.t.name)}</b> <span class="muted">· ${Math.round(d)} m</span></div>
+        <div class="detail">${esc(st.g.o.description)}</div></div></div>`;
+    });
+    if (r.extract) steps.push(`<div class="obj"><span class="route-num static">🏁</span><div class="small"><b>Extract: ${esc(r.extract.name)}</b> <span class="muted">· ${Math.round(dist2(prev, r.extract))} m</span></div></div>`);
+    body = `<div class="small">~<b>${Math.round(r.total).toLocaleString()} m</b> straight-line · ~${Math.max(1, Math.round(r.total / ROUTE_SPEED / 60))} min of moving · ${r.stops.length} stops</div>${steps.join('')}
+      ${r.minefieldLegs ? `<div class="small" style="color:var(--bad)">⚠ ${r.minefieldLegs} leg${r.minefieldLegs > 1 ? 's' : ''} still cross a minefield — go around the red dashed area.</div>` : ''}
+      <div class="small muted">Straight-line distances, routed around minefields where possible: walls, fences and floors aren't accounted for. Objectives without a fixed spot (kills, anywhere-on-map) aren't on the route — do them along the way.</div>`;
+  }
+  return `<div class="sec"><h4>Route</h4><div class="row">${pick}${S.raid.spawn ? '<button data-act="raidSpawnClear">Clear</button>' : ''}</div><div style="margin:6px 0">${select}</div>${body}</div>`;
+}
+
+function viewQuests() {
+  const q = S.ui.search.trim().toLowerCase();
+  const traders = D.traders.map(tr => `<option value="${tr.id}" ${S.ui.trader === tr.id ? 'selected' : ''}>${esc(tr.name)}</option>`).join('');
+  const list = D.tasks.filter(t => {
+    if (!factionOk(t) || !inFocus(t)) return false;
+    if (S.ui.trader !== 'all' && (!t.trader || t.trader.id !== S.ui.trader)) return false;
+    const st = taskState(t).status;
+    if (!S.ui.showDone && (st === 'done' || st === 'failed')) return false;
+    if (!S.ui.showLocked && st === 'locked') return false;
+    if (q && !t.name.toLowerCase().includes(q) && !t.objectives.some(o => (o.description || '').toLowerCase().includes(q))) return false;
+    return true;
+  }).sort((a, b) => (a.trader ? a.trader.name : '').localeCompare(b.trader ? b.trader.name : '') || (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0));
+  let html = `<div class="panel row">
+      <input class="search" id="search" placeholder="Search quests / objectives…" value="${esc(S.ui.search)}">
+      <select id="traderFilter"><option value="all">All traders</option>${traders}</select>
+      <label><input type="checkbox" id="showLocked" ${S.ui.showLocked ? 'checked' : ''}> show locked</label>
+      <label><input type="checkbox" id="showDone" ${S.ui.showDone ? 'checked' : ''}> show completed</label>
+      <span class="spacer"></span><span class="muted">${list.length} quests</span>
+    </div>`;
+  let last = null;
+  for (const t of list) {
+    const tn = t.trader ? t.trader.name : '?';
+    if (tn !== last) { html += `<div class="group-title">${esc(tn)}</div>`; last = tn; }
+    html += taskCard(t);
+  }
+  return html;
+}
+
+// Quest, level, trader and hideout conditions are derived from progress; skills and stash money are ticked by hand.
+const conditionAuto = c => !!((c.task && D.byId[c.task.id]) || c.playerLevel || (c.trader && c.level) || (c.type === 'hideoutStation' && c.station));
+
+function conditionMet(c) {
+  if (c.task && D.byId[c.task.id]) return !!S.tasks[c.task.id];
+  if (c.playerLevel) return S.level >= c.playerLevel;
+  if (c.trader && c.level) return (S.traders[c.trader.id] || 1) >= c.level;
+  if (c.type === 'hideoutStation' && c.station) return stationBuilt(c.station.id, c.stationLevel);
+  return !!S.pchecks[c.id];
+}
+
+function viewPrestige() {
+  const p = currentPrestige();
+  const pp = pathProgress();
+  if (!p) return '<div class="panel muted">json.tarkov.dev has no prestige data for this game mode.</div>';
+  const rows = p.conditions.map(c => {
+    const met = conditionMet(c);
+    const auto = conditionAuto(c);
+    let extra = c.type === 'haveItem' ? 'Keep this in your stash when you press Prestige — it is consumed.' : objectiveDetail(c);
+    if (c.type === 'hideoutStation') extra = 'Tick it in the Hideout tab; prerequisite levels are marked PRESTIGE there.';
+    if (c.type === 'skill') extra = SKILL_TIPS[c.skillLevel.name] || 'Tick when your skill reaches this level.';
+    if (c.task && D.byId[c.task.id]) {
+      const t = D.byId[c.task.id];
+      const sub = [...ancestorsOf([t.id])].map(id => D.byId[id]).filter(factionOk);
+      const d = sub.filter(x => S.tasks[x.id]).length;
+      extra = `Quest chain: ${d}/${sub.length} done · <a href="#" data-act="goto" data-id="${t.id}">open quest</a>`;
+    }
+    return `<tr class="${met ? 'complete' : ''}">
+      <td>${auto ? (met ? '✅' : '⬜') : `<input type="checkbox" data-act="pcheck" data-id="${c.id}" ${met ? 'checked' : ''}>`}</td>
+      <td>${esc(c.description)}<div class="small muted">${extra}</div></td>
+      <td class="small muted">${auto ? 'auto' : 'tick manually'}</td>
+    </tr>`;
+  }).join('');
+  const metCount = p.conditions.filter(conditionMet).length;
+  return `<div class="panel">
+      <div class="row"><b>${esc(p.name)}</b><span class="spacer"></span><span class="muted">${metCount} / ${p.conditions.length} requirements met</span></div>
+      <div class="bar"><div style="width:${(100 * metCount / Math.max(1, p.conditions.length)).toFixed(1)}%"></div></div>
+      <div class="small muted">Quest, level and hideout requirements tick automatically from your progress.${D.pathSet.size ? ` Required quest chain: ${pp.done}/${pp.total}.` : ''}</div>
+    </div>
+    <div class="panel"><table><thead><tr><th></th><th>Requirement</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small muted">Tip: when you prestige, press “Start new prestige” — it archives this run and wipes quests/hideout/items like the game does.</div>`;
+}
+
+function levelBuildable(l) {
+  const reasons = [];
+  for (const r of l.stationLevelRequirements || []) {
+    if (!r.station) continue;
+    const st = D.stationById[r.station.id];
+    const req = st && st.levels.find(x => x.level === r.level);
+    if (req && !S.hideout[req.id]) reasons.push(`${r.station.name} ${r.level}`);
+  }
+  for (const r of l.traderRequirements || []) {
+    if (r.requirementType === 'level' && r.trader && !cmp(S.traders[r.trader.id] || 1, r.compareMethod, r.value)) reasons.push(`${r.trader.name} LL${r.value}`);
+  }
+  return reasons;
+}
+
+function viewHideout() {
+  const onPath = s => s.levels.some(l => D.hideoutPath.has(l.id) && !S.hideout[l.id]);
+  const stations = [...D.hideoutStations]
+    .filter(s => !S.ui.hideoutPrestigeOnly || onPath(s))
+    .sort((a, b) => onPath(b) - onPath(a) || a.name.localeCompare(b.name));
+  const cards = stations.map(s => {
+    const levels = [...s.levels].sort((a, b) => a.level - b.level);
+    const builtMax = Math.max(0, ...levels.filter(l => S.hideout[l.id]).map(l => l.level));
+    let shown = S.ui.hideoutNextOnly ? levels.filter(l => !S.hideout[l.id]).slice(0, 1) : levels;
+    if (S.ui.hideoutPrestigeOnly) shown = shown.filter(l => D.hideoutPath.has(l.id));
+    const rows = shown.map(l => {
+      const built = !!S.hideout[l.id];
+      const blockers = levelBuildable(l);
+      const items = l.itemRequirements.map(r => {
+        const have = S.have[r.item.id] || 0;
+        return `<span title="have ${have}">${itemChip(r.item, r.count, r.foundInRaid)}${have >= r.count ? '✓' : ''}</span>`;
+      }).join('');
+      const skills = (l.skillRequirements || []).map(x => `${esc(x.name)} ${x.level}`).join(', ');
+      const traders = (l.traderRequirements || []).map(x => `${esc(x.trader.name)} LL${x.value}`).join(', ');
+      return `<div class="lvl ${built ? 'built' : ''}">
+        <label><input type="checkbox" data-act="hideout" data-id="${l.id}" ${built ? 'checked' : ''}> <b>Level ${l.level}</b></label>
+        ${D.hideoutPath.has(l.id) && !built ? '<span class="badge path">PRESTIGE</span>' : ''}
+        ${built ? '<span class="badge ok">built</span>' : blockers.length ? `<span class="badge lock">needs ${esc(blockers.join(', '))}</span>` : '<span class="badge ok">can build</span>'}
+        ${l.constructionTime ? `<span class="badge">${Math.round(l.constructionTime / 3600 * 10) / 10}h</span>` : ''}
+        <div>${items || '<span class="muted small">no items</span>'}</div>
+        ${skills ? `<div class="small muted">Skills: ${skills}</div>` : ''}
+        ${traders ? `<div class="small muted">Traders: ${traders}</div>` : ''}
+      </div>`;
+    }).join('');
+    return `<div class="panel station"><h3>${esc(s.name)} <span class="muted small">${builtMax}/${levels.length}</span></h3>${rows || '<div class="muted small">Fully built</div>'}</div>`;
+  }).join('');
+  return `<div class="panel row">
+      <label><input type="checkbox" id="hideoutNextOnly" ${S.ui.hideoutNextOnly ? 'checked' : ''}> show next level only</label>
+      <label><input type="checkbox" id="hideoutPrestigeOnly" ${S.ui.hideoutPrestigeOnly ? 'checked' : ''}> only levels needed for prestige</label>
+      <span class="spacer"></span><span class="small muted">Ticking a level marks lower levels built too. Item counts use your “have” numbers from the Items tab.</span>
+    </div><div class="grid2">${cards}</div>`;
+}
+
+function neededItems() {
+  const need = new Map();
+  const add = (it, count, fir, source) => {
+    const key = it.id;
+    const e = need.get(key) || { item: it, count: 0, fir: 0, sources: [] };
+    e.count += count;
+    if (fir) e.fir += count;
+    e.sources.push(source);
+    need.set(key, e);
+  };
+  // With no required quest chain, listing items for every quest in the game is noise — only count quests available now.
+  const onlyAvailable = S.focus === 'prestige' && !D.pathSet.size;
+  for (const t of D.tasks) {
+    if (!factionOk(t) || !inFocus(t) || S.tasks[t.id]) continue;
+    if (onlyAvailable && taskState(t).status !== 'available') continue;
+    for (const o of t.objectives) {
+      // Only hand-in objectives consume items; "find" objectives are usually paired with a hand-in.
+      if (S.objs[o.id] || o.optional || !o.items || !o.items.length || !['giveItem', 'plantItem'].includes(o.type)) continue;
+      add(o.items[0], o.count || 1, o.foundInRaid, `${t.name}${o.items.length > 1 ? ' (alternatives ok)' : ''}`);
+    }
+  }
+  if (S.ui.itemsHideout !== 'none') {
+    for (const s of D.hideoutStations) for (const l of s.levels) {
+      if (S.hideout[l.id] || (S.ui.itemsHideout === 'prestige' && !D.hideoutPath.has(l.id))) continue;
+      for (const r of l.itemRequirements) add(r.item, r.count, r.foundInRaid, `${s.name} ${l.level}`);
+    }
+  }
+  return [...need.values()];
+}
+
+function viewItems() {
+  const q = S.ui.search.trim().toLowerCase();
+  let list = neededItems();
+  if (S.ui.itemsHideDone) list = list.filter(e => (S.have[e.item.id] || 0) < e.count);
+  if (q) list = list.filter(e => e.item.name.toLowerCase().includes(q));
+  list.sort((a, b) => b.fir - a.fir || b.count - a.count);
+  const rows = list.map(e => {
+    const have = S.have[e.item.id] || 0;
+    return `<tr class="${have >= e.count ? 'complete' : ''}">
+      <td>${itemChip(e.item)}</td>
+      <td><b>${e.count.toLocaleString()}</b>${e.fir ? `<div class="small"><span class="badge fir">${e.fir.toLocaleString()} FIR</span></div>` : ''}</td>
+      <td><button data-act="have" data-id="${e.item.id}" data-d="-1">−</button>
+          <input type="number" min="0" data-act="haveSet" data-id="${e.item.id}" value="${have}">
+          <button data-act="have" data-id="${e.item.id}" data-d="1">+</button></td>
+      <td class="small muted">${esc(e.sources.join(' · '))}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="panel row">
+      <input class="search" id="search" placeholder="Search items…" value="${esc(S.ui.search)}">
+      <label class="muted">Hideout <select id="itemsHideout">${[['prestige', 'prestige levels only'], ['all', 'all unbuilt levels'], ['none', 'none']].map(([k, v]) => `<option value="${k}" ${S.ui.itemsHideout === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label><input type="checkbox" id="itemsHideDone" ${S.ui.itemsHideDone ? 'checked' : ''}> hide items I have enough of</label>
+      <span class="spacer"></span><span class="small muted">${S.focus === 'prestige' && !D.pathSet.size ? 'Quest items: only quests available now. ' : 'Quest items follow the Focus setting. '}FIR = found in raid — don't sell these.</span>
+    </div>
+    <div class="panel"><table><thead><tr><th>Item</th><th>Need</th><th>Have</th><th>For</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="muted">Nothing needed 🎉</td></tr>'}</tbody></table></div>`;
+}
+
+// ---------- shell ----------
+function render() {
+  memo = new Map();
+  document.getElementById('lvl').value = S.level;
+  document.getElementById('faction').value = S.faction;
+  document.getElementById('mode').value = S.mode;
+  document.getElementById('focus').value = S.focus;
+  document.getElementById('prestigeNo').textContent = `Prestige ${S.prestige} → ${S.prestige + 1}`;
+  for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('on', b.dataset.tab === S.ui.tab);
+  if (!D) return;
+  const v = { raid: viewRaid, next: viewNext, quests: viewQuests, prestige: viewPrestige, hideout: viewHideout, items: viewItems, story: viewStory, completed: viewCompleted }[S.ui.tab] || viewNext;
+  const focused = document.activeElement && document.activeElement.id;
+  const caret = focused === 'search' ? document.activeElement.selectionStart : null;
+  document.getElementById('view').innerHTML = v();
+  document.documentElement.style.setProperty('--hdr', document.querySelector('header').offsetHeight + 'px');
+  renderSide();
+  document.getElementById('raidTab').textContent = S.raid ? '● Raid in progress' : 'Raid planner';
+  if (S.ui.tab === 'raid' && S.raid) attachRaidMap();
+  if (focused === 'search') {
+    const el = document.getElementById('search');
+    if (el) { el.focus(); el.setSelectionRange(caret, caret); }
+  }
+}
+
+// Everything needed to finish the quests currently accepted in game (from the game logs).
+function acceptedNeeds() {
+  const quests = D.tasks.filter(t => S.active[t.id] && !S.tasks[t.id]);
+  const items = new Map();
+  const add = (it, count, fir, quest, note) => {
+    const e = items.get(it.id) || { item: it, count: 0, fir: 0, quests: [] };
+    e.count += count;
+    if (fir) e.fir += count;
+    e.quests.push(note ? `${quest} (${note})` : quest);
+    items.set(it.id, e);
+  };
+  const keys = new Map();
+  for (const t of quests) {
+    for (const o of t.objectives) {
+      if (S.objs[o.id] || o.optional) continue;
+      if ((o.type === 'giveItem' || o.type === 'plantItem') && o.items && o.items.length) {
+        add(o.items[0], o.count || 1, o.foundInRaid, t.name, [o.type === 'plantItem' ? 'plant' : '', o.items.length > 1 ? 'alternatives ok' : ''].filter(Boolean).join(', '));
+      }
+      if (o.type === 'mark' && o.markerItem) add(o.markerItem, 1, false, t.name, 'mark');
+      if (o.type === 'buildWeapon' && o.item) add(o.item, 1, false, t.name, 'build — see wiki for parts');
+    }
+    for (const k of t.neededKeys || []) {
+      const id = k.keys.map(x => x.id).join('|');
+      const e = keys.get(id) || { keys: k.keys, map: k.map, quests: [] };
+      e.quests.push(t.name);
+      keys.set(id, e);
+    }
+  }
+  return { quests, items: [...items.values()], keys: [...keys.values()] };
+}
+
+function renderSide() {
+  const layout = document.getElementById('layout');
+  const raidScreen = S.ui.tab === 'raid' && !!S.raid;
+  layout.classList.toggle('side-hidden', !S.ui.sideOpen || raidScreen);
+  document.body.classList.toggle('side-off', !S.ui.sideOpen);
+  document.getElementById('sideShow').style.display = S.ui.sideOpen ? 'none' : 'inline-block';
+  const side = document.getElementById('side');
+  if (raidScreen) document.getElementById('sideShow').style.display = 'none';
+  if (!D || !S.ui.sideOpen || raidScreen) { side.innerHTML = ''; return; }
+  const { quests, items, keys } = acceptedNeeds();
+  const head = `<div class="row"><b>Accepted quests</b><span class="muted small">${quests.length} active</span><span class="spacer"></span>
+    <button class="small" data-act="sideToggle" title="Hide sidebar">◂</button></div>`;
+  if (!S.logSync) {
+    side.innerHTML = `<div class="panel">${head}<div class="small muted" style="margin-top:6px">Press “Sync from game” to load the quests you've accepted in game.</div></div>`;
+    return;
+  }
+  items.sort((a, b) => (b.fir > 0) - (a.fir > 0) || a.item.name.localeCompare(b.item.name));
+  const missing = items.filter(e => (S.have[e.item.id] || 0) < e.count).length;
+  const rows = items.map(e => {
+    const have = S.have[e.item.id] || 0;
+    return `<div class="side-item ${have >= e.count ? 'complete' : ''}" title="${esc(e.quests.join('\n'))}">
+      ${e.item.iconLink ? `<img loading="lazy" src="${esc(e.item.iconLink)}" alt="">` : ''}
+      <div class="info"><div class="small">${esc(e.item.name)}${e.fir ? ' <span class="badge fir">FIR</span>' : ''}</div><div class="for">${esc(e.quests.join(' · '))}</div></div>
+      <div class="count"><button data-act="have" data-id="${e.item.id}" data-d="-1">−</button> <b>${have}/${e.count.toLocaleString()}</b> <button data-act="have" data-id="${e.item.id}" data-d="1">+</button></div>
+    </div>`;
+  }).join('');
+  const keyRows = keys.map(k => `<div class="side-item" title="${esc(k.quests.join('\n'))}">
+      ${k.keys[0].iconLink ? `<img loading="lazy" src="${esc(k.keys[0].iconLink)}" alt="">` : ''}
+      <div class="info"><div class="small">${k.keys.map(x => esc(x.name)).join(' or ')}</div><div class="for">${k.map ? esc(k.map.name) + ' · ' : ''}${esc(k.quests.join(' · '))}</div></div></div>`).join('');
+  const questList = quests.map(t => `<a href="#" data-act="goto" data-id="${t.id}">${esc(t.name)}</a>`).join(' · ');
+  side.innerHTML = `<div class="panel">${head}
+    <div class="sec"><h4>Items to hand in / use (${missing} still needed)</h4>${rows || '<div class="small muted">No items needed for your accepted quests.</div>'}</div>
+    ${keyRows ? `<div class="sec"><h4>Keys</h4>${keyRows}</div>` : ''}
+    <div class="sec small"><h4>Quests</h4>${questList || '<span class="muted">None accepted</span>'}</div>
+    <div class="small muted" style="margin-top:8px">Counts use the same “have” numbers as the Items tab. Tick an objective on a quest card to drop its items.</div>
+  </div>`;
+}
+
+function renderTraderLL() {
+  const box = document.getElementById('traderLL');
+  if (!D) return;
+  box.innerHTML = D.traders.map(tr => `<label class="muted">${esc(tr.name)} LL <select data-trader="${tr.id}">${[1, 2, 3, 4].map(n => `<option ${(S.traders[tr.id] || 1) === n ? 'selected' : ''}>${n}</option>`).join('')}</select>
+    rep <input type="number" step="0.01" data-rep="${tr.id}" value="${S.rep[tr.id] || 0}" style="width:70px"></label>`).join('')
+    + '<span class="small muted">Loyalty level and reputation as shown on the trader screen — quests check both.</span>';
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+function update() { save(); render(); }
+
+document.getElementById('layout').addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const { act, id } = el.dataset;
+  if (act === 'toggle') {
+    if (e.target.closest('input,a,button')) return;
+    openTasks.has(id) ? openTasks.delete(id) : openTasks.add(id);
+    render();
+  } else if (act === 'done') {
+    e.stopPropagation();
+    const n = setTaskDone(id, el.checked);
+    if (n) toast(`Also marked ${n} prerequisite quest${n > 1 ? 's' : ''} done`);
+    update();
+  } else if (act === 'obj') {
+    el.checked ? (S.objs[id] = true) : delete S.objs[id];
+    update();
+  } else if (act === 'goto') {
+    e.preventDefault();
+    openTasks.add(id);
+    const t = D.byId[id];
+    S.ui.tab = 'quests'; S.ui.search = t.name; S.ui.trader = 'all'; S.ui.showDone = true; S.ui.showLocked = true;
+    if (!inFocus(t)) S.focus = 'all';
+    update();
+  } else if (act === 'snooze') {
+    S.snoozed[id] ? delete S.snoozed[id] : (S.snoozed[id] = true);
+    update();
+  } else if (act === 'keyToggle') {
+    e.preventDefault();
+    S.have[id] = haveKey({ id }) ? 0 : 1;
+    update();
+  } else if (act === 'friendAdd') {
+    const box = document.getElementById('friendCode');
+    importFriendCode(box.value).then(r => { toast(`Added ${r.name}: ${r.active} active, ${r.done} done`); update(); })
+      .catch(err => toast('Could not read code: ' + err.message));
+  } else if (act === 'friendRemove') {
+    if (!confirm(`Remove ${id}?`)) return;
+    delete S.friends[id];
+    S.squad = S.squad.filter(n => n !== id);
+    raidSelection = null;
+    update();
+  } else if (act === 'squadToggle') {
+    S.squad = el.checked ? [...new Set([...S.squad, id])] : S.squad.filter(n => n !== id);
+    raidSelection = null;
+    update();
+  } else if (act === 'myCode') {
+    myFriendCode().then(code => navigator.clipboard.writeText(code)).then(() => toast('Your sync code is on the clipboard'))
+      .catch(err => toast('Could not copy: ' + err.message));
+  } else if (act === 'raidPick') {
+    S.ui.raidMap = id;
+    update();
+  } else if (act === 'raidSel') {
+    el.checked ? raidSelection.ids.add(id) : raidSelection.ids.delete(id);
+    render();
+  } else if (act === 'raidStart') {
+    S.raid = { map: S.ui.raidMap, quests: [...raidSelection.ids], startedAt: new Date().toISOString() };
+    update();
+  } else if (act === 'raidSpawnPick') {
+    pickingSpawn = !pickingSpawn;
+    render();
+  } else if (act === 'raidSpawnClear') {
+    S.raid.spawn = null;
+    pickingSpawn = false;
+    update();
+  } else if (act === 'raidFull') {
+    if (raidMapEl && raidMapEl.requestFullscreen) raidMapEl.requestFullscreen();
+  } else if (act === 'raidEnd' || act === 'raidCancel') {
+    if (act === 'raidCancel' && !confirm('Cancel this raid plan?')) return;
+    const r = S.raid;
+    S.raid = null;
+    raidSelection = null;
+    if (raidMap) { raidMap.remove(); raidMap = null; raidMapKey = null; }
+    update();
+    if (act === 'raidEnd') {
+      const done = r.quests.filter(id => S.tasks[id] === 'done').length;
+      toast(`Raid ended — ${done}/${r.quests.length} quests completed`);
+      syncFromGame(false);
+    }
+  } else if (act === 'sideToggle') {
+    S.ui.sideOpen = false;
+    update();
+  } else if (act === 'syncApply') {
+    if (id !== 'cancel' && pendingSync) {
+      const auto = document.getElementById('autoSync');
+      applyGameProgress(pendingSync, id === 'replace');
+      S.logSync.auto = auto ? auto.checked : true;
+      toast(`Applied game progress (${id})`);
+    }
+    pendingSync = null;
+    update();
+  } else if (act === 'chapter') {
+    e.preventDefault();
+    openChapters.add(id);
+    S.ui.tab = 'story';
+    update();
+  } else if (act === 'chapterAll') {
+    openChapters.has(id) ? openChapters.delete(id) : openChapters.add(id);
+    render();
+  } else if (act === 'chapterStart') {
+    el.checked ? (S.storyStarted[id] = true) : delete S.storyStarted[id];
+    update();
+  } else if (act === 'storyUpTo') {
+    const c = D.chapterOfStep[id];
+    // Optional steps are often branch-specific, so only main steps are filled in.
+    for (const o of c.objectives) { if (!o.optional || o.id === id) S.story[o.id] = true; if (o.id === id) break; }
+    S.storyStarted[c.id] = true;
+    update();
+  } else if (act === 'story') {
+    el.checked ? (S.story[id] = true) : delete S.story[id];
+    update();
+  } else if (act === 'gate') {
+    S.gates[id] = true;
+    toast(`Unlocked ${D.gateGroups[id].length} quests`);
+    update();
+  } else if (act === 'map') {
+    S.ui.map = id; update();
+  } else if (act === 'pcheck') {
+    el.checked ? (S.pchecks[id] = true) : delete S.pchecks[id];
+    update();
+  } else if (act === 'hideout') {
+    const l = D.levelById[id];
+    for (const x of l.station.levels) {
+      if (el.checked && x.level <= l.level) S.hideout[x.id] = true;
+      if (!el.checked && x.level >= l.level) delete S.hideout[x.id];
+    }
+    update();
+  } else if (act === 'have') {
+    S.have[id] = Math.max(0, (S.have[id] || 0) + Number(el.dataset.d));
+    update();
+  }
+});
+
+document.getElementById('layout').addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.act === 'haveSet') { S.have[el.dataset.id] = Math.max(0, Number(el.value) || 0); update(); return; }
+  const flags = ['showDone', 'showLocked', 'hideoutNextOnly', 'hideoutPrestigeOnly', 'itemsHideDone', 'ignoreGates'];
+  if (flags.includes(el.id)) { S.ui[el.id] = el.checked; update(); }
+  if (el.id === 'traderFilter') { S.ui.trader = el.value; update(); }
+  if (el.id === 'itemsHideout') { S.ui.itemsHideout = el.value; update(); }
+  if (el.id === 'sortSel') { S.ui.sort = el.value; update(); }
+  if (el.id === 'raidExtract' && S.raid) { S.raid.extract = el.value; update(); }
+  if (el.id === 'myName') { S.myName = el.value.trim(); save(); }
+  if ((el.id === 'friendLogFiles' || el.id === 'friendLogDir') && el.files.length) {
+    toast('Reading log files…');
+    importFriendLogs([...el.files]).then(msg => { toast(msg); update(); }).catch(err => toast('Could not import logs: ' + err.message));
+  }
+});
+
+document.getElementById('layout').addEventListener('input', e => {
+  if (e.target.id === 'friendName') { friendNameDraft = e.target.value; return; }
+  if (e.target.id === 'search') { S.ui.search = e.target.value; update(); }
+});
+
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) { S.ui.tab = b.dataset.tab; S.ui.search = ''; update(); }
+});
+document.getElementById('lvl').addEventListener('change', e => { S.level = Math.max(1, Math.min(79, Number(e.target.value) || 1)); update(); });
+document.getElementById('faction').addEventListener('change', e => { S.faction = e.target.value; update(); });
+document.getElementById('focus').addEventListener('change', e => { S.focus = e.target.value; update(); });
+document.getElementById('mode').addEventListener('change', e => { S.mode = e.target.value; save(); boot(false); });
+document.getElementById('traderBtn').addEventListener('click', () => { const b = document.getElementById('traderLL'); b.hidden = !b.hidden; renderTraderLL(); });
+document.getElementById('traderLL').addEventListener('change', e => {
+  const { trader, rep } = e.target.dataset;
+  if (trader) S.traders[trader] = Number(e.target.value);
+  if (rep) S.rep[rep] = Number(e.target.value) || 0;
+  if (trader || rep) update();
+});
+document.getElementById('refreshBtn').addEventListener('click', () => boot(true));
+document.getElementById('syncBtn').addEventListener('click', () => syncFromGame(true));
+document.getElementById('layout').addEventListener('dragover', e => { if (e.target.id === 'friendCode' || e.target.id === 'friendLogDrop') e.preventDefault(); });
+document.getElementById('layout').addEventListener('drop', e => {
+  if (e.target.id !== 'friendLogDrop' || !e.dataTransfer.files.length) return;
+  e.preventDefault();
+  toast('Reading log files…');
+  importFriendLogs([...e.dataTransfer.files]).then(msg => { toast(msg); update(); }).catch(err => toast('Could not import logs: ' + err.message));
+});
+document.getElementById('layout').addEventListener('drop', async e => {
+  if (e.target.id !== 'friendCode' || !e.dataTransfer.files.length) return;
+  e.preventDefault();
+  e.target.value = await e.dataTransfer.files[0].text();
+});
+document.getElementById('sideShow').addEventListener('click', () => { S.ui.sideOpen = true; update(); });
+setInterval(() => { if (S.logSync && S.logSync.auto && !pendingSync) syncFromGame(false); }, AUTO_SYNC_MS);
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tarkov-progress-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const s = JSON.parse(await f.text());
+    const d = defaultState();
+    S = { ...d, ...s, ui: { ...d.ui, ...(s.ui || {}) } };
+    save(); computeSets(); render(); toast('Progress imported');
+  } catch (err) { toast('Import failed: ' + err.message); }
+  e.target.value = '';
+});
+
+document.getElementById('prestigeBtn').addEventListener('click', () => {
+  if (!confirm(`Start prestige ${S.prestige + 1}? This clears quests, objectives, hideout, item counts and trader levels (your current run is archived in the export file).`)) return;
+  S.history.push({ prestige: S.prestige, finishedAt: new Date().toISOString(), questsDone: Object.keys(S.tasks).length });
+  S.prestige += 1;
+  Object.assign(S, { level: 1, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, traders: {}, gates: {}, story: {}, storyStarted: {}, rep: {}, active: {} });
+  save(); computeSets(); renderTraderLL(); render();
+  toast(`Good luck on prestige ${S.prestige + 1}`);
+});
+
+async function boot(force) {
+  document.getElementById('view').innerHTML = '<div class="loading">Loading quest data from tarkov.dev…</div>';
+  try {
+    D = indexData(await loadData(force));
+    computeSets();
+    renderTraderLL();
+    render();
+    if (force) toast('Data refreshed');
+    if (!S.logSync || S.logSync.auto) syncFromGame(false);
+  } catch (e) {
+    D = null;
+    document.getElementById('view').innerHTML = `<div class="panel">Couldn't load data from tarkov.dev: ${esc(e.message)}<br><br><button class="primary" onclick="boot(true)">Retry</button></div>`;
+  }
+}
+
+render();
+boot(false);
+</script>
+</body>
+</html>
