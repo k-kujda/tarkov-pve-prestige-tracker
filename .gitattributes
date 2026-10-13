@@ -1,0 +1,5 @@
+* text=auto eol=lf
+# cmd.exe needs Windows line endings: store batch files byte-for-byte (CRLF), so raw downloads work too
+*.bat -text
+*.png binary
+*.jpg binary
