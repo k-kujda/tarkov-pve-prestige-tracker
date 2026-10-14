@@ -111,6 +111,8 @@
   .raid-grid > .panel { max-height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); overflow-y: auto; }
   @media (max-width: 1200px) { .raid-grid { grid-template-columns: 1fr; } }
   table.rank td, table.rank th { white-space: nowrap; }
+  .badge.skip { color: var(--muted); border-color: var(--muted); text-decoration: line-through; }
+  .task.skipped { opacity: .45; }
   .badge.squad { color: #4fc1c9; border-color: #4fc1c9; }
   .item.key { cursor: pointer; user-select: none; }
   .item.key.have { border-color: var(--good); }
@@ -174,7 +176,7 @@ const MAP_ALIASES = { 'ground-zero-21': 'ground-zero', 'ground-zero-tutorial': '
 // ---------- state ----------
 const defaultState = () => ({
   level: 1, faction: 'USEC', mode: 'pve', focus: 'prestige', prestige: 0,
-  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, story: {}, storyStarted: {}, rep: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
+  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
   ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true },
 });
 let S = loadState();
@@ -544,18 +546,20 @@ function taskCard(t) {
     st.status === 'locked' ? `<span class="badge lock" title="${esc(st.reasons.join(', '))}">🔒 ${esc(st.reasons[0])}${st.reasons.length > 1 ? ` +${st.reasons.length - 1}` : ''}</span>` : '',
     st.status === 'failed' ? '<span class="badge lock">Failed</span>' : '',
     S.snoozed[t.id] && !S.tasks[t.id] ? '<span class="badge">hidden</span>' : '',
+    isSkipped(t) && !S.tasks[t.id] ? '<span class="badge skip" title="You marked this as a quest you will never do">won\'t do</span>' : '',
     S.active[t.id] && !S.tasks[t.id] ? '<span class="badge ok" title="Started in game (from your game logs)">active in game</span>' : '',
     (t.otherRequirements || []).some(o => o.type === 'dialogue') ? '<span class="badge gate" title="Offered through trader dialogue">dialogue</span>' : '',
   ].join('');
   const unlocks = remainingDescendants(t);
-  let html = `<div class="task ${st.status === 'done' || st.status === 'failed' ? 'done' : ''}" data-task="${t.id}">
+  let html = `<div class="task ${st.status === 'done' || st.status === 'failed' ? 'done' : ''} ${isSkipped(t) && !S.tasks[t.id] ? 'skipped' : ''}" data-task="${t.id}">
     <div class="task-head" data-act="toggle" data-id="${t.id}">
       <input type="checkbox" data-act="done" data-id="${t.id}" ${st.status === 'done' ? 'checked' : ''} title="Mark quest complete">
       <div style="flex:1">
         <div><span class="name">${esc(t.name)}</span>${badges}</div>
         <div class="meta">${esc(t.trader ? t.trader.name : '?')} · ${maps.length ? maps.map(m => esc(m.name)).join(', ') : 'Any map'} · Lvl ${t.minPlayerLevel || 1} · ${(t.experience || 0).toLocaleString()} XP${moneyText(t) ? ` · ${moneyText(t)}` : ''}${unlocks ? ` · unlocks ${unlocks} more` : ''}</div>
       </div>
-      ${st.status === 'available' && !S.active[t.id] && !S.snoozed[t.id] ? `<button class="small" data-act="snooze" data-id="${t.id}" title="Not offered at the trader in game — hide it until the game shows you accepted it">hide</button>` : ''}
+      ${!S.tasks[t.id] ? `<button class="small" data-act="skip" data-id="${t.id}" title="${isSkipped(t) ? 'Put this quest back in your lists' : 'Never show this quest in Next up, the raid planner or item lists'}">${isSkipped(t) ? 'undo won\'t do' : 'won\'t do'}</button>` : ''}
+      ${st.status === 'available' && !S.active[t.id] && !S.snoozed[t.id] && !isSkipped(t) ? `<button class="small" data-act="snooze" data-id="${t.id}" title="Not offered at the trader in game — hide it until the game shows you accepted it">hide</button>` : ''}
       <span class="muted">${open ? '▾' : '▸'}</span>
     </div>`;
   if (open) {
@@ -621,6 +625,8 @@ function byPriority(a, b) {
 function prestigeSummary() {
   const p = currentPrestige();
   if (!p) return '<div class="panel muted">No prestige data for this game mode.</div>';
+  const skippedOnPath = [...D.pathSet].map(id => D.byId[id]).filter(t => t && isSkipped(t) && !S.tasks[t.id]);
+  const skipWarn = skippedOnPath.length ? `<div class="small" style="color:var(--bad);margin-top:4px">⚠ Marked “won't do” but needed for this prestige: ${skippedOnPath.map(t => esc(t.name)).join(', ')}</div>` : '';
   const met = p.conditions.filter(conditionMet).length;
   const lvlCond = p.conditions.find(c => c.type === 'playerLevel');
   let xpLine = '';
@@ -638,7 +644,7 @@ function prestigeSummary() {
         ? `Quest chain to the required quest(s): <b>${pp.done} / ${pp.total}</b> done. Path quests are listed first.`
         : `No quests required for this prestige — the fastest route is XP and roubles, so quests are sorted by XP. Build the hideout levels marked PRESTIGE.`}
         Only quests you can do <i>right now</i> are shown. Pick a map to plan a raid around every quest you can do there.</div>
-    </div>`;
+    ${skipWarn}</div>`;
 }
 
 function pathProgress() {
@@ -648,8 +654,12 @@ function pathProgress() {
 }
 
 // ---------- views ----------
+// Quests the player will never do: dropped from every "what to do" list, never auto-restored.
+const isSkipped = t => !!(S.skipped && S.skipped[t.id]);
+
 function viewNext() {
-  const visible = D.tasks.filter(t => factionOk(t) && inFocus(t));
+  const visible = D.tasks.filter(t => factionOk(t) && inFocus(t) && !isSkipped(t));
+  const skippedCount = D.tasks.filter(t => factionOk(t) && isSkipped(t) && !S.tasks[t.id]).length;
   const avail = visible.filter(t => taskState(t).status === 'available' && !S.snoozed[t.id]).sort(byPriority);
   const snoozedCount = visible.filter(t => S.snoozed[t.id] && !S.tasks[t.id]).length;
   const mapCounts = new Map();
@@ -692,6 +702,7 @@ function viewNext() {
     </div>
     ${list || '<div class="panel muted">Nothing available — check your level / trader levels, or see the upcoming quests below.</div>'}
     ${gated}
+    ${skippedCount ? `<div class="small muted" style="margin-top:8px">${skippedCount} quest(s) marked “won't do” — undo from the All quests tab (tick “show won't do”).</div>` : ''}
     ${snoozedCount ? `<div class="small muted" style="margin-top:8px">${snoozedCount} quest(s) hidden as “not offered in game yet” — un-hide them from the All quests tab.</div>` : ''}
     ${nextLocked.length ? `<div class="group-title">Coming up on the prestige path</div>${nextLocked.map(taskCard).join('')}` : ''}`;
 }
@@ -835,7 +846,7 @@ const raidObjectives = t => t.objectives.filter(o => !o.optional && !S.objs[o.id
 const RAID_COLORS = ['#e6b450', '#6c9bd2', '#6fae5f', '#d9705a', '#a982d6', '#4fc1c9', '#d6d26a', '#e08bc0', '#9aa7b8', '#c98a4f'];
 
 function raidCandidates() {
-  return D.tasks.filter(t => (factionOk(t) && !S.tasks[t.id] && (S.active[t.id] || (taskState(t).status === 'available' && !S.snoozed[t.id])))
+  return D.tasks.filter(t => (factionOk(t) && !S.tasks[t.id] && !isSkipped(t) && (S.active[t.id] || (taskState(t).status === 'available' && !S.snoozed[t.id])))
     || squadWith(t).length);
 }
 
@@ -1555,6 +1566,7 @@ function viewQuests() {
     const st = taskState(t).status;
     if (!S.ui.showDone && (st === 'done' || st === 'failed')) return false;
     if (!S.ui.showLocked && st === 'locked') return false;
+    if (!S.ui.showSkipped && isSkipped(t) && st !== 'done') return false;
     if (q && !t.name.toLowerCase().includes(q) && !t.objectives.some(o => (o.description || '').toLowerCase().includes(q))) return false;
     return true;
   }).sort((a, b) => (a.trader ? a.trader.name : '').localeCompare(b.trader ? b.trader.name : '') || (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0));
@@ -1563,6 +1575,7 @@ function viewQuests() {
       <select id="traderFilter"><option value="all">All traders</option>${traders}</select>
       <label><input type="checkbox" id="showLocked" ${S.ui.showLocked ? 'checked' : ''}> show locked</label>
       <label><input type="checkbox" id="showDone" ${S.ui.showDone ? 'checked' : ''}> show completed</label>
+      <label><input type="checkbox" id="showSkipped" ${S.ui.showSkipped ? 'checked' : ''}> show won't do</label>
       <span class="spacer"></span><span class="muted">${list.length} quests</span>
     </div>`;
   let last = null;
@@ -1682,7 +1695,7 @@ function neededItems() {
   // With no required quest chain, listing items for every quest in the game is noise — only count quests available now.
   const onlyAvailable = S.focus === 'prestige' && !D.pathSet.size;
   for (const t of D.tasks) {
-    if (!factionOk(t) || !inFocus(t) || S.tasks[t.id]) continue;
+    if (!factionOk(t) || !inFocus(t) || S.tasks[t.id] || isSkipped(t)) continue;
     if (onlyAvailable && taskState(t).status !== 'available') continue;
     for (const o of t.objectives) {
       // Only hand-in objectives consume items; "find" objectives are usually paired with a hand-in.
@@ -1751,7 +1764,7 @@ function render() {
 
 // Everything needed to finish the quests currently accepted in game (from the game logs).
 function acceptedNeeds() {
-  const quests = D.tasks.filter(t => S.active[t.id] && !S.tasks[t.id]);
+  const quests = D.tasks.filter(t => S.active[t.id] && !S.tasks[t.id] && !isSkipped(t));
   const items = new Map();
   const add = (it, count, fir, quest, note) => {
     const e = items.get(it.id) || { item: it, count: 0, fir: 0, quests: [] };
@@ -1856,8 +1869,16 @@ document.getElementById('layout').addEventListener('click', e => {
     e.preventDefault();
     openTasks.add(id);
     const t = D.byId[id];
-    S.ui.tab = 'quests'; S.ui.search = t.name; S.ui.trader = 'all'; S.ui.showDone = true; S.ui.showLocked = true;
+    S.ui.tab = 'quests'; S.ui.search = t.name; S.ui.trader = 'all'; S.ui.showDone = true; S.ui.showLocked = true; S.ui.showSkipped = true;
     if (!inFocus(t)) S.focus = 'all';
+    update();
+  } else if (act === 'skip') {
+    const t = D.byId[id];
+    if (S.skipped[id]) delete S.skipped[id];
+    else {
+      S.skipped[id] = true;
+      toast(`“${t.name}” marked won't do${D.pathSet.has(id) ? ' — note: your prestige needs it' : ''}`);
+    }
     update();
   } else if (act === 'snooze') {
     S.snoozed[id] ? delete S.snoozed[id] : (S.snoozed[id] = true);
@@ -1974,7 +1995,7 @@ document.getElementById('layout').addEventListener('click', e => {
 document.getElementById('layout').addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.act === 'haveSet') { S.have[el.dataset.id] = Math.max(0, Number(el.value) || 0); update(); return; }
-  const flags = ['showDone', 'showLocked', 'hideoutNextOnly', 'hideoutPrestigeOnly', 'itemsHideDone', 'ignoreGates'];
+  const flags = ['showDone', 'showLocked', 'showSkipped', 'hideoutNextOnly', 'hideoutPrestigeOnly', 'itemsHideDone', 'ignoreGates'];
   if (flags.includes(el.id)) { S.ui[el.id] = el.checked; update(); }
   if (el.id === 'traderFilter') { S.ui.trader = el.value; update(); }
   if (el.id === 'itemsHideout') { S.ui.itemsHideout = el.value; update(); }

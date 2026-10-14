@@ -76,6 +76,7 @@ Either way, nobody has to run a script or program someone else sent them.
 ## ⚠️ Good to know
 
 - **Unlock data isn't perfect.** Tarkov 1.x unlocks many quests through server-side story and progress flags. The tracker combines several community sources and your own logs. For anything the data gets wrong, use **hide** on a quest; it reappears by itself once the game shows you accepted it.
+- **Quests you'll never do:** mark them **won't do**. They drop out of every list for good (kept across prestiges) until you undo it from *All quests → show won't do*.
 - **Routes are straight lines.** There's no public walkable-path data, so walls, fences and floors aren't accounted for. Read the route as the best *order*, not turn-by-turn directions.
 - **Your stash isn't visible.** Item and key counts are entered by you.
 
