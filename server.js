@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 12;
+const CACHE_VERSION = 13;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -84,6 +84,43 @@ async function getStory(mode) {
 // from a quest's wiki page, with thumbnail URLs. Fetched on demand and cached for a day.
 const WIKI_IMAGES_TTL_MS = 24 * 60 * 60 * 1000;
 const wikiImageCache = new Map();
+
+// Keys the wiki says spawn every raid: its "Key Location" section has a ===Map=== subsection per map,
+// and the subsection text says "guaranteed" (e.g. "Guaranteed spawn every raid").
+function parseGuaranteedSpawns(wikitext) {
+  const sec = (wikitext.match(/==\s*Key Locations?\s*==([\s\S]*?)(?=\n==[^=]|$)/i) || [])[1];
+  if (!sec) return [];
+  const clean = t => t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/<[^>]+>/g, ' ').replace(/'''?/g, '').replace(/\{\{[^}]*\}\}/g, '').replace(/\s+/g, ' ').trim();
+  const parts = sec.split(/\n===\s*([^=]+?)\s*===/);
+  const out = [];
+  for (let i = 1; i < parts.length; i += 2) {
+    const lines = parts[i + 1].split('\n').filter(l => !/^\s*(File:|Image:|<\/?gallery)/i.test(l));
+    const line = lines.find(l => /guarant/i.test(l));
+    if (line) out.push({ mapName: clean(parts[i]), note: clean(line.replace(/^\s*\*+\s*/, '')) });
+  }
+  return out;
+}
+
+async function getWikiKeySpawns(keyNames) {
+  const out = {};
+  try {
+    for (let i = 0; i < keyNames.length; i += 50) {
+      const batch = keyNames.slice(i, i + 50);
+      const body = await getJson(`${WIKI_API}?action=query&prop=revisions&rvprop=content&rvslots=main&format=json&formatversion=2&redirects=1&titles=${encodeURIComponent(batch.join('|'))}`);
+      const back = {};
+      for (const r of [...(body.query.normalized || []), ...(body.query.redirects || [])]) back[r.to] = back[r.from] || r.from;
+      for (const p of body.query.pages || []) {
+        const text = p.revisions && p.revisions[0].slots.main.content;
+        const spawns = text ? parseGuaranteedSpawns(text) : [];
+        if (spawns.length) out[back[p.title] || p.title] = { title: p.title, spawns };
+      }
+    }
+    return out;
+  } catch (e) {
+    console.warn(`Wiki key spawns unavailable (${e.message})`);
+    return {};
+  }
+}
 
 function parseGuideImages(wikitext) {
   const out = [];
@@ -239,6 +276,16 @@ async function build(mode) {
     getMapDefs().then(m => { raw.mapDefs = m; }),
   ]);
   raw.wikiLoyalty = await getWikiLoyalty(Object.values(raw.tasks.data.tasks).map(t => t.wikiLink));
+  // Names of every key a quest needs, for the guaranteed-spawn lookup.
+  const dict = Object.assign({}, ...DATASETS.map(n => raw[n].dict));
+  const keyIds = new Set();
+  for (const t of Object.values(raw.tasks.data.tasks)) {
+    for (const k of t.neededKeys || []) for (const id of k.keys || []) keyIds.add(id);
+    for (const o of t.objectives || []) for (const g of o.requiredKeys || []) for (const id of [].concat(g)) keyIds.add(id);
+  }
+  const keyName = id => raw.items.data.items[id] && dict[raw.items.data.items[id].name];
+  raw.keyNames = Object.fromEntries([...keyIds].map(id => [id, keyName(id)]).filter(([, n]) => n));
+  raw.keySpawns = await getWikiKeySpawns(Object.values(raw.keyNames));
   return normalize(raw);
 }
 
@@ -433,7 +480,21 @@ function normalize(raw) {
   const playerLevels = raw.items.data.playerLevels || [];
 
   const mapFeatures = buildMapFeatures(raw.maps.data, tr, item);
-  return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, hideoutStations, traders, maps, prestige, playerLevels };
+  // Guaranteed key spawns with positions: dedicated loose-loot spots on that map that only ever hold this key.
+  const keySpawns = {};
+  const mapByName = Object.fromEntries(Object.values(mapsRaw).map(m => [tr(m.name, m.normalizedName).toLowerCase(), m]));
+  for (const [id, name] of Object.entries(raw.keyNames || {})) {
+    const w = (raw.keySpawns || {})[name];
+    if (!w) continue;
+    keySpawns[id] = { wikiTitle: w.title, spawns: w.spawns.map(sp => {
+      const m = mapByName[sp.mapName.toLowerCase()];
+      const spots = m ? (m.lootLoose || []).filter(l => l.position && l.items.includes(id)) : [];
+      const own = spots.filter(l => l.items.length === 1);
+      const pts = (own.length ? own : spots.filter(l => l.items.length <= 3)).map(l => ({ x: Math.round(l.position.x * 10) / 10, y: Math.round(l.position.y * 10) / 10, z: Math.round(l.position.z * 10) / 10 }));
+      return { map: m ? m.normalizedName : null, mapName: sp.mapName, note: sp.note, points: pts };
+    }).filter(sp => sp.map) };
+  }
+  return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, keySpawns, hideoutStations, traders, maps, prestige, playerLevels };
 }
 
 // ---------- cache ----------

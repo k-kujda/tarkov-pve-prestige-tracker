@@ -138,6 +138,8 @@
   .item.key.have { border-color: var(--good); }
   .item.key.missing { border-color: var(--bad); }
   .keys-line { margin-top: 3px; }
+  .objline.pickup span { color: #ffd24a; }
+  .key-spawn { font-size: 16px; line-height: 1; text-shadow: 0 0 3px #000, 0 0 3px #000; cursor: pointer; }
   .loadout { padding: 6px 0; border-bottom: 1px solid var(--line); }
   .loadout > div:not(.small) { margin-top: 3px; }
   .objline { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--muted); margin: 2px 0; cursor: pointer; }
@@ -1121,9 +1123,26 @@ function viewRaidPlanner() {
     ${plan}`;
 }
 
+// Keys this quest needs on this map that you don't have yet but that spawn every raid.
+function keyPickups(t, key) {
+  const out = [];
+  for (const g of questKeyGroups(t, key)) {
+    if (g.some(haveKey)) continue;
+    for (const k of g) {
+      const ks = D.keySpawns && D.keySpawns[k.id];
+      const sp = ks && ks.spawns.find(x => mapKey(x.map) === key);
+      if (sp) { out.push({ key: k, spawn: sp, wikiTitle: ks.wikiTitle }); break; }
+    }
+  }
+  return out;
+}
+const keyWikiLink = title => 'https://escapefromtarkov.fandom.com/wiki/' + encodeURIComponent(title.replace(/ /g, '_'));
+const pickupLine = pk => `<label class="objline pickup" title="Ticking this marks the key as owned"><input type="checkbox" data-act="keyToggle" data-id="${pk.key.id}">
+  <span>🔑 <b>First: pick up ${esc(pk.key.name)}</b> — guaranteed spawn: ${esc(pk.spawn.note)}${pk.spawn.points.length ? '' : ' (inside a container — no exact map spot)'}</span></label>`;
+
 function objectiveTicks(t, key) {
   const objs = t.objectives.filter(o => !o.optional && !OUT_OF_RAID.has(o.type) && (objOnMap(o, t, key) || objAnywhere(o, t)));
-  return objs.map(o => `<label class="objline ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
+  return keyPickups(t, key).map(pickupLine).join('') + objs.map(o => `<label class="objline ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
     <span>${esc(o.description)}</span></label>`).join('');
 }
 
@@ -1204,6 +1223,7 @@ function viewRaidInProgress() {
     return `<div class="sec"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
       ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}${S.active[t.id] ? '' : ' <span class="badge squad">for squad</span>'}
       ${questKeysHtml(t, key)}
+      ${keyPickups(t, key).map(pickupLine).join('')}
       ${objs.map(o => `<div class="obj ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
         <div><div class="desc">${esc(o.description)}${(o.points || []).some(p => mapKey(p.map) === key) ? ' 📍' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div></div>`).join('')}
       ${after.length ? `<div class="small muted">After the raid: ${after.map(o => esc(o.description)).join(' · ')}</div>` : ''}</div>`;
@@ -1505,6 +1525,13 @@ async function attachRaidMap() {
       }
     }
   });
+  for (const kg of raidStopGroups(key).filter(g => g.keyId)) {
+    for (const c of kg.cands) {
+      const mk = L.marker([c.z, c.x], { zIndexOffset: 980, icon: L.divIcon({ className: 'key-spawn', html: '🔑', iconSize: null, iconAnchor: [8, 8] }) });
+      raidMarkers.addLayer(bindObjectiveTip(mk, kg.t, kg.o, key, `<b>${esc(kg.t.name)}</b><br>${esc(kg.o.description)}${kg.cands.length > 1 ? `<br><i>One of ${kg.cands.length} spots — the key is at one of them each raid</i>` : ''}`));
+      pts.push([c.z, c.x]);
+    }
+  }
   if (pts.length && !raidMapEl.dataset.fitted) { raidMap.fitBounds(L.latLngBounds(pts).pad(0.25)); raidMapEl.dataset.fitted = '1'; }
   // Spawn picking: show the PMC spawn points and let a click choose one.
   raidSpawnLayer.clearLayers();
@@ -1540,7 +1567,32 @@ function raidStopGroups(key) {
       if (cands.length) groups.push({ t, o, color: RAID_COLORS[i % RAID_COLORS.length], cands });
     }
   });
+  const keyGroups = new Map();
+  S.raid.quests.map(id => D.byId[id]).filter(Boolean).forEach(t => {
+    if (S.tasks[t.id] === 'done') return;
+    for (const pk of keyPickups(t, key)) {
+      if (!pk.spawn.points.length) continue;
+      if (!keyGroups.has(pk.key.id)) {
+        const kg = { t: { id: 'key:' + pk.key.id, name: '🔑 ' + pk.key.name, wikiLink: keyWikiLink(pk.wikiTitle) },
+          o: { id: 'key:' + pk.key.id, type: 'pickup', description: `Pick up ${pk.key.name} — ${pk.spawn.note}` },
+          color: '#ffd24a', cands: pk.spawn.points.map(p => ({ x: p.x, z: p.z, y: p.y })), keyId: pk.key.id };
+        keyGroups.set(pk.key.id, kg);
+        groups.push(kg);
+      }
+      for (const g of groups) if (g.t === t) g.needsKeys = [...new Set([...(g.needsKeys || []), pk.key.id])];
+    }
+  });
   return groups;
+}
+
+// Precedence: bit mask of the key groups each group needs visited first.
+const needMasks = groups => groups.map(g => (g.needsKeys || []).reduce((m, k) => { const i = groups.findIndex(x => x.keyId === k); return i >= 0 ? m | (1 << i) : m; }, 0));
+// Heuristic routes can break precedence while improving: move each key stop in front of its first dependant.
+function enforceKeyOrder(stops) {
+  for (const ks of stops.filter(st => st.g.keyId)) {
+    const ki = stops.indexOf(ks), di = stops.findIndex(st => (st.g.needsKeys || []).includes(ks.g.keyId));
+    if (di >= 0 && di < ki) { stops.splice(ki, 1); stops.splice(di, 0, ks); }
+  }
 }
 
 function raidExtractOptions(key) {
@@ -1593,9 +1645,10 @@ function planRoute(start, groups, ends) {
 
 function routeExact(start, groups, ends, nodes) {
   const N = groups.length, M = nodes.length, FULL = (1 << N) - 1;
+  const need = needMasks(groups);
   const dp = new Float64Array((FULL + 1) * M).fill(Infinity);
   const parent = new Int32Array((FULL + 1) * M).fill(-1);
-  nodes.forEach((nd, j) => { dp[(1 << nd.gi) * M + j] = legCost(start, nd.c); });
+  nodes.forEach((nd, j) => { if (!need[nd.gi]) dp[(1 << nd.gi) * M + j] = legCost(start, nd.c); });
   for (let mask = 1; mask <= FULL; mask++) {
     for (let j = 0; j < M; j++) {
       const v = dp[mask * M + j];
@@ -1603,6 +1656,7 @@ function routeExact(start, groups, ends, nodes) {
       for (let k = 0; k < M; k++) {
         const bit = 1 << nodes[k].gi;
         if (mask & bit) continue;
+        if ((mask & need[nodes[k].gi]) !== need[nodes[k].gi]) continue; // its key isn't picked up yet
         const idx = (mask | bit) * M + k, nv = v + legCost(nodes[j].c, nodes[k].c);
         if (nv < dp[idx]) { dp[idx] = nv; parent[idx] = j; }
       }
@@ -1630,18 +1684,21 @@ function routeExact(start, groups, ends, nodes) {
 function routeHeuristic(start, groups, end, restarts = 24) {
   let best = null;
   for (let r = 0; r < restarts; r++) {
-    const stops = [], left = groups.slice();
+    const stops = [], left = groups.slice(), got = new Set();
     let cur = start;
     while (left.length) {
       const opts = [];
-      left.forEach((g, i) => g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })));
+      left.forEach((g, i) => { if ((g.needsKeys || []).every(k => got.has(k))) g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })); });
+      if (!opts.length) left.forEach((g, i) => g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })));
       opts.sort((a, b) => a.d - b.d);
       const pick = r === 0 ? opts[0] : opts[Math.min(opts.length - 1, Math.floor(Math.random() * 3))];
       stops.push({ g: left[pick.i], p: pick.c });
+      if (left[pick.i].keyId) got.add(left[pick.i].keyId);
       cur = pick.c;
       left.splice(pick.i, 1);
     }
     improveRoute(start, stops, end);
+    enforceKeyOrder(stops);
     const total = routeLength(start, stops, end);
     if (!best || total < best.total) best = { stops, total };
   }
