@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 13;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -79,6 +79,94 @@ async function getStory(mode) {
 // The wiki infobox's "LL requirement" fills loyalty gates missing from both data sources (e.g. Green Corridor).
 // Only that field is used: the wiki's prerequisite chains and level requirements are partly pre-1.x and
 // contradict real in-game progress, so they are ignored.
+// ---------- quest guide photos from the wiki ----------
+// Gallery images (with captions and the guide section they sit in, which is the map for multi-map quests)
+// from a quest's wiki page, with thumbnail URLs. Fetched on demand and cached for a day.
+const WIKI_IMAGES_TTL_MS = 24 * 60 * 60 * 1000;
+const wikiImageCache = new Map();
+
+// Keys the wiki says spawn every raid: its "Key Location" section has a ===Map=== subsection per map,
+// and the subsection text says "guaranteed" (e.g. "Guaranteed spawn every raid").
+function parseGuaranteedSpawns(wikitext) {
+  const sec = (wikitext.match(/==\s*Key Locations?\s*==([\s\S]*?)(?=\n==[^=]|$)/i) || [])[1];
+  if (!sec) return [];
+  const clean = t => t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/<[^>]+>/g, ' ').replace(/'''?/g, '').replace(/\{\{[^}]*\}\}/g, '').replace(/\s+/g, ' ').trim();
+  const parts = sec.split(/\n===\s*([^=]+?)\s*===/);
+  const out = [];
+  for (let i = 1; i < parts.length; i += 2) {
+    const lines = parts[i + 1].split('\n').filter(l => !/^\s*(File:|Image:|<\/?gallery)/i.test(l));
+    const line = lines.find(l => /guarant/i.test(l));
+    if (line) out.push({ mapName: clean(parts[i]), note: clean(line.replace(/^\s*\*+\s*/, '')) });
+  }
+  return out;
+}
+
+async function getWikiKeySpawns(keyNames) {
+  const out = {};
+  try {
+    for (let i = 0; i < keyNames.length; i += 50) {
+      const batch = keyNames.slice(i, i + 50);
+      const body = await getJson(`${WIKI_API}?action=query&prop=revisions&rvprop=content&rvslots=main&format=json&formatversion=2&redirects=1&titles=${encodeURIComponent(batch.join('|'))}`);
+      const back = {};
+      for (const r of [...(body.query.normalized || []), ...(body.query.redirects || [])]) back[r.to] = back[r.from] || r.from;
+      for (const p of body.query.pages || []) {
+        const text = p.revisions && p.revisions[0].slots.main.content;
+        const spawns = text ? parseGuaranteedSpawns(text) : [];
+        if (spawns.length) out[back[p.title] || p.title] = { title: p.title, spawns };
+      }
+    }
+    return out;
+  } catch (e) {
+    console.warn(`Wiki key spawns unavailable (${e.message})`);
+    return {};
+  }
+}
+
+function parseGuideImages(wikitext) {
+  const out = [];
+  let section = null, inGallery = false;
+  for (const raw of wikitext.split('\n')) {
+    const line = raw.trim();
+    const head = line.match(/^==+\s*(.+?)\s*==+$/);
+    if (head) { section = head[1].replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').trim(); continue; }
+    if (/<gallery/i.test(line)) { inGallery = true; continue; }
+    if (/<\/gallery>/i.test(line)) { inGallery = false; continue; }
+    if (inGallery) {
+      const m = line.match(/^(?:File:|Image:)?([^|]+\.(?:png|jpe?g|gif|webp))\s*(?:\|(.*))?$/i);
+      if (m) out.push({ file: m[1].trim(), caption: (m[2] || '').replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').trim(), section });
+      continue;
+    }
+    // Inline screenshots ([[File:x.png|thumb|caption]]); item icons use link= and are skipped.
+    for (const m of line.matchAll(/\[\[(?:File|Image):([^|\]]+\.(?:png|jpe?g|webp))\|([^\]]*)\]\]/gi)) {
+      if (/link=/i.test(m[2]) || !/thumb|frame/i.test(m[2])) continue;
+      out.push({ file: m[1].trim(), caption: m[2].split('|').pop().trim(), section });
+    }
+  }
+  return out;
+}
+
+async function questImages(title) {
+  const cached = wikiImageCache.get(title);
+  if (cached && Date.now() - cached.at < WIKI_IMAGES_TTL_MS) return cached.images;
+  const page = await getJson(`${WIKI_API}?action=parse&page=${encodeURIComponent(title)}&prop=wikitext&format=json&formatversion=2&redirects=1`);
+  const images = parseGuideImages((page.parse && page.parse.wikitext) || '');
+  const files = [...new Set(images.map(i => i.file))];
+  const thumbs = {};
+  for (let i = 0; i < files.length; i += 50) {
+    const batch = files.slice(i, i + 50).map(f => 'File:' + f);
+    const info = await getJson(`${WIKI_API}?action=query&prop=imageinfo&iiprop=url&iiurlwidth=420&format=json&formatversion=2&titles=${encodeURIComponent(batch.join('|'))}`);
+    const back = {};
+    for (const n of (info.query && info.query.normalized) || []) back[n.to] = n.from;
+    for (const p of (info.query && info.query.pages) || []) {
+      const ii = p.imageinfo && p.imageinfo[0];
+      if (ii) thumbs[(back[p.title] || p.title).replace(/^File:/, '')] = { thumb: ii.thumburl || ii.url, url: ii.descriptionurl || ii.url };
+    }
+  }
+  const result = images.filter(i => thumbs[i.file]).map(i => ({ ...i, ...thumbs[i.file] }));
+  wikiImageCache.set(title, { at: Date.now(), images: result });
+  return result;
+}
+
 async function getWikiLoyalty(wikiLinks) {
   const titles = [...new Set(wikiLinks.map(l => decodeURIComponent((l || '').split('/wiki/')[1] || '').replace(/_/g, ' ')).filter(Boolean))];
   const result = {};
@@ -114,8 +202,17 @@ async function getMapDefs() {
         tilePath: m.tilePath || null, svgPath: m.svgPath || null, svgLayer: m.svgLayer || null, tileSize: m.tileSize || 256, minZoom: m.minZoom || 1, maxZoom: m.maxZoom || 6,
         heightRange: m.heightRange || null,
         // Floors as height bands (e.g. Streets: 2nd floor = 10–15 m) and the SVG group that draws each one.
-        layers: (m.layers || []).filter(l => l.svgLayer && l.extents && l.extents[0] && l.extents[0].height)
-          .map(l => ({ name: l.name, svgLayer: l.svgLayer, height: l.extents[0].height })),
+        // A floor can have several height bands, each limited to named building areas (e.g. Customs 2nd floor:
+        // 2.7–6.5 m inside dorms, mechanic, scav checkpoint…). No areas = the band applies map-wide.
+        layers: (m.layers || []).filter(l => l.svgLayer && l.extents && l.extents.length && l.extents[0].height)
+          .map(l => ({
+            name: l.name, svgLayer: l.svgLayer, height: l.extents[0].height,
+            extents: l.extents.filter(e => e.height).map(e => ({
+              height: e.height,
+              areas: (e.bounds || []).filter(b => Array.isArray(b) && b.length >= 2)
+                .map(b => ({ x1: b[0][0], z1: b[0][1], x2: b[1][0], z2: b[1][1], name: b[2] || null })),
+            })),
+          })),
         // Place / building names with their [x, z] position.
         labels: (m.labels || []).filter(l => Array.isArray(l.position)).map(l => ({ text: l.text, x: l.position[0], z: l.position[1], size: l.size || 100, rotation: l.rotation || 0 })),
       };
@@ -179,6 +276,16 @@ async function build(mode) {
     getMapDefs().then(m => { raw.mapDefs = m; }),
   ]);
   raw.wikiLoyalty = await getWikiLoyalty(Object.values(raw.tasks.data.tasks).map(t => t.wikiLink));
+  // Names of every key a quest needs, for the guaranteed-spawn lookup.
+  const dict = Object.assign({}, ...DATASETS.map(n => raw[n].dict));
+  const keyIds = new Set();
+  for (const t of Object.values(raw.tasks.data.tasks)) {
+    for (const k of t.neededKeys || []) for (const id of k.keys || []) keyIds.add(id);
+    for (const o of t.objectives || []) for (const g of o.requiredKeys || []) for (const id of [].concat(g)) keyIds.add(id);
+  }
+  const keyName = id => raw.items.data.items[id] && dict[raw.items.data.items[id].name];
+  raw.keyNames = Object.fromEntries([...keyIds].map(id => [id, keyName(id)]).filter(([, n]) => n));
+  raw.keySpawns = await getWikiKeySpawns(Object.values(raw.keyNames));
   return normalize(raw);
 }
 
@@ -373,7 +480,21 @@ function normalize(raw) {
   const playerLevels = raw.items.data.playerLevels || [];
 
   const mapFeatures = buildMapFeatures(raw.maps.data, tr, item);
-  return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, hideoutStations, traders, maps, prestige, playerLevels };
+  // Guaranteed key spawns with positions: dedicated loose-loot spots on that map that only ever hold this key.
+  const keySpawns = {};
+  const mapByName = Object.fromEntries(Object.values(mapsRaw).map(m => [tr(m.name, m.normalizedName).toLowerCase(), m]));
+  for (const [id, name] of Object.entries(raw.keyNames || {})) {
+    const w = (raw.keySpawns || {})[name];
+    if (!w) continue;
+    keySpawns[id] = { wikiTitle: w.title, spawns: w.spawns.map(sp => {
+      const m = mapByName[sp.mapName.toLowerCase()];
+      const spots = m ? (m.lootLoose || []).filter(l => l.position && l.items.includes(id)) : [];
+      const own = spots.filter(l => l.items.length === 1);
+      const pts = (own.length ? own : spots.filter(l => l.items.length <= 3)).map(l => ({ x: Math.round(l.position.x * 10) / 10, y: Math.round(l.position.y * 10) / 10, z: Math.round(l.position.z * 10) / 10 }));
+      return { map: m ? m.normalizedName : null, mapName: sp.mapName, note: sp.note, points: pts };
+    }).filter(sp => sp.map) };
+  }
+  return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, keySpawns, hideoutStations, traders, maps, prestige, playerLevels };
 }
 
 // ---------- cache ----------
@@ -434,6 +555,12 @@ const server = http.createServer(async (req, res) => {
       const { entry, status, warning } = await getData(mode, url.searchParams.get('refresh') === '1');
       console.log(`[${new Date().toLocaleTimeString()}] data ${mode}: ${status}${warning ? ` (${warning})` : ''}`);
       return send(req, res, 200, 'application/json', JSON.stringify({ at: entry.at, status, warning, ...entry.data }));
+    }
+    if (url.pathname === '/api/quest-images') {
+      // Only wiki page titles are accepted (the server builds the wiki URL itself).
+      const title = (url.searchParams.get('title') || '').slice(0, 200);
+      if (!title || /[<>{}\[\]|#]/.test(title)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad title' }));
+      return send(req, res, 200, 'application/json', JSON.stringify({ title, images: await questImages(title) }));
     }
     if (url.pathname === '/api/game-progress') {
       const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';

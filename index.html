@@ -91,7 +91,21 @@
   .map-place { white-space: nowrap; font: 700 11px/1.1 "Segoe UI", sans-serif; color: #f3e6c4; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000; text-transform: uppercase; letter-spacing: .4px; pointer-events: none; }
   #raidMapBox:fullscreen { height: 100vh; border: none; border-radius: 0; }
   #raidMapBox .leaflet-container { background: #0d0c0a; }
-  .leaflet-tooltip { background: var(--panel2); color: var(--text); border-color: var(--line); }
+  .leaflet-tooltip, #raidMapBox .leaflet-tooltip { background: var(--panel2); color: var(--text); border-color: var(--line); box-shadow: 0 2px 10px rgba(0,0,0,.6); }
+  #raidMapBox .leaflet-tooltip-top:before { border-top-color: var(--line); }
+  #raidMapBox .leaflet-tooltip-bottom:before { border-bottom-color: var(--line); }
+  #raidMapBox .leaflet-tooltip-left:before { border-left-color: var(--line); }
+  #raidMapBox .leaflet-tooltip-right:before { border-right-color: var(--line); }
+  .leaflet-tooltip.obj-tip { white-space: normal; width: max-content; max-width: 660px; }
+  .tip-imgs { display: flex; gap: 6px; margin-top: 6px; }
+  .tip-imgs figure { margin: 0; width: 210px; }
+  .tip-imgs.many { flex-wrap: wrap; max-width: 660px; }
+  .tip-imgs.many figure { width: 155px; }
+  .tip-imgs.many img { width: 155px; height: 96px; }
+  .tip-imgs img { width: 210px; height: 130px; object-fit: cover; border-radius: 4px; display: block; background: #000; }
+  .tip-imgs figcaption { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tip-item { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--muted); }
+  .tip-item img { width: 40px; height: 40px; object-fit: contain; }
   .leaflet-control-layers, .leaflet-control-layers-expanded { background: rgba(28, 27, 24, .92) !important; color: var(--text) !important; border: 1px solid var(--line) !important; font: 12px "Segoe UI", sans-serif; }
   .leaflet-control-layers-toggle { filter: invert(.85); }
   .leaflet-control-layers label { margin: 2px 0; }
@@ -127,6 +141,8 @@
   .item.key.have { border-color: var(--good); }
   .item.key.missing { border-color: var(--bad); }
   .keys-line { margin-top: 3px; }
+  .objline.pickup span { color: #ffd24a; }
+  .key-spawn { font-size: 16px; line-height: 1; text-shadow: 0 0 3px #000, 0 0 3px #000; cursor: pointer; }
   .loadout { padding: 6px 0; border-bottom: 1px solid var(--line); }
   .loadout > div:not(.small) { margin-top: 3px; }
   .objline { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--muted); margin: 2px 0; cursor: pointer; }
@@ -239,6 +255,7 @@ function indexData(raw) {
     return set;
   };
   for (const t of raw.tasks) desc(t.id);
+  for (const [k, v] of Object.entries(raw.mapDefs || {})) v._key = k;
   d.storyChapters = raw.storyChapters || [];
   d.chapterById = {};
   d.chapterOfStep = {};
@@ -1110,9 +1127,26 @@ function viewRaidPlanner() {
     ${plan}`;
 }
 
+// Keys this quest needs on this map that you don't have yet but that spawn every raid.
+function keyPickups(t, key) {
+  const out = [];
+  for (const g of questKeyGroups(t, key)) {
+    if (g.some(haveKey)) continue;
+    for (const k of g) {
+      const ks = D.keySpawns && D.keySpawns[k.id];
+      const sp = ks && ks.spawns.find(x => mapKey(x.map) === key);
+      if (sp) { out.push({ key: k, spawn: sp, wikiTitle: ks.wikiTitle }); break; }
+    }
+  }
+  return out;
+}
+const keyWikiLink = title => 'https://escapefromtarkov.fandom.com/wiki/' + encodeURIComponent(title.replace(/ /g, '_'));
+const pickupLine = pk => `<label class="objline pickup" title="Ticking this marks the key as owned"><input type="checkbox" data-act="keyToggle" data-id="${pk.key.id}">
+  <span>🔑 <b>First: pick up ${esc(pk.key.name)}</b> — guaranteed spawn: ${esc(pk.spawn.note)}${pk.spawn.points.length ? '' : ' (inside a container — no exact map spot)'}</span></label>`;
+
 function objectiveTicks(t, key) {
   const objs = t.objectives.filter(o => !o.optional && !OUT_OF_RAID.has(o.type) && (objOnMap(o, t, key) || objAnywhere(o, t)));
-  return objs.map(o => `<label class="objline ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
+  return keyPickups(t, key).map(pickupLine).join('') + objs.map(o => `<label class="objline ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
     <span>${esc(o.description)}</span></label>`).join('');
 }
 
@@ -1193,6 +1227,7 @@ function viewRaidInProgress() {
     return `<div class="sec"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
       ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}${S.active[t.id] ? '' : ' <span class="badge squad">for squad</span>'}
       ${questKeysHtml(t, key)}
+      ${keyPickups(t, key).map(pickupLine).join('')}
       ${objs.map(o => `<div class="obj ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
         <div><div class="desc">${esc(o.description)}${(o.points || []).some(p => mapKey(p.map) === key) ? ' 📍' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div></div>`).join('')}
       ${after.length ? `<div class="small muted">After the raid: ${after.map(o => esc(o.description)).join(' · ')}</div>` : ''}</div>`;
@@ -1202,7 +1237,7 @@ function viewRaidInProgress() {
       <span class="spacer"></span><button data-act="raidFull" title="Show the map fullscreen (Esc to leave)">⛶ Fullscreen map</button><button class="primary" data-act="raidEnd">End raid</button><button data-act="raidCancel">Cancel raid</button></div>
     <div class="raid-grid">
       <div><div id="raidMapSlot"></div><div style="margin-top:6px">${legend}</div>
-        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Yellow tags (2F, 3F, UG) mark objectives off the ground floor — click one, or use the floor buttons on the map, to see that floor. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
+        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Yellow tags (2F, 3F, B) mark objectives off the ground floor — click one, or use the level buttons on the map, to see that floor. On Streets floors are estimated from height above street level. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
       <div class="panel" style="margin:0">${routePanel(key)}${bringList(key, quests)}${blocks}</div>
     </div>`;
 }
@@ -1230,26 +1265,145 @@ function svgFloorOverlay(root, def, floorLayer, hideBase = false) {
 const hasFloors = def => !!(def && def.svgPath && def.layers && def.layers.length);
 const GROUND = 'Ground floor';
 const mapFloors = def => [GROUND, ...def.layers.slice().sort((a, b) => a.height[0] - b.height[0]).map(l => l.name)];
-const floorOf = (def, y) => { const l = (def.layers || []).find(l => y >= l.height[0] && y < l.height[1]); return l ? l.name : GROUND; };
+// A point is on a floor when its height is in one of the floor's bands and, if that band is limited to
+// building areas, it lies inside one of them (same rule as tarkov.dev). Otherwise it's on the ground floor.
+const inArea = (a, p) => p.x >= Math.min(a.x1, a.x2) && p.x <= Math.max(a.x1, a.x2) && p.z >= Math.min(a.z1, a.z2) && p.z <= Math.max(a.z1, a.z2);
+function floorMatch(def, p) {
+  const y = p.y || 0;
+  for (const l of def.layers || []) {
+    for (const e of l.extents || [{ height: l.height, areas: [] }]) {
+      if (y < e.height[0] || y >= e.height[1]) continue;
+      if (!e.areas.length) return { floor: l.name, area: null };
+      const a = e.areas.find(a => inArea(a, p));
+      if (a) return { floor: l.name, area: a.name };
+    }
+  }
+  return { floor: GROUND, area: null };
+}
+const floorOf = (def, p) => floorMatch(def, p).floor;
+const titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
+
+// Maps like Streets only have map-wide height bands (tarkov.dev's drawing levels, e.g. "2nd Floor" = 10–15 m), which
+// don't match a building's real floors. There the floor is estimated from the height above the local street level:
+// the median height of the 8 nearest outdoor points (PMC spawns, extracts, transits), ~3.2 m per storey.
+// Checked against floors stated in wiki guides (Ballet Lover 4th, House Arrest 3rd, Audit 2nd, ground-floor shops…).
+const usesAreas = def => (def.layers || []).some(l => (l.extents || []).some(e => e.areas && e.areas.length));
+const STOREY_M = 3.2;
+const groundRefs = {};
+function refsFor(key) {
+  if (!groundRefs[key]) {
+    const f = (D.mapFeatures && D.mapFeatures[key]) || {};
+    groundRefs[key] = [...(f.spawns || []), ...(f.extracts || []), ...(f.transits || [])].filter(p => typeof p.y === 'number');
+  }
+  return groundRefs[key];
+}
+function localGround(key, p) {
+  const near = refsFor(key).map(r => ({ y: r.y, d: Math.hypot(r.x - p.x, r.z - p.z) })).sort((a, b) => a.d - b.d).slice(0, 8);
+  if (!near.length) return null;
+  const ys = near.map(r => r.y).sort((a, b) => a - b);
+  return ys[Math.floor(ys.length / 2)];
+}
+// Building floor: 1 = ground floor, -1 = basement; null when not estimated (area-based maps, no reference points).
+function buildingFloor(def, p) {
+  if (usesAreas(def) || !def._key) return null;
+  const g = localGround(def._key, p);
+  if (g === null) return null;
+  // Streets' streets differ in height by several metres, so "below the nearest spawns" isn't reliably a basement:
+  // basements come from tarkov.dev's absolute Underground level, and the estimate is only used upwards.
+  if (/under/i.test(floorOf(def, p))) return -1;
+  const above = (p.y || 0) - (p.kind === 'zone' ? 1 : 0) - g;
+  return Math.max(1, Math.floor((above + 0.8) / STOREY_M) + 1);
+}
+const ordFloor = n => (n === -1 ? 'basement' : n === 1 ? GROUND : `${n}${n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'} floor`);
+// Short tag shown on the map (null = ground floor, no tag).
+function floorTag(def, p) {
+  const bf = buildingFloor(def, p);
+  if (bf !== null) return bf === 1 ? null : bf === -1 ? 'B' : bf + 'F';
+  const fl = floorOf(def, p);
+  return fl === GROUND ? null : shortFloor(fl);
+}
+// Label for a floor button: real floors on area-based maps, drawing levels ("L2") on height-band maps.
+const floorButtonLabel = (def, f) => (usesAreas(def) ? shortFloor(f) : f === GROUND ? 'L1' : /under/i.test(f) ? 'UG' : 'L' + ((f.match(/\d+/) || ['?'])[0]));
 const floorLayerId = (def, name) => { const l = (def.layers || []).find(l => l.name === name); return l ? l.svgLayer : null; };
 const isBuildingLabel = l => l.size !== 80 && !/\b(St\.|Ave\.|Alley)$/.test(l.text);
 const buildingLabels = def => (def.labels || []).filter(isBuildingLabel);
-// No building outlines in the data, so a point belongs to the nearest building label within 60 m.
+// No building outlines in the data, so a point is "near" the closest building label within 30 m.
 function buildingOf(def, p) {
-  let best = null, bd = 60;
+  let best = null, bd = 30;
   for (const l of buildingLabels(def)) { const d = Math.hypot(l.x - p.x, l.z - p.z); if (d < bd) { bd = d; best = l; } }
   return best;
 }
 const labelText = l => l.text.replace(/\n/g, ' ');
 function placeOf(def, p) {
   if (!hasFloors(def)) return null;
-  const b = buildingOf(def, p), f = floorOf(def, p.y);
-  return (b || f !== GROUND) ? { building: b ? labelText(b) : null, floor: f } : null;
+  const b = buildingOf(def, p), m = floorMatch(def, p), bf = buildingFloor(def, p);
+  // Prefer the floor area's own name (area-based maps), else "near" the closest building label.
+  const building = m.area ? titleCase(m.area) : b ? 'near ' + labelText(b) : null;
+  const floor = bf !== null ? (bf === 1 ? GROUND : '≈ ' + ordFloor(bf)) : m.floor;
+  return (building || floor !== GROUND) ? { building, floor } : null;
 }
 const placeText = pl => (pl ? [pl.building, pl.floor].filter(Boolean).join(' · ') : '');
 // The floor shown on the raid map, and the SVG overlay currently drawing it.
 let raidFloor = GROUND, raidOverlay = null, raidOverlayFloor = null, raidTileLayer = null, raidFloorCtl = null;
 const shortFloor = name => (name === GROUND ? 'G' : /under/i.test(name) ? 'UG' : (name.match(/\d+/) || [name])[0] + 'F');
+
+// ---------- location photos in map tooltips (wiki quest guides) ----------
+const questImageCache = {};
+const wikiTitle = t => decodeURIComponent((t.wikiLink || '').split('/wiki/')[1] || '').replace(/_/g, ' ');
+function fetchQuestImages(t) {
+  const title = wikiTitle(t);
+  if (!title) return Promise.resolve([]);
+  if (!questImageCache[title]) questImageCache[title] = fetch('/api/quest-images?title=' + encodeURIComponent(title)).then(r => r.json()).then(j => j.images || []).catch(() => []);
+  return questImageCache[title];
+}
+const TIP_STOP = new Set('locate obtain find mark the with and any inside near your from hand over item items place stash eliminate survive extract visit investigate specified spot using while into this that for are was'.split(' '));
+const tipWords = str => ((str || '').toLowerCase().match(/[a-z0-9]{3,}/g) || []).filter(w => !TIP_STOP.has(w));
+// Pick up to 3 photos for an objective: this map's guide section first (multi-map quests), then captions sharing words with the objective.
+// The guides' map screenshots ("Locations marked on map", "Needle … Interchange Map.png").
+const isMapShot = i => /marked on (the )?map|\bon the map$|^map\b/i.test(i.caption) || /(^|[ _-])map$/i.test(i.file.replace(/\.[a-z0-9]+$/i, ''));
+// all = the objective has several possible spawn spots: show every matching spawn photo (up to 12), not the best 3.
+function photosFor(o, key, imgs, all = false) {
+  const here = mapName(key).toLowerCase();
+  const mapNames = new Set(D.maps.map(m => m.name.toLowerCase()));
+  const byMap = imgs.some(i => mapNames.has((i.section || '').toLowerCase()));
+  let pool = byMap ? imgs.filter(i => (i.section || '').toLowerCase() === here || (i.caption + ' ' + i.file).toLowerCase().includes(here)) : imgs;
+  // Unsectioned guides often name the map in the caption ("Woods kill area marked on map"): drop other maps' photos.
+  const names = i => [...mapNames].filter(n => (i.caption + ' ' + i.file).toLowerCase().includes(n));
+  if (!byMap && pool.some(i => names(i).includes(here))) pool = pool.filter(i => !names(i).length || names(i).includes(here));
+  if (!pool.length) pool = imgs;
+  // Skip the guides' map screenshots ("… marked on map"): the tracker already shows the map.
+  pool = pool.filter(i => !isMapShot(i));
+  // Map names appear in most file names, so they don't say which spot a photo shows.
+  const mapWords = new Set([...mapNames].flatMap(n => tipWords(n)));
+  const want = new Set(tipWords(o.description).filter(w => !mapWords.has(w)));
+  const scored = pool.map((im, idx) => ({ im, idx, sc: tipWords(im.caption + ' ' + im.file.replace(/[_.-]/g, ' ')).filter(w => want.has(w)).length }));
+  scored.sort((a, b) => b.sc - a.sc || a.idx - b.idx);
+  let picks = scored[0] && scored[0].sc > 0 ? scored.filter(x => x.sc > 0).map(x => x.im) : scored.map(x => x.im);
+  if (all) {
+    // Spawn variants are often captioned "1: On a tractor", "Second spawn: …", "Spawn location 3".
+    const variant = i => /^s*d+s*[:.)-]|spawn|(first|second|third|fourth|fifth|sixth|seventh|eighth)/i.test(i.caption);
+    picks = [...new Set([...picks, ...pool.filter(variant)])];
+    return picks.sort((a, b) => pool.indexOf(a) - pool.indexOf(b)).slice(0, 12);
+  }
+  return picks.slice(0, 3).sort((a, b) => pool.indexOf(a) - pool.indexOf(b));
+}
+function tipItemHtml(o) {
+  const it = o.questItem || o.markerItem || (o.type === 'findItem' || o.type === 'plantItem' ? o.items && o.items[0] : null);
+  return it && it.iconLink ? `<div class="tip-item"><img src="${esc(it.iconLink)}" alt="">${esc(it.name)}</div>` : '';
+}
+// Tooltip that shows text at once and fills in item picture + location photos when hovered.
+function bindObjectiveTip(layer, t, o, key, html, all = false) {
+  layer.bindTooltip(html + tipItemHtml(o), { className: 'obj-tip', direction: 'auto', opacity: 1 });
+  layer.on('tooltipopen', ev => {
+    fetchQuestImages(t).then(imgs => {
+      const pics = photosFor(o, key, imgs, all);
+      if (!pics.length || !ev.tooltip.isOpen()) return;
+      ev.tooltip.setContent(html + tipItemHtml(o) + `<div class="tip-imgs${pics.length > 3 ? ' many' : ''}">${pics.map(p => `<figure><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer"><figcaption>${esc(p.caption)}</figcaption></figure>`).join('')}</div>
+        <div class="small muted" style="margin-top:2px">Photos: Escape from Tarkov Wiki</div>`);
+    });
+  });
+  return layer;
+}
 
 // Leaflet map, kept alive across re-renders so zoom/pan survive ticking objectives.
 let leafletReady = null, raidMap = null, raidMapKey = null, raidMapEl = null, raidMarkers = null;
@@ -1358,7 +1512,7 @@ async function attachRaidMap() {
       // Floor switcher inside the map: the chosen floor is drawn in place over a faded ground level.
       const Ctl = L.Control.extend({ onAdd: () => {
         const box = L.DomUtil.create('div', 'floor-ctl');
-        box.innerHTML = mapFloors(def).slice().reverse().map(f => `<button data-floor="${esc(f)}" title="${esc(f)}">${esc(shortFloor(f))}</button>`).join('');
+        box.innerHTML = mapFloors(def).slice().reverse().map(f => `<button data-floor="${esc(f)}" title="${esc(usesAreas(def) ? f : 'Map drawing level ' + floorButtonLabel(def, f) + (f === GROUND ? ' (street level)' : ''))}">${esc(floorButtonLabel(def, f))}</button>`).join('');
         L.DomEvent.disableClickPropagation(box);
         box.addEventListener('click', ev => { const b = ev.target.closest('button'); if (b) { raidFloor = b.dataset.floor; render(); } });
         return box;
@@ -1403,27 +1557,37 @@ async function attachRaidMap() {
       if (o.optional || OUT_OF_RAID.has(o.type)) continue;
       const done = !!S.objs[o.id] || S.tasks[t.id] === 'done';
       for (const p of (o.points || []).filter(p => mapKey(p.map) === key)) {
-        const fl = hasFloors(def) ? floorOf(def, p.y) : GROUND;
+        const fl = hasFloors(def) ? floorOf(def, p) : GROUND;
         const away = fl !== raidFloor;
         if (p.outline) {
           raidMarkers.addLayer(L.polygon(p.outline.map(([x, z]) => [z, x]), {
             color: done ? '#555' : color, weight: 1, fillOpacity: done ? 0.05 : away ? 0.06 : 0.18, opacity: away ? 0.5 : 1, dashArray: away ? '3 4' : null, interactive: false,
           }));
         }
-        if (fl !== GROUND && !done) {
-          raidMarkers.addLayer(L.marker([p.z, p.x], { zIndexOffset: 950, icon: L.divIcon({ className: 'floor-tag' + (away ? '' : ' here'), html: esc(shortFloor(fl)), iconSize: null, iconAnchor: [-9, 20] }) })
+        const tag = floorTag(def, p);
+        if (tag && !done) {
+          raidMarkers.addLayer(L.marker([p.z, p.x], { zIndexOffset: 950, icon: L.divIcon({ className: 'floor-tag' + (away ? '' : ' here'), html: esc(tag), iconSize: null, iconAnchor: [-9, 20] }) })
             .bindTooltip(esc(placeText(placeOf(def, p)) || fl) + (away ? ' — click to show this floor' : ''))
             .on('click', () => { raidFloor = fl; render(); }));
         }
         const m = L.circleMarker([p.z, p.x], {
           radius: p.kind === 'item' ? 5 : 9, color: done ? '#555' : color, fillColor: done ? '#333' : color,
           fillOpacity: done ? 0.3 : away ? 0.3 : 0.75, opacity: away ? 0.6 : 1, dashArray: away ? '3 3' : null, weight: 2,
-        }).on('click', () => { if (away) { raidFloor = fl; render(); } }).bindTooltip(`<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`);
+        }).on('click', () => { if (away) { raidFloor = fl; render(); } });
+        const spots = (o.points || []).filter(q => mapKey(q.map) === key).length;
+        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`, spots > 1);
         raidMarkers.addLayer(m);
         if (!done) pts.push([p.z, p.x]);
       }
     }
   });
+  for (const kg of raidStopGroups(key).filter(g => g.keyId)) {
+    for (const c of kg.cands) {
+      const mk = L.marker([c.z, c.x], { zIndexOffset: 980, icon: L.divIcon({ className: 'key-spawn', html: '🔑', iconSize: null, iconAnchor: [8, 8] }) });
+      raidMarkers.addLayer(bindObjectiveTip(mk, kg.t, kg.o, key, `<b>${esc(kg.t.name)}</b><br>${esc(kg.o.description)}${kg.cands.length > 1 ? `<br><i>One of ${kg.cands.length} spots — the key is at one of them each raid</i>` : ''}`, kg.cands.length > 1));
+      pts.push([c.z, c.x]);
+    }
+  }
   if (pts.length && !raidMapEl.dataset.fitted) { raidMap.fitBounds(L.latLngBounds(pts).pad(0.25)); raidMapEl.dataset.fitted = '1'; }
   // Spawn picking: show the PMC spawn points and let a click choose one.
   raidSpawnLayer.clearLayers();
@@ -1455,11 +1619,36 @@ function raidStopGroups(key) {
     if (S.tasks[t.id] === 'done') return;
     for (const o of t.objectives) {
       if (o.optional || OUT_OF_RAID.has(o.type) || S.objs[o.id]) continue;
-      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z, y: p.y }));
+      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z, y: p.y, kind: p.kind }));
       if (cands.length) groups.push({ t, o, color: RAID_COLORS[i % RAID_COLORS.length], cands });
     }
   });
+  const keyGroups = new Map();
+  S.raid.quests.map(id => D.byId[id]).filter(Boolean).forEach(t => {
+    if (S.tasks[t.id] === 'done') return;
+    for (const pk of keyPickups(t, key)) {
+      if (!pk.spawn.points.length) continue;
+      if (!keyGroups.has(pk.key.id)) {
+        const kg = { t: { id: 'key:' + pk.key.id, name: '🔑 ' + pk.key.name, wikiLink: keyWikiLink(pk.wikiTitle) },
+          o: { id: 'key:' + pk.key.id, type: 'pickup', description: `Pick up ${pk.key.name} — ${pk.spawn.note}` },
+          color: '#ffd24a', cands: pk.spawn.points.map(p => ({ x: p.x, z: p.z, y: p.y })), keyId: pk.key.id };
+        keyGroups.set(pk.key.id, kg);
+        groups.push(kg);
+      }
+      for (const g of groups) if (g.t === t) g.needsKeys = [...new Set([...(g.needsKeys || []), pk.key.id])];
+    }
+  });
   return groups;
+}
+
+// Precedence: bit mask of the key groups each group needs visited first.
+const needMasks = groups => groups.map(g => (g.needsKeys || []).reduce((m, k) => { const i = groups.findIndex(x => x.keyId === k); return i >= 0 ? m | (1 << i) : m; }, 0));
+// Heuristic routes can break precedence while improving: move each key stop in front of its first dependant.
+function enforceKeyOrder(stops) {
+  for (const ks of stops.filter(st => st.g.keyId)) {
+    const ki = stops.indexOf(ks), di = stops.findIndex(st => (st.g.needsKeys || []).includes(ks.g.keyId));
+    if (di >= 0 && di < ki) { stops.splice(ki, 1); stops.splice(di, 0, ks); }
+  }
 }
 
 function raidExtractOptions(key) {
@@ -1512,9 +1701,10 @@ function planRoute(start, groups, ends) {
 
 function routeExact(start, groups, ends, nodes) {
   const N = groups.length, M = nodes.length, FULL = (1 << N) - 1;
+  const need = needMasks(groups);
   const dp = new Float64Array((FULL + 1) * M).fill(Infinity);
   const parent = new Int32Array((FULL + 1) * M).fill(-1);
-  nodes.forEach((nd, j) => { dp[(1 << nd.gi) * M + j] = legCost(start, nd.c); });
+  nodes.forEach((nd, j) => { if (!need[nd.gi]) dp[(1 << nd.gi) * M + j] = legCost(start, nd.c); });
   for (let mask = 1; mask <= FULL; mask++) {
     for (let j = 0; j < M; j++) {
       const v = dp[mask * M + j];
@@ -1522,6 +1712,7 @@ function routeExact(start, groups, ends, nodes) {
       for (let k = 0; k < M; k++) {
         const bit = 1 << nodes[k].gi;
         if (mask & bit) continue;
+        if ((mask & need[nodes[k].gi]) !== need[nodes[k].gi]) continue; // its key isn't picked up yet
         const idx = (mask | bit) * M + k, nv = v + legCost(nodes[j].c, nodes[k].c);
         if (nv < dp[idx]) { dp[idx] = nv; parent[idx] = j; }
       }
@@ -1549,18 +1740,21 @@ function routeExact(start, groups, ends, nodes) {
 function routeHeuristic(start, groups, end, restarts = 24) {
   let best = null;
   for (let r = 0; r < restarts; r++) {
-    const stops = [], left = groups.slice();
+    const stops = [], left = groups.slice(), got = new Set();
     let cur = start;
     while (left.length) {
       const opts = [];
-      left.forEach((g, i) => g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })));
+      left.forEach((g, i) => { if ((g.needsKeys || []).every(k => got.has(k))) g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })); });
+      if (!opts.length) left.forEach((g, i) => g.cands.forEach(c => opts.push({ i, c, d: legCost(cur, c) })));
       opts.sort((a, b) => a.d - b.d);
       const pick = r === 0 ? opts[0] : opts[Math.min(opts.length - 1, Math.floor(Math.random() * 3))];
       stops.push({ g: left[pick.i], p: pick.c });
+      if (left[pick.i].keyId) got.add(left[pick.i].keyId);
       cur = pick.c;
       left.splice(pick.i, 1);
     }
     improveRoute(start, stops, end);
+    enforceKeyOrder(stops);
     const total = routeLength(start, stops, end);
     if (!best || total < best.total) best = { stops, total };
   }
@@ -1652,12 +1846,12 @@ function drawRoute(key) {
   raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#fff', weight: 3, opacity: 0.9, dashArray: '8 6', interactive: false }));
   const def = D.mapDefs[key];
   r.stops.forEach((st, i) => {
-    const fl = hasFloors(def) ? floorOf(def, st.p.y || 0) : GROUND;
+    const fl = hasFloors(def) ? floorOf(def, st.p) : GROUND;
     const place = placeText(placeOf(def, st.p));
-    raidRouteLayer.addLayer(L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
+    const stop = L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
       icon: L.divIcon({ className: 'route-num' + (fl !== raidFloor ? ' away' : ''), html: String(i + 1), iconSize: [20, 20] }) })
-      .bindTooltip(`<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`)
-      .on('click', () => { if (fl !== raidFloor) { raidFloor = fl; render(); } }));
+      .on('click', () => { if (fl !== raidFloor) { raidFloor = fl; render(); } });
+    raidRouteLayer.addLayer(bindObjectiveTip(stop, st.g.t, st.g.o, key, `<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`, st.g.cands.length > 1));
   });
   if (r.extract) raidRouteLayer.addLayer(L.marker([r.extract.z, r.extract.x], { zIndexOffset: 1000,
     icon: L.divIcon({ className: 'map-label route-end', html: `<span class="dot"></span>🏁 ${esc(r.extract.name)}`, iconSize: null, iconAnchor: [7, 7] }) }));
@@ -2057,7 +2251,7 @@ document.getElementById('layout').addEventListener('click', e => {
   } else if (act === 'routeGo') {
     const key = S.raid.map, def = D.mapDefs[key], r = raidRoute(key), st = r && r.stops[Number(id)];
     if (!st) return;
-    if (hasFloors(def)) raidFloor = floorOf(def, st.p.y || 0);
+    if (hasFloors(def)) raidFloor = floorOf(def, st.p);
     if (raidMap) raidMap.setView([st.p.z, st.p.x], Math.max(raidMap.getZoom(), def.maxZoom - 1));
     render();
   } else if (act === 'raidFull') {
