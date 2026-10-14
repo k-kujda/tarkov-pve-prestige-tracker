@@ -79,6 +79,57 @@ async function getStory(mode) {
 // The wiki infobox's "LL requirement" fills loyalty gates missing from both data sources (e.g. Green Corridor).
 // Only that field is used: the wiki's prerequisite chains and level requirements are partly pre-1.x and
 // contradict real in-game progress, so they are ignored.
+// ---------- quest guide photos from the wiki ----------
+// Gallery images (with captions and the guide section they sit in, which is the map for multi-map quests)
+// from a quest's wiki page, with thumbnail URLs. Fetched on demand and cached for a day.
+const WIKI_IMAGES_TTL_MS = 24 * 60 * 60 * 1000;
+const wikiImageCache = new Map();
+
+function parseGuideImages(wikitext) {
+  const out = [];
+  let section = null, inGallery = false;
+  for (const raw of wikitext.split('\n')) {
+    const line = raw.trim();
+    const head = line.match(/^==+\s*(.+?)\s*==+$/);
+    if (head) { section = head[1].replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').trim(); continue; }
+    if (/<gallery/i.test(line)) { inGallery = true; continue; }
+    if (/<\/gallery>/i.test(line)) { inGallery = false; continue; }
+    if (inGallery) {
+      const m = line.match(/^(?:File:|Image:)?([^|]+\.(?:png|jpe?g|gif|webp))\s*(?:\|(.*))?$/i);
+      if (m) out.push({ file: m[1].trim(), caption: (m[2] || '').replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').trim(), section });
+      continue;
+    }
+    // Inline screenshots ([[File:x.png|thumb|caption]]); item icons use link= and are skipped.
+    for (const m of line.matchAll(/\[\[(?:File|Image):([^|\]]+\.(?:png|jpe?g|webp))\|([^\]]*)\]\]/gi)) {
+      if (/link=/i.test(m[2]) || !/thumb|frame/i.test(m[2])) continue;
+      out.push({ file: m[1].trim(), caption: m[2].split('|').pop().trim(), section });
+    }
+  }
+  return out;
+}
+
+async function questImages(title) {
+  const cached = wikiImageCache.get(title);
+  if (cached && Date.now() - cached.at < WIKI_IMAGES_TTL_MS) return cached.images;
+  const page = await getJson(`${WIKI_API}?action=parse&page=${encodeURIComponent(title)}&prop=wikitext&format=json&formatversion=2&redirects=1`);
+  const images = parseGuideImages((page.parse && page.parse.wikitext) || '');
+  const files = [...new Set(images.map(i => i.file))];
+  const thumbs = {};
+  for (let i = 0; i < files.length; i += 50) {
+    const batch = files.slice(i, i + 50).map(f => 'File:' + f);
+    const info = await getJson(`${WIKI_API}?action=query&prop=imageinfo&iiprop=url&iiurlwidth=420&format=json&formatversion=2&titles=${encodeURIComponent(batch.join('|'))}`);
+    const back = {};
+    for (const n of (info.query && info.query.normalized) || []) back[n.to] = n.from;
+    for (const p of (info.query && info.query.pages) || []) {
+      const ii = p.imageinfo && p.imageinfo[0];
+      if (ii) thumbs[(back[p.title] || p.title).replace(/^File:/, '')] = { thumb: ii.thumburl || ii.url, url: ii.descriptionurl || ii.url };
+    }
+  }
+  const result = images.filter(i => thumbs[i.file]).map(i => ({ ...i, ...thumbs[i.file] }));
+  wikiImageCache.set(title, { at: Date.now(), images: result });
+  return result;
+}
+
 async function getWikiLoyalty(wikiLinks) {
   const titles = [...new Set(wikiLinks.map(l => decodeURIComponent((l || '').split('/wiki/')[1] || '').replace(/_/g, ' ')).filter(Boolean))];
   const result = {};
@@ -443,6 +494,12 @@ const server = http.createServer(async (req, res) => {
       const { entry, status, warning } = await getData(mode, url.searchParams.get('refresh') === '1');
       console.log(`[${new Date().toLocaleTimeString()}] data ${mode}: ${status}${warning ? ` (${warning})` : ''}`);
       return send(req, res, 200, 'application/json', JSON.stringify({ at: entry.at, status, warning, ...entry.data }));
+    }
+    if (url.pathname === '/api/quest-images') {
+      // Only wiki page titles are accepted (the server builds the wiki URL itself).
+      const title = (url.searchParams.get('title') || '').slice(0, 200);
+      if (!title || /[<>{}\[\]|#]/.test(title)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad title' }));
+      return send(req, res, 200, 'application/json', JSON.stringify({ title, images: await questImages(title) }));
     }
     if (url.pathname === '/api/game-progress') {
       const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';

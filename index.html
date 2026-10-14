@@ -91,7 +91,18 @@
   .map-place { white-space: nowrap; font: 700 11px/1.1 "Segoe UI", sans-serif; color: #f3e6c4; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000; text-transform: uppercase; letter-spacing: .4px; pointer-events: none; }
   #raidMapBox:fullscreen { height: 100vh; border: none; border-radius: 0; }
   #raidMapBox .leaflet-container { background: #0d0c0a; }
-  .leaflet-tooltip { background: var(--panel2); color: var(--text); border-color: var(--line); }
+  .leaflet-tooltip, #raidMapBox .leaflet-tooltip { background: var(--panel2); color: var(--text); border-color: var(--line); box-shadow: 0 2px 10px rgba(0,0,0,.6); }
+  #raidMapBox .leaflet-tooltip-top:before { border-top-color: var(--line); }
+  #raidMapBox .leaflet-tooltip-bottom:before { border-bottom-color: var(--line); }
+  #raidMapBox .leaflet-tooltip-left:before { border-left-color: var(--line); }
+  #raidMapBox .leaflet-tooltip-right:before { border-right-color: var(--line); }
+  .leaflet-tooltip.obj-tip { white-space: normal; width: max-content; max-width: 660px; }
+  .tip-imgs { display: flex; gap: 6px; margin-top: 6px; }
+  .tip-imgs figure { margin: 0; width: 210px; }
+  .tip-imgs img { width: 210px; height: 130px; object-fit: cover; border-radius: 4px; display: block; background: #000; }
+  .tip-imgs figcaption { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tip-item { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--muted); }
+  .tip-item img { width: 40px; height: 40px; object-fit: contain; }
   .leaflet-control-layers, .leaflet-control-layers-expanded { background: rgba(28, 27, 24, .92) !important; color: var(--text) !important; border: 1px solid var(--line) !important; font: 12px "Segoe UI", sans-serif; }
   .leaflet-control-layers-toggle { filter: invert(.85); }
   .leaflet-control-layers label { margin: 2px 0; }
@@ -1269,6 +1280,57 @@ const placeText = pl => (pl ? [pl.building, pl.floor].filter(Boolean).join(' · 
 let raidFloor = GROUND, raidOverlay = null, raidOverlayFloor = null, raidTileLayer = null, raidFloorCtl = null;
 const shortFloor = name => (name === GROUND ? 'G' : /under/i.test(name) ? 'UG' : (name.match(/\d+/) || [name])[0] + 'F');
 
+// ---------- location photos in map tooltips (wiki quest guides) ----------
+const questImageCache = {};
+const wikiTitle = t => decodeURIComponent((t.wikiLink || '').split('/wiki/')[1] || '').replace(/_/g, ' ');
+function fetchQuestImages(t) {
+  const title = wikiTitle(t);
+  if (!title) return Promise.resolve([]);
+  if (!questImageCache[title]) questImageCache[title] = fetch('/api/quest-images?title=' + encodeURIComponent(title)).then(r => r.json()).then(j => j.images || []).catch(() => []);
+  return questImageCache[title];
+}
+const TIP_STOP = new Set('locate obtain find mark the with and any inside near your from hand over item items place stash eliminate survive extract visit investigate specified spot using while into this that for are was'.split(' '));
+const tipWords = str => ((str || '').toLowerCase().match(/[a-z0-9]{3,}/g) || []).filter(w => !TIP_STOP.has(w));
+// Pick up to 3 photos for an objective: this map's guide section first (multi-map quests), then captions sharing words with the objective.
+function photosFor(o, key, imgs) {
+  const here = mapName(key).toLowerCase();
+  const mapNames = new Set(D.maps.map(m => m.name.toLowerCase()));
+  const byMap = imgs.some(i => mapNames.has((i.section || '').toLowerCase()));
+  let pool = byMap ? imgs.filter(i => (i.section || '').toLowerCase() === here || (i.caption + ' ' + i.file).toLowerCase().includes(here)) : imgs;
+  // Unsectioned guides often name the map in the caption ("Woods kill area marked on map"): drop other maps' photos.
+  const names = i => [...mapNames].filter(n => (i.caption + ' ' + i.file).toLowerCase().includes(n));
+  if (!byMap && pool.some(i => names(i).includes(here))) pool = pool.filter(i => !names(i).length || names(i).includes(here));
+  if (!pool.length) pool = imgs;
+  // Map names appear in most file names, so they don't say which spot a photo shows.
+  const mapWords = new Set([...mapNames].flatMap(n => tipWords(n)));
+  const want = new Set(tipWords(o.description).filter(w => !mapWords.has(w)));
+  const scored = pool.map((im, idx) => ({ im, idx, sc: tipWords(im.caption + ' ' + im.file.replace(/[_.-]/g, ' ')).filter(w => want.has(w)).length }));
+  scored.sort((a, b) => b.sc - a.sc || a.idx - b.idx);
+  let picks = scored[0] && scored[0].sc > 0 ? scored.filter(x => x.sc > 0).map(x => x.im) : scored.map(x => x.im);
+  picks = picks.slice(0, 3);
+  // Add the guide's "marked on map" overview when there's room.
+  const overview = pool.find(i => /marked on (the )?map/i.test(i.caption));
+  if (overview && !picks.includes(overview) && picks.length < 3) picks.unshift(overview);
+  return picks.sort((a, b) => pool.indexOf(a) - pool.indexOf(b));
+}
+function tipItemHtml(o) {
+  const it = o.questItem || o.markerItem || (o.type === 'findItem' || o.type === 'plantItem' ? o.items && o.items[0] : null);
+  return it && it.iconLink ? `<div class="tip-item"><img src="${esc(it.iconLink)}" alt="">${esc(it.name)}</div>` : '';
+}
+// Tooltip that shows text at once and fills in item picture + location photos when hovered.
+function bindObjectiveTip(layer, t, o, key, html) {
+  layer.bindTooltip(html + tipItemHtml(o), { className: 'obj-tip', direction: 'auto', opacity: 1 });
+  layer.on('tooltipopen', ev => {
+    fetchQuestImages(t).then(imgs => {
+      const pics = photosFor(o, key, imgs);
+      if (!pics.length || !ev.tooltip.isOpen()) return;
+      ev.tooltip.setContent(html + tipItemHtml(o) + `<div class="tip-imgs">${pics.map(p => `<figure><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer"><figcaption>${esc(p.caption)}</figcaption></figure>`).join('')}</div>
+        <div class="small muted" style="margin-top:2px">Photos: Escape from Tarkov Wiki</div>`);
+    });
+  });
+  return layer;
+}
+
 // Leaflet map, kept alive across re-renders so zoom/pan survive ticking objectives.
 let leafletReady = null, raidMap = null, raidMapKey = null, raidMapEl = null, raidMarkers = null;
 document.addEventListener('fullscreenchange', () => { if (raidMap) setTimeout(() => raidMap.invalidateSize(), 50); });
@@ -1436,7 +1498,8 @@ async function attachRaidMap() {
         const m = L.circleMarker([p.z, p.x], {
           radius: p.kind === 'item' ? 5 : 9, color: done ? '#555' : color, fillColor: done ? '#333' : color,
           fillOpacity: done ? 0.3 : away ? 0.3 : 0.75, opacity: away ? 0.6 : 1, dashArray: away ? '3 3' : null, weight: 2,
-        }).on('click', () => { if (away) { raidFloor = fl; render(); } }).bindTooltip(`<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`);
+        }).on('click', () => { if (away) { raidFloor = fl; render(); } });
+        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`);
         raidMarkers.addLayer(m);
         if (!done) pts.push([p.z, p.x]);
       }
@@ -1672,10 +1735,10 @@ function drawRoute(key) {
   r.stops.forEach((st, i) => {
     const fl = hasFloors(def) ? floorOf(def, st.p) : GROUND;
     const place = placeText(placeOf(def, st.p));
-    raidRouteLayer.addLayer(L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
+    const stop = L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
       icon: L.divIcon({ className: 'route-num' + (fl !== raidFloor ? ' away' : ''), html: String(i + 1), iconSize: [20, 20] }) })
-      .bindTooltip(`<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`)
-      .on('click', () => { if (fl !== raidFloor) { raidFloor = fl; render(); } }));
+      .on('click', () => { if (fl !== raidFloor) { raidFloor = fl; render(); } });
+    raidRouteLayer.addLayer(bindObjectiveTip(stop, st.g.t, st.g.o, key, `<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`));
   });
   if (r.extract) raidRouteLayer.addLayer(L.marker([r.extract.z, r.extract.x], { zIndexOffset: 1000,
     icon: L.divIcon({ className: 'map-label route-end', html: `<span class="dot"></span>🏁 ${esc(r.extract.name)}`, iconSize: null, iconAnchor: [7, 7] }) }));
