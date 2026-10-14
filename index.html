@@ -99,6 +99,9 @@
   .leaflet-tooltip.obj-tip { white-space: normal; width: max-content; max-width: 660px; }
   .tip-imgs { display: flex; gap: 6px; margin-top: 6px; }
   .tip-imgs figure { margin: 0; width: 210px; }
+  .tip-imgs.many { flex-wrap: wrap; max-width: 660px; }
+  .tip-imgs.many figure { width: 155px; }
+  .tip-imgs.many img { width: 155px; height: 96px; }
   .tip-imgs img { width: 210px; height: 130px; object-fit: cover; border-radius: 4px; display: block; background: #000; }
   .tip-imgs figcaption { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .tip-item { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; color: var(--muted); }
@@ -1358,7 +1361,8 @@ const tipWords = str => ((str || '').toLowerCase().match(/[a-z0-9]{3,}/g) || [])
 // Pick up to 3 photos for an objective: this map's guide section first (multi-map quests), then captions sharing words with the objective.
 // The guides' map screenshots ("Locations marked on map", "Needle … Interchange Map.png").
 const isMapShot = i => /marked on (the )?map|\bon the map$|^map\b/i.test(i.caption) || /(^|[ _-])map$/i.test(i.file.replace(/\.[a-z0-9]+$/i, ''));
-function photosFor(o, key, imgs) {
+// all = the objective has several possible spawn spots: show every matching spawn photo (up to 12), not the best 3.
+function photosFor(o, key, imgs, all = false) {
   const here = mapName(key).toLowerCase();
   const mapNames = new Set(D.maps.map(m => m.name.toLowerCase()));
   const byMap = imgs.some(i => mapNames.has((i.section || '').toLowerCase()));
@@ -1375,6 +1379,12 @@ function photosFor(o, key, imgs) {
   const scored = pool.map((im, idx) => ({ im, idx, sc: tipWords(im.caption + ' ' + im.file.replace(/[_.-]/g, ' ')).filter(w => want.has(w)).length }));
   scored.sort((a, b) => b.sc - a.sc || a.idx - b.idx);
   let picks = scored[0] && scored[0].sc > 0 ? scored.filter(x => x.sc > 0).map(x => x.im) : scored.map(x => x.im);
+  if (all) {
+    // Spawn variants are often captioned "1: On a tractor", "Second spawn: …", "Spawn location 3".
+    const variant = i => /^s*d+s*[:.)-]|spawn|(first|second|third|fourth|fifth|sixth|seventh|eighth)/i.test(i.caption);
+    picks = [...new Set([...picks, ...pool.filter(variant)])];
+    return picks.sort((a, b) => pool.indexOf(a) - pool.indexOf(b)).slice(0, 12);
+  }
   return picks.slice(0, 3).sort((a, b) => pool.indexOf(a) - pool.indexOf(b));
 }
 function tipItemHtml(o) {
@@ -1382,13 +1392,13 @@ function tipItemHtml(o) {
   return it && it.iconLink ? `<div class="tip-item"><img src="${esc(it.iconLink)}" alt="">${esc(it.name)}</div>` : '';
 }
 // Tooltip that shows text at once and fills in item picture + location photos when hovered.
-function bindObjectiveTip(layer, t, o, key, html) {
+function bindObjectiveTip(layer, t, o, key, html, all = false) {
   layer.bindTooltip(html + tipItemHtml(o), { className: 'obj-tip', direction: 'auto', opacity: 1 });
   layer.on('tooltipopen', ev => {
     fetchQuestImages(t).then(imgs => {
-      const pics = photosFor(o, key, imgs);
+      const pics = photosFor(o, key, imgs, all);
       if (!pics.length || !ev.tooltip.isOpen()) return;
-      ev.tooltip.setContent(html + tipItemHtml(o) + `<div class="tip-imgs">${pics.map(p => `<figure><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer"><figcaption>${esc(p.caption)}</figcaption></figure>`).join('')}</div>
+      ev.tooltip.setContent(html + tipItemHtml(o) + `<div class="tip-imgs${pics.length > 3 ? ' many' : ''}">${pics.map(p => `<figure><img src="${esc(p.thumb)}" alt="" referrerpolicy="no-referrer"><figcaption>${esc(p.caption)}</figcaption></figure>`).join('')}</div>
         <div class="small muted" style="margin-top:2px">Photos: Escape from Tarkov Wiki</div>`);
     });
   });
@@ -1564,7 +1574,8 @@ async function attachRaidMap() {
           radius: p.kind === 'item' ? 5 : 9, color: done ? '#555' : color, fillColor: done ? '#333' : color,
           fillOpacity: done ? 0.3 : away ? 0.3 : 0.75, opacity: away ? 0.6 : 1, dashArray: away ? '3 3' : null, weight: 2,
         }).on('click', () => { if (away) { raidFloor = fl; render(); } });
-        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`);
+        const spots = (o.points || []).filter(q => mapKey(q.map) === key).length;
+        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`, spots > 1);
         raidMarkers.addLayer(m);
         if (!done) pts.push([p.z, p.x]);
       }
@@ -1573,7 +1584,7 @@ async function attachRaidMap() {
   for (const kg of raidStopGroups(key).filter(g => g.keyId)) {
     for (const c of kg.cands) {
       const mk = L.marker([c.z, c.x], { zIndexOffset: 980, icon: L.divIcon({ className: 'key-spawn', html: '🔑', iconSize: null, iconAnchor: [8, 8] }) });
-      raidMarkers.addLayer(bindObjectiveTip(mk, kg.t, kg.o, key, `<b>${esc(kg.t.name)}</b><br>${esc(kg.o.description)}${kg.cands.length > 1 ? `<br><i>One of ${kg.cands.length} spots — the key is at one of them each raid</i>` : ''}`));
+      raidMarkers.addLayer(bindObjectiveTip(mk, kg.t, kg.o, key, `<b>${esc(kg.t.name)}</b><br>${esc(kg.o.description)}${kg.cands.length > 1 ? `<br><i>One of ${kg.cands.length} spots — the key is at one of them each raid</i>` : ''}`, kg.cands.length > 1));
       pts.push([c.z, c.x]);
     }
   }
@@ -1840,7 +1851,7 @@ function drawRoute(key) {
     const stop = L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
       icon: L.divIcon({ className: 'route-num' + (fl !== raidFloor ? ' away' : ''), html: String(i + 1), iconSize: [20, 20] }) })
       .on('click', () => { if (fl !== raidFloor) { raidFloor = fl; render(); } });
-    raidRouteLayer.addLayer(bindObjectiveTip(stop, st.g.t, st.g.o, key, `<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`));
+    raidRouteLayer.addLayer(bindObjectiveTip(stop, st.g.t, st.g.o, key, `<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`, st.g.cands.length > 1));
   });
   if (r.extract) raidRouteLayer.addLayer(L.marker([r.extract.z, r.extract.x], { zIndexOffset: 1000,
     icon: L.divIcon({ className: 'map-label route-end', html: `<span class="dot"></span>🏁 ${esc(r.extract.name)}`, iconSize: null, iconAnchor: [7, 7] }) }));
