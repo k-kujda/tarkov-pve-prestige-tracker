@@ -252,6 +252,7 @@ function indexData(raw) {
     return set;
   };
   for (const t of raw.tasks) desc(t.id);
+  for (const [k, v] of Object.entries(raw.mapDefs || {})) v._key = k;
   d.storyChapters = raw.storyChapters || [];
   d.chapterById = {};
   d.chapterOfStep = {};
@@ -1233,7 +1234,7 @@ function viewRaidInProgress() {
       <span class="spacer"></span><button data-act="raidFull" title="Show the map fullscreen (Esc to leave)">⛶ Fullscreen map</button><button class="primary" data-act="raidEnd">End raid</button><button data-act="raidCancel">Cancel raid</button></div>
     <div class="raid-grid">
       <div><div id="raidMapSlot"></div><div style="margin-top:6px">${legend}</div>
-        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Yellow tags (2F, 3F, UG) mark objectives off the ground floor — click one, or use the floor buttons on the map, to see that floor. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
+        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Yellow tags (2F, 3F, B) mark objectives off the ground floor — click one, or use the level buttons on the map, to see that floor. On Streets floors are estimated from height above street level. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
       <div class="panel" style="margin:0">${routePanel(key)}${bringList(key, quests)}${blocks}</div>
     </div>`;
 }
@@ -1278,22 +1279,65 @@ function floorMatch(def, p) {
 }
 const floorOf = (def, p) => floorMatch(def, p).floor;
 const titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
+
+// Maps like Streets only have map-wide height bands (tarkov.dev's drawing levels, e.g. "2nd Floor" = 10–15 m), which
+// don't match a building's real floors. There the floor is estimated from the height above the local street level:
+// the median height of the 8 nearest outdoor points (PMC spawns, extracts, transits), ~3.2 m per storey.
+// Checked against floors stated in wiki guides (Ballet Lover 4th, House Arrest 3rd, Audit 2nd, ground-floor shops…).
+const usesAreas = def => (def.layers || []).some(l => (l.extents || []).some(e => e.areas && e.areas.length));
+const STOREY_M = 3.2;
+const groundRefs = {};
+function refsFor(key) {
+  if (!groundRefs[key]) {
+    const f = (D.mapFeatures && D.mapFeatures[key]) || {};
+    groundRefs[key] = [...(f.spawns || []), ...(f.extracts || []), ...(f.transits || [])].filter(p => typeof p.y === 'number');
+  }
+  return groundRefs[key];
+}
+function localGround(key, p) {
+  const near = refsFor(key).map(r => ({ y: r.y, d: Math.hypot(r.x - p.x, r.z - p.z) })).sort((a, b) => a.d - b.d).slice(0, 8);
+  if (!near.length) return null;
+  const ys = near.map(r => r.y).sort((a, b) => a - b);
+  return ys[Math.floor(ys.length / 2)];
+}
+// Building floor: 1 = ground floor, -1 = basement; null when not estimated (area-based maps, no reference points).
+function buildingFloor(def, p) {
+  if (usesAreas(def) || !def._key) return null;
+  const g = localGround(def._key, p);
+  if (g === null) return null;
+  // Streets' streets differ in height by several metres, so "below the nearest spawns" isn't reliably a basement:
+  // basements come from tarkov.dev's absolute Underground level, and the estimate is only used upwards.
+  if (/under/i.test(floorOf(def, p))) return -1;
+  const above = (p.y || 0) - (p.kind === 'zone' ? 1 : 0) - g;
+  return Math.max(1, Math.floor((above + 0.8) / STOREY_M) + 1);
+}
+const ordFloor = n => (n === -1 ? 'basement' : n === 1 ? GROUND : `${n}${n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'} floor`);
+// Short tag shown on the map (null = ground floor, no tag).
+function floorTag(def, p) {
+  const bf = buildingFloor(def, p);
+  if (bf !== null) return bf === 1 ? null : bf === -1 ? 'B' : bf + 'F';
+  const fl = floorOf(def, p);
+  return fl === GROUND ? null : shortFloor(fl);
+}
+// Label for a floor button: real floors on area-based maps, drawing levels ("L2") on height-band maps.
+const floorButtonLabel = (def, f) => (usesAreas(def) ? shortFloor(f) : f === GROUND ? 'L1' : /under/i.test(f) ? 'UG' : 'L' + ((f.match(/\d+/) || ['?'])[0]));
 const floorLayerId = (def, name) => { const l = (def.layers || []).find(l => l.name === name); return l ? l.svgLayer : null; };
 const isBuildingLabel = l => l.size !== 80 && !/\b(St\.|Ave\.|Alley)$/.test(l.text);
 const buildingLabels = def => (def.labels || []).filter(isBuildingLabel);
-// No building outlines in the data, so a point belongs to the nearest building label within 60 m.
+// No building outlines in the data, so a point is "near" the closest building label within 30 m.
 function buildingOf(def, p) {
-  let best = null, bd = 60;
+  let best = null, bd = 30;
   for (const l of buildingLabels(def)) { const d = Math.hypot(l.x - p.x, l.z - p.z); if (d < bd) { bd = d; best = l; } }
   return best;
 }
 const labelText = l => l.text.replace(/\n/g, ' ');
 function placeOf(def, p) {
   if (!hasFloors(def)) return null;
-  const b = buildingOf(def, p), m = floorMatch(def, p);
-  // Prefer the map's building label; fall back to the floor area's own name (e.g. "scav checkpoint").
-  const building = b ? labelText(b) : m.area ? titleCase(m.area) : null;
-  return (building || m.floor !== GROUND) ? { building, floor: m.floor } : null;
+  const b = buildingOf(def, p), m = floorMatch(def, p), bf = buildingFloor(def, p);
+  // Prefer the floor area's own name (area-based maps), else "near" the closest building label.
+  const building = m.area ? titleCase(m.area) : b ? 'near ' + labelText(b) : null;
+  const floor = bf !== null ? (bf === 1 ? GROUND : '≈ ' + ordFloor(bf)) : m.floor;
+  return (building || floor !== GROUND) ? { building, floor } : null;
 }
 const placeText = pl => (pl ? [pl.building, pl.floor].filter(Boolean).join(' · ') : '');
 // The floor shown on the raid map, and the SVG overlay currently drawing it.
@@ -1458,7 +1502,7 @@ async function attachRaidMap() {
       // Floor switcher inside the map: the chosen floor is drawn in place over a faded ground level.
       const Ctl = L.Control.extend({ onAdd: () => {
         const box = L.DomUtil.create('div', 'floor-ctl');
-        box.innerHTML = mapFloors(def).slice().reverse().map(f => `<button data-floor="${esc(f)}" title="${esc(f)}">${esc(shortFloor(f))}</button>`).join('');
+        box.innerHTML = mapFloors(def).slice().reverse().map(f => `<button data-floor="${esc(f)}" title="${esc(usesAreas(def) ? f : 'Map drawing level ' + floorButtonLabel(def, f) + (f === GROUND ? ' (street level)' : ''))}">${esc(floorButtonLabel(def, f))}</button>`).join('');
         L.DomEvent.disableClickPropagation(box);
         box.addEventListener('click', ev => { const b = ev.target.closest('button'); if (b) { raidFloor = b.dataset.floor; render(); } });
         return box;
@@ -1510,8 +1554,9 @@ async function attachRaidMap() {
             color: done ? '#555' : color, weight: 1, fillOpacity: done ? 0.05 : away ? 0.06 : 0.18, opacity: away ? 0.5 : 1, dashArray: away ? '3 4' : null, interactive: false,
           }));
         }
-        if (fl !== GROUND && !done) {
-          raidMarkers.addLayer(L.marker([p.z, p.x], { zIndexOffset: 950, icon: L.divIcon({ className: 'floor-tag' + (away ? '' : ' here'), html: esc(shortFloor(fl)), iconSize: null, iconAnchor: [-9, 20] }) })
+        const tag = floorTag(def, p);
+        if (tag && !done) {
+          raidMarkers.addLayer(L.marker([p.z, p.x], { zIndexOffset: 950, icon: L.divIcon({ className: 'floor-tag' + (away ? '' : ' here'), html: esc(tag), iconSize: null, iconAnchor: [-9, 20] }) })
             .bindTooltip(esc(placeText(placeOf(def, p)) || fl) + (away ? ' — click to show this floor' : ''))
             .on('click', () => { raidFloor = fl; render(); }));
         }
@@ -1563,7 +1608,7 @@ function raidStopGroups(key) {
     if (S.tasks[t.id] === 'done') return;
     for (const o of t.objectives) {
       if (o.optional || OUT_OF_RAID.has(o.type) || S.objs[o.id]) continue;
-      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z, y: p.y }));
+      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z, y: p.y, kind: p.kind }));
       if (cands.length) groups.push({ t, o, color: RAID_COLORS[i % RAID_COLORS.length], cands });
     }
   });
