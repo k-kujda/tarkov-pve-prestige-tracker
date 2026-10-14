@@ -116,6 +116,9 @@
   .item.key.have { border-color: var(--good); }
   .item.key.missing { border-color: var(--bad); }
   .keys-line { margin-top: 3px; }
+  .objline { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--muted); margin: 2px 0; cursor: pointer; }
+  .objline input { width: 14px; height: 14px; margin-top: 1px; }
+  .objline.done span { text-decoration: line-through; opacity: .6; }
   #friendCode { width: 100%; min-height: 54px; font: 12px monospace; }
 </style>
 </head>
@@ -1032,7 +1035,22 @@ function squadPanel() {
 
 function viewRaid() {
   if (!S.logSync) return '<div class="panel">Sync your progress first (“Sync from game”) so the planner knows which quests you have accepted.</div>' + viewRaidPlanner();
+  if (S.raid && S.raid.debrief) return viewRaidDebrief();
   return S.raid ? viewRaidInProgress() : viewRaidPlanner();
+}
+
+// After a raid: the logs say which quests finished, but not which objectives — ask.
+function viewRaidDebrief() {
+  const r = S.raid, key = r.map;
+  const quests = r.quests.map(id => D.byId[id]).filter(Boolean);
+  const finished = quests.filter(t => S.tasks[t.id] === 'done');
+  const open = quests.filter(t => S.tasks[t.id] !== 'done');
+  const blocks = open.map(t => `<div class="sec"><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>${objectiveTicks(t, key) || '<div class="small muted">No in-raid objectives on this map.</div>'}</div>`).join('');
+  return `<div class="panel"><div class="row"><b>Raid debrief: ${esc(mapName(key))}</b><span class="spacer"></span>
+      <button class="primary" data-act="raidClose">Save &amp; close</button></div>
+    <div class="small muted">Tick the objectives you completed this raid. Quests the game logs show as finished are already handled.</div>
+    ${finished.length ? `<div class="sec small"><span class="badge ok">completed ✓</span> ${finished.map(t => esc(t.name)).join(' · ')}</div>` : ''}
+    ${blocks || '<div class="sec muted">Every quest from this raid is completed.</div>'}</div>`;
 }
 
 function viewRaidPlanner() {
@@ -1051,24 +1069,30 @@ function viewRaidPlanner() {
     const quests = [...p.finish, ...p.progress];
     if (!raidSelection || raidSelection.key !== key) raidSelection = { key, ids: new Set(quests.filter(t => S.active[t.id] || squadWith(t).length).map(t => t.id)) };
     const list = quests.map(t => {
-      const objs = raidObjectives(t).filter(o => objOnMap(o, t, key) || objAnywhere(o, t));
-      return `<label class="obj" style="cursor:pointer"><input type="checkbox" data-act="raidSel" data-id="${t.id}" ${raidSelection.ids.has(t.id) ? 'checked' : ''}>
-        <div><div><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
+      return `<div class="obj"><input type="checkbox" id="rs-${t.id}" data-act="raidSel" data-id="${t.id}" ${raidSelection.ids.has(t.id) ? 'checked' : ''}>
+        <div><div><label for="rs-${t.id}" style="cursor:pointer"><b>${esc(t.name)}</b></label> <span class="muted small">${esc(t.trader.name)}</span>
           ${p.finish.includes(t) ? '<span class="badge ok">can finish</span>' : '<span class="badge">progress</span>'}
           ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}
           ${S.active[t.id] ? '' : S.tasks[t.id] || !factionOk(t) || taskState(t).status !== 'available' ? `<span class="badge squad">for squad</span>`
             : '<span class="badge gate" title="Not accepted yet — pick it up from the trader before the raid">accept first</span>'}</div>
-          <div class="detail">${objs.map(o => esc(o.description)).join(' · ')}</div>${questKeysHtml(t, key)}</div></label>`;
+          ${objectiveTicks(t, key)}${questKeysHtml(t, key)}</div></div>`;
     }).join('');
     plan = `<div class="panel"><div class="row"><b>${esc(mapName(key))}</b><span class="spacer"></span>
         <button class="primary" data-act="raidStart" ${raidSelection.ids.size ? '' : 'disabled'}>Start raid with ${raidSelection.ids.size} quest${raidSelection.ids.size === 1 ? '' : 's'}</button></div>
-      <div class="small muted">Accepted quests are pre-selected. “Can finish” = every remaining in-raid objective can be done on this map.</div>
+      <div class="small muted">Accepted quests are pre-selected. “Can finish” = every remaining in-raid objective can be done on this map.
+        Tick objectives you've already done — the game logs only record whole quests, not single objectives.</div>
       <div class="sec">${list || '<div class="muted">No quests here.</div>'}</div>
       ${bringList(key, [...raidSelection.ids].map(id => D.byId[id]).filter(Boolean))}</div>`;
   }
   return `${squadPanel()}<div class="panel"><b>Best maps right now</b> <span class="small muted">— accepted quests count triple; quests you can finish count double.</span>
       <table class="rank"><thead><tr><th>Map</th><th>Can finish</th><th>Can progress</th><th>Objectives</th>${squadMembers().length ? '<th>Squad quests</th>' : ''}<th>XP (finishable)</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="muted">No quest objectives on any map — sync from game or accept quests.</td></tr>'}</tbody></table></div>
     ${plan}`;
+}
+
+function objectiveTicks(t, key) {
+  const objs = t.objectives.filter(o => !o.optional && !OUT_OF_RAID.has(o.type) && (objOnMap(o, t, key) || objAnywhere(o, t)));
+  return objs.map(o => `<label class="objline ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
+    <span>${esc(o.description)}</span></label>`).join('');
 }
 
 function questKeyGroups(t, key) {
@@ -1878,17 +1902,21 @@ document.getElementById('layout').addEventListener('click', e => {
     update();
   } else if (act === 'raidFull') {
     if (raidMapEl && raidMapEl.requestFullscreen) raidMapEl.requestFullscreen();
-  } else if (act === 'raidEnd' || act === 'raidCancel') {
+  } else if (act === 'raidEnd') {
+    if (raidMap) { raidMap.remove(); raidMap = null; raidMapKey = null; }
+    S.raid.debrief = true;
+    update();
+    syncFromGame(false);
+  } else if (act === 'raidClose' || act === 'raidCancel') {
     if (act === 'raidCancel' && !confirm('Cancel this raid plan?')) return;
     const r = S.raid;
     S.raid = null;
     raidSelection = null;
     if (raidMap) { raidMap.remove(); raidMap = null; raidMapKey = null; }
     update();
-    if (act === 'raidEnd') {
+    if (act === 'raidClose') {
       const done = r.quests.filter(id => S.tasks[id] === 'done').length;
-      toast(`Raid ended — ${done}/${r.quests.length} quests completed`);
-      syncFromGame(false);
+      toast(`Raid saved — ${done}/${r.quests.length} quests completed`);
     }
   } else if (act === 'sideToggle') {
     S.ui.sideOpen = false;
