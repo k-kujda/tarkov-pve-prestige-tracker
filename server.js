@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 10;
+const CACHE_VERSION = 11;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -188,6 +188,17 @@ function normalize(raw) {
 
   const T = raw.tasks.data;
   const itemsRaw = raw.items.data.items;
+  const itemCategories = raw.items.data.itemCategories || {};
+  // Weapon type(s) of a kill condition's weapon list, from each item's most specific category ("Assault rifle"), most common first.
+  const weaponTypes = weaponIds => {
+    const counts = new Map();
+    for (const id of weaponIds) {
+      const cat = itemsRaw[id] && itemsRaw[id].categories && itemCategories[itemsRaw[id].categories[0]];
+      const name = cat ? tr(cat.name, cat.normalizedName) : 'Other';
+      counts.set(name, (counts.get(name) || 0) + 1);
+    }
+    return [...counts].sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n }));
+  };
   const mapsRaw = raw.maps.data.maps;
   const tradersRaw = raw.traders.data;
   const stationsRaw = raw.hideout.data;
@@ -236,7 +247,15 @@ function normalize(raw) {
     if (o.targetNames && o.targetNames.length) r.targetNames = o.targetNames.map(x => tr(x));
     if (o.zones && o.type === 'shoot') r.zoneNames = [...new Set(o.zones.map(z => tr(z.name, '')).filter(Boolean))];
     if (o.bodyParts && o.bodyParts.length) r.bodyParts = o.bodyParts.map(x => tr(x));
-    if (o.usingWeapon && o.usingWeapon.length) r.usingWeapon = o.usingWeapon.map(item);
+    if (o.usingWeapon && o.usingWeapon.length) {
+      r.usingWeapon = o.usingWeapon.map(item);
+      r.weaponTypes = weaponTypes(o.usingWeapon);
+    }
+    // Kill conditions on attachments and gear: groups are alternatives ("any of these").
+    const ids = list => [].concat(list).map(x => (typeof x === 'string' ? x : x && x.id)).filter(Boolean);
+    if (o.usingWeaponMods && o.usingWeaponMods.length) r.usingWeaponMods = o.usingWeaponMods.map(g => ids(g).map(item));
+    if (o.wearing && o.wearing.length) r.wearing = o.wearing.map(g => ids(g).map(item));
+    if (o.notWearing && o.notWearing.length) r.notWearing = ids(o.notWearing).map(item);
     if (o.exitName) r.exitName = tr(o.exitName);
     if (o.useAny && o.useAny.length) r.useAny = o.useAny.map(item);
     if (o.type === 'skill') r.skillLevel = { name: tr(o.skill), level: o.level };

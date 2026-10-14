@@ -127,6 +127,8 @@
   .item.key.have { border-color: var(--good); }
   .item.key.missing { border-color: var(--bad); }
   .keys-line { margin-top: 3px; }
+  .loadout { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .loadout > div:not(.small) { margin-top: 3px; }
   .objline { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--muted); margin: 2px 0; cursor: pointer; }
   .objline input { width: 14px; height: 14px; margin-top: 1px; }
   .objline.done span { text-decoration: line-through; opacity: .6; }
@@ -1145,10 +1147,38 @@ function bringList(key, quests) {
     }
     for (const k of t.neededKeys || []) if (!k.map || mapKey(k.map.normalizedName) === key) keys.set(k.keys.map(x => x.id).join('|'), k.keys);
   }
-  if (!items.size && !keys.size) return '';
+  const loadout = loadoutLines(key, quests);
+  if (!items.size && !keys.size && !loadout) return '';
   return `<div class="sec"><h4>Bring</h4>
     ${[...items.values()].map(e => `<span title="${e.note}">${itemChip(e.item, e.n)}</span>`).join('')}
-    ${[...keys.values()].map(ks => `<span title="key">${ks.map(k => `<span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}">${k.iconLink ? `<img loading="lazy" src="${esc(k.iconLink)}" alt="">` : ''}${esc(k.name)} ${haveKey(k) ? '✓' : '✗'}</span>`).join(' or ')}</span>`).join(' ')}</div>`;
+    ${[...keys.values()].map(ks => `<span title="key">${ks.map(k => `<span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}">${k.iconLink ? `<img loading="lazy" src="${esc(k.iconLink)}" alt="">` : ''}${esc(k.name)} ${haveKey(k) ? '✓' : '✗'}</span>`).join(' or ')}</span>`).join(' ')}
+    ${loadout}</div>`;
+}
+
+// Kill objectives with weapon / attachment / gear conditions: what to carry or wear into the raid.
+function loadoutLines(key, quests) {
+  const chip = it => `<span class="item" title="${esc(it.name)}">${it.iconLink ? `<img loading="lazy" src="${esc(it.iconLink)}" alt="">` : ''}${esc(it.shortName || it.name)}</span>`;
+  const some = (list, n = 4) => list.slice(0, n).map(chip).join(' ') + (list.length > n ? ` <span class="muted small" title="${esc(list.slice(n).map(i => i.name).join(', '))}">+${list.length - n} more</span>` : '');
+  // Groups are alternatives; the items inside one group are worn/fitted together.
+  const combos = (groups, n = 3) => groups.slice(0, n).map(g => g.map(chip).join(' + ')).join(' <span class="muted small">or</span> ')
+    + (groups.length > n ? ` <span class="muted small" title="${esc(groups.slice(n).map(g => g.map(i => i.name).join(' + ')).join(' | '))}">or ${groups.length - n} more</span>` : '');
+  const rows = [];
+  for (const t of quests) {
+    for (const o of raidObjectives(t)) {
+      if (o.type !== 'shoot' || !(objOnMap(o, t, key) || objAnywhere(o, t))) continue;
+      const parts = [];
+      if (o.usingWeapon && o.usingWeapon.length) {
+        const types = (o.weaponTypes || []).map(w => w.name);
+        const label = types.length === 1 ? `Any ${types[0]}` : types.length ? types.slice(0, 3).join(' / ') + (types.length > 3 ? ' / …' : '') : 'Weapon';
+        parts.push(`<div><b>🔫 ${esc(label)}</b> <span class="muted small">(${o.usingWeapon.length} option${o.usingWeapon.length > 1 ? 's' : ''})</span> ${some(o.usingWeapon)}</div>`);
+      }
+      if (o.usingWeaponMods && o.usingWeaponMods.length) parts.push(`<div><b>🔧 with</b> ${combos(o.usingWeaponMods)}</div>`);
+      if (o.wearing && o.wearing.length) parts.push(`<div><b>🧥 wear</b> ${combos(o.wearing)}</div>`);
+      if (o.notWearing && o.notWearing.length) parts.push(`<div><b>🚫 don't wear</b> ${some(o.notWearing, 6)}</div>`);
+      if (parts.length) rows.push(`<div class="loadout"><div class="small muted">${esc(t.name)}: ${esc(o.description)}</div>${parts.join('')}</div>`);
+    }
+  }
+  return rows.length ? `<div class="sec"><h4>Weapons &amp; gear for kills</h4>${rows.join('')}</div>` : '';
 }
 
 function viewRaidInProgress() {
