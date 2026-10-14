@@ -24,7 +24,7 @@
 | 🗺️ **Raid planner** | Ranks every map by the quests you can finish there, then runs a live map with objective zones, extracts, transits, minefields, bosses, locked doors and loot. |
 | 🛣️ **Route planning** | Click where you spawned and get the shortest route through your objectives to the best extract. Exact for typical raids, and it avoids minefields. |
 | 🔑 **Keys & items** | A sidebar of everything your accepted quests need (FIR flags, counts, keys), and key checks next to each quest in the planner. |
-| 👥 **Squad sync** | Friends share their progress via `share-progress.bat` or their raw log files, so you can plan raids around everyone's quests. |
+| 👥 **Squad sync** | Friends share their progress as a sync code from their own tracker, or by sending their raw log files, so you can plan raids around everyone's quests. |
 | 🏆 **Prestige, hideout & story** | Prestige checklists, the hideout levels you need (with prerequisites), and every storyline chapter with how to start it. |
 
 ## 📸 Screenshots
@@ -66,9 +66,12 @@ The tracker only **reads** these files on your PC, and only quest IDs and timest
 
 ## 👥 Raiding with friends
 
-Send friends **`share-progress.bat`** (also downloadable from the Raid planner tab). They double-click it, and it copies a sync code to their clipboard for them to paste to you. They need nothing installed.
+Two ways to get a friend's progress into your Squad panel (Raid planner tab):
 
-No batch files? They can zip their `push-notifications` and `application` logs instead (Explorer search in the `Logs` folder → select all → *Send to → Compressed folder*), and you drop the zip into the Squad panel.
+- **They run the tracker too:** they press **Copy my sync code** and paste it to you.
+- **They don't:** they zip their `push-notifications` and `application` logs (Explorer search in the `Logs` folder → select all → *Send to → Compressed folder*) and send you the zip, which you drop into the Squad panel. The zip is read in your browser.
+
+Either way, nobody has to run a script or program someone else sent them.
 
 ## ⚠️ Good to know
 
@@ -91,7 +94,6 @@ No batch files? They can zip their `push-notifications` and `application` logs i
 | `index.html` | The whole tracker UI (single page, vanilla JS) |
 | `server.js` | Local server: serves the page and builds the combined game data (cached 6 h) |
 | `gamelogs.js` | Reads quest progress from the game's log files |
-| `share-progress.bat` | For friends: copies their quest progress as a sync code |
 | `start-tracker.bat` | Starts the server and opens your browser |
 
 ---

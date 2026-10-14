@@ -881,7 +881,7 @@ async function gzipBase64(text) {
   return btoa(bin);
 }
 
-// Codes look like "TPTF1.<base64 gzip JSON>" — made by share-progress.bat or by “Copy my sync code”.
+// Codes look like "TPTF1.<base64 gzip JSON>" — made by “Copy my sync code” in a friend's tracker.
 async function importFriendCode(text) {
   const m = String(text).match(/TPTF1\.([A-Za-z0-9+/=]+)/);
   if (!m) throw new Error('no sync code found (it starts with TPTF1.)');
@@ -1015,8 +1015,7 @@ function squadPanel() {
     <div class="row" style="margin-top:6px"><button class="primary" data-act="friendAdd">Add / update friend</button>
       <button data-act="myCode" title="Copy your own progress as a sync code for a friend who uses this tracker">Copy my sync code</button>
       <input id="myName" placeholder="your name" value="${esc(S.myName || '')}" style="width:120px">
-      <span class="spacer"></span><a class="small" href="/share-progress.bat" download>⬇ share-progress.bat</a>
-      <span class="small muted">— send this to friends; it copies their code from their game logs.</span></div>
+      <span class="spacer"></span><span class="small muted">Friends running this tracker copy their code the same way.</span></div>
     <details style="margin-top:8px" ${friendNameDraft ? 'open' : ''}><summary class="small" style="cursor:pointer">…or import a friend's raw log files</summary>
       <div class="small muted" style="margin:6px 0">Your friend opens their Tarkov install folder → <b>Logs</b>, types <b>push-notifications</b> in Explorer's search box, selects all (Ctrl+A),
         then searches <b>application</b> and adds those too, and zips them (right-click → Send to → Compressed (zipped) folder).

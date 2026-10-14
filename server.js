@@ -410,10 +410,6 @@ const server = http.createServer(async (req, res) => {
       console.log(`[${new Date().toLocaleTimeString()}] data ${mode}: ${status}${warning ? ` (${warning})` : ''}`);
       return send(req, res, 200, 'application/json', JSON.stringify({ at: entry.at, status, warning, ...entry.data }));
     }
-    if (url.pathname === '/share-progress.bat') {
-      res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="share-progress.bat"' });
-      return res.end(fs.readFileSync(path.join(__dirname, 'share-progress.bat')));
-    }
     if (url.pathname === '/api/game-progress') {
       const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';
       const progress = gamelogs.readProgress(mode);
