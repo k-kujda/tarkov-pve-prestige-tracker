@@ -1230,7 +1230,23 @@ function svgFloorOverlay(root, def, floorLayer, hideBase = false) {
 const hasFloors = def => !!(def && def.svgPath && def.layers && def.layers.length);
 const GROUND = 'Ground floor';
 const mapFloors = def => [GROUND, ...def.layers.slice().sort((a, b) => a.height[0] - b.height[0]).map(l => l.name)];
-const floorOf = (def, y) => { const l = (def.layers || []).find(l => y >= l.height[0] && y < l.height[1]); return l ? l.name : GROUND; };
+// A point is on a floor when its height is in one of the floor's bands and, if that band is limited to
+// building areas, it lies inside one of them (same rule as tarkov.dev). Otherwise it's on the ground floor.
+const inArea = (a, p) => p.x >= Math.min(a.x1, a.x2) && p.x <= Math.max(a.x1, a.x2) && p.z >= Math.min(a.z1, a.z2) && p.z <= Math.max(a.z1, a.z2);
+function floorMatch(def, p) {
+  const y = p.y || 0;
+  for (const l of def.layers || []) {
+    for (const e of l.extents || [{ height: l.height, areas: [] }]) {
+      if (y < e.height[0] || y >= e.height[1]) continue;
+      if (!e.areas.length) return { floor: l.name, area: null };
+      const a = e.areas.find(a => inArea(a, p));
+      if (a) return { floor: l.name, area: a.name };
+    }
+  }
+  return { floor: GROUND, area: null };
+}
+const floorOf = (def, p) => floorMatch(def, p).floor;
+const titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
 const floorLayerId = (def, name) => { const l = (def.layers || []).find(l => l.name === name); return l ? l.svgLayer : null; };
 const isBuildingLabel = l => l.size !== 80 && !/\b(St\.|Ave\.|Alley)$/.test(l.text);
 const buildingLabels = def => (def.labels || []).filter(isBuildingLabel);
@@ -1243,8 +1259,10 @@ function buildingOf(def, p) {
 const labelText = l => l.text.replace(/\n/g, ' ');
 function placeOf(def, p) {
   if (!hasFloors(def)) return null;
-  const b = buildingOf(def, p), f = floorOf(def, p.y);
-  return (b || f !== GROUND) ? { building: b ? labelText(b) : null, floor: f } : null;
+  const b = buildingOf(def, p), m = floorMatch(def, p);
+  // Prefer the map's building label; fall back to the floor area's own name (e.g. "scav checkpoint").
+  const building = b ? labelText(b) : m.area ? titleCase(m.area) : null;
+  return (building || m.floor !== GROUND) ? { building, floor: m.floor } : null;
 }
 const placeText = pl => (pl ? [pl.building, pl.floor].filter(Boolean).join(' · ') : '');
 // The floor shown on the raid map, and the SVG overlay currently drawing it.
@@ -1403,7 +1421,7 @@ async function attachRaidMap() {
       if (o.optional || OUT_OF_RAID.has(o.type)) continue;
       const done = !!S.objs[o.id] || S.tasks[t.id] === 'done';
       for (const p of (o.points || []).filter(p => mapKey(p.map) === key)) {
-        const fl = hasFloors(def) ? floorOf(def, p.y) : GROUND;
+        const fl = hasFloors(def) ? floorOf(def, p) : GROUND;
         const away = fl !== raidFloor;
         if (p.outline) {
           raidMarkers.addLayer(L.polygon(p.outline.map(([x, z]) => [z, x]), {
@@ -1652,7 +1670,7 @@ function drawRoute(key) {
   raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#fff', weight: 3, opacity: 0.9, dashArray: '8 6', interactive: false }));
   const def = D.mapDefs[key];
   r.stops.forEach((st, i) => {
-    const fl = hasFloors(def) ? floorOf(def, st.p.y || 0) : GROUND;
+    const fl = hasFloors(def) ? floorOf(def, st.p) : GROUND;
     const place = placeText(placeOf(def, st.p));
     raidRouteLayer.addLayer(L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
       icon: L.divIcon({ className: 'route-num' + (fl !== raidFloor ? ' away' : ''), html: String(i + 1), iconSize: [20, 20] }) })
@@ -2057,7 +2075,7 @@ document.getElementById('layout').addEventListener('click', e => {
   } else if (act === 'routeGo') {
     const key = S.raid.map, def = D.mapDefs[key], r = raidRoute(key), st = r && r.stops[Number(id)];
     if (!st) return;
-    if (hasFloors(def)) raidFloor = floorOf(def, st.p.y || 0);
+    if (hasFloors(def)) raidFloor = floorOf(def, st.p);
     if (raidMap) raidMap.setView([st.p.z, st.p.x], Math.max(raidMap.getZoom(), def.maxZoom - 1));
     render();
   } else if (act === 'raidFull') {

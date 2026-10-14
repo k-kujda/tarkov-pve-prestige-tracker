@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 12;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -114,8 +114,17 @@ async function getMapDefs() {
         tilePath: m.tilePath || null, svgPath: m.svgPath || null, svgLayer: m.svgLayer || null, tileSize: m.tileSize || 256, minZoom: m.minZoom || 1, maxZoom: m.maxZoom || 6,
         heightRange: m.heightRange || null,
         // Floors as height bands (e.g. Streets: 2nd floor = 10–15 m) and the SVG group that draws each one.
-        layers: (m.layers || []).filter(l => l.svgLayer && l.extents && l.extents[0] && l.extents[0].height)
-          .map(l => ({ name: l.name, svgLayer: l.svgLayer, height: l.extents[0].height })),
+        // A floor can have several height bands, each limited to named building areas (e.g. Customs 2nd floor:
+        // 2.7–6.5 m inside dorms, mechanic, scav checkpoint…). No areas = the band applies map-wide.
+        layers: (m.layers || []).filter(l => l.svgLayer && l.extents && l.extents.length && l.extents[0].height)
+          .map(l => ({
+            name: l.name, svgLayer: l.svgLayer, height: l.extents[0].height,
+            extents: l.extents.filter(e => e.height).map(e => ({
+              height: e.height,
+              areas: (e.bounds || []).filter(b => Array.isArray(b) && b.length >= 2)
+                .map(b => ({ x1: b[0][0], z1: b[0][1], x2: b[1][0], z2: b[1][1], name: b[2] || null })),
+            })),
+          })),
         // Place / building names with their [x, z] position.
         labels: (m.labels || []).filter(l => Array.isArray(l.position)).map(l => ({ text: l.text, x: l.position[0], z: l.position[1], size: l.size || 100, rotation: l.rotation || 0 })),
       };
