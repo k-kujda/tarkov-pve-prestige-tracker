@@ -88,6 +88,7 @@
   #traderLL { padding: 8px 0; }
   .search { min-width: 220px; }
   #raidMapBox { height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); border: 1px solid var(--line); border-radius: 8px; background: #0d0c0a; }
+  .map-place { white-space: nowrap; font: 700 11px/1.1 "Segoe UI", sans-serif; color: #f3e6c4; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000; text-transform: uppercase; letter-spacing: .4px; pointer-events: none; }
   #raidMapBox:fullscreen { height: 100vh; border: none; border-radius: 0; }
   #raidMapBox .leaflet-container { background: #0d0c0a; }
   .leaflet-tooltip { background: var(--panel2); color: var(--text); border-color: var(--line); }
@@ -101,6 +102,14 @@
   .map-label.ext-shared .dot { background: #c77ae6; }
   .map-label.transit .dot { background: #4fb4e6; border-radius: 50%; }
   .route-num { background: #fff; color: #111; border-radius: 50%; font: 700 11px/20px "Segoe UI", sans-serif; text-align: center; box-shadow: 0 0 0 2px #000; }
+  .route-num.away { opacity: .55; }
+  .route-step { cursor: pointer; border-radius: 4px; }
+  .route-step:hover { background: var(--panel2); }
+  .floor-tag { background: #111; color: #ffd24a; border: 1px solid #ffd24a; border-radius: 3px; font: 700 10px/14px "Segoe UI", sans-serif; padding: 0 3px; white-space: nowrap; cursor: pointer; box-shadow: 0 0 3px #000; }
+  .floor-tag.here { background: #ffd24a; color: #111; }
+  .floor-ctl { background: rgba(28, 27, 24, .92); border: 1px solid var(--line); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; }
+  .floor-ctl button { font: 700 11px "Segoe UI", sans-serif; padding: 3px 7px; min-width: 34px; }
+  .floor-ctl button.on { border-color: var(--accent); color: #1a1710; background: var(--accent); }
   .route-num.static { display: inline-block; width: 20px; height: 20px; flex: none; }
   .map-label.route-start .dot { background: #3fa9f5; border-radius: 50%; width: 12px; height: 12px; }
   .map-label.route-end .dot { background: #fff; }
@@ -1163,10 +1172,54 @@ function viewRaidInProgress() {
       <span class="spacer"></span><button data-act="raidFull" title="Show the map fullscreen (Esc to leave)">⛶ Fullscreen map</button><button class="primary" data-act="raidEnd">End raid</button><button data-act="raidCancel">Cancel raid</button></div>
     <div class="raid-grid">
       <div><div id="raidMapSlot"></div><div style="margin-top:6px">${legend}</div>
-        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
+        <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Yellow tags (2F, 3F, UG) mark objectives off the ground floor — click one, or use the floor buttons on the map, to see that floor. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
       <div class="panel" style="margin:0">${routePanel(key)}${bringList(key, quests)}${blocks}</div>
     </div>`;
 }
+
+// ---------- buildings & floors (maps whose SVG has floor layers, e.g. Streets of Tarkov) ----------
+const svgTextCache = {};
+async function loadSvgRoot(url) {
+  if (!svgTextCache[url]) svgTextCache[url] = fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+  return new DOMParser().parseFromString(await svgTextCache[url], 'image/svg+xml').documentElement;
+}
+// One floor visible: the base (ground) layer plus groups kept with it, or a floor drawn over a faded ground level.
+function svgFloorOverlay(root, def, floorLayer, hideBase = false) {
+  const svg = document.importNode(root, true);
+  const base = def.svgLayer;
+  const layerGroups = [...svg.children].filter(g => g.tagName.toLowerCase() === 'g' && g.dataset && g.dataset.layer);
+  for (const g of layerGroups) {
+    const isBase = g.id === base || g.dataset.keepWithGroup === base;
+    if (!floorLayer) g.style.display = isBase ? '' : 'none';
+    else if (g.id === floorLayer) g.style.display = '';
+    else if (isBase && !hideBase) { g.style.display = ''; g.style.opacity = '0.22'; }
+    else g.style.display = 'none';
+  }
+  return L.svgOverlay(svg, gameBounds(def.svgBounds || def.bounds), { interactive: false });
+}
+const hasFloors = def => !!(def && def.svgPath && def.layers && def.layers.length);
+const GROUND = 'Ground floor';
+const mapFloors = def => [GROUND, ...def.layers.slice().sort((a, b) => a.height[0] - b.height[0]).map(l => l.name)];
+const floorOf = (def, y) => { const l = (def.layers || []).find(l => y >= l.height[0] && y < l.height[1]); return l ? l.name : GROUND; };
+const floorLayerId = (def, name) => { const l = (def.layers || []).find(l => l.name === name); return l ? l.svgLayer : null; };
+const isBuildingLabel = l => l.size !== 80 && !/\b(St\.|Ave\.|Alley)$/.test(l.text);
+const buildingLabels = def => (def.labels || []).filter(isBuildingLabel);
+// No building outlines in the data, so a point belongs to the nearest building label within 60 m.
+function buildingOf(def, p) {
+  let best = null, bd = 60;
+  for (const l of buildingLabels(def)) { const d = Math.hypot(l.x - p.x, l.z - p.z); if (d < bd) { bd = d; best = l; } }
+  return best;
+}
+const labelText = l => l.text.replace(/\n/g, ' ');
+function placeOf(def, p) {
+  if (!hasFloors(def)) return null;
+  const b = buildingOf(def, p), f = floorOf(def, p.y);
+  return (b || f !== GROUND) ? { building: b ? labelText(b) : null, floor: f } : null;
+}
+const placeText = pl => (pl ? [pl.building, pl.floor].filter(Boolean).join(' · ') : '');
+// The floor shown on the raid map, and the SVG overlay currently drawing it.
+let raidFloor = GROUND, raidOverlay = null, raidOverlayFloor = null, raidTileLayer = null, raidFloorCtl = null;
+const shortFloor = name => (name === GROUND ? 'G' : /under/i.test(name) ? 'UG' : (name.match(/\d+/) || [name])[0] + 'F');
 
 // Leaflet map, kept alive across re-renders so zoom/pan survive ticking objectives.
 let leafletReady = null, raidMap = null, raidMapKey = null, raidMapEl = null, raidMarkers = null;
@@ -1207,7 +1260,7 @@ function tarkovCRS(def) {
 const gameBounds = b => L.latLngBounds([b[0][1], b[0][0]], [b[1][1], b[1][0]]);
 
 // Map overlays (extracts, transits, keys, hazards, bosses…), toggleable and remembered.
-const MAP_LAYER_DEFAULTS = { 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
+const MAP_LAYER_DEFAULTS = { 'Place names': true, 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
   'Hazards': true, 'Bosses': true, 'Locked doors (keys)': false, 'Stationary weapons': false, 'Loot containers': false };
 const LOOT_COLORS = { safe: '#ffd24a', 'weapon-box': '#d9705a', medcase: '#6fdc5f', 'medical-supply-crate': '#6fdc5f', 'ground-cache': '#c98a4f',
   'buried-barrel-cache': '#c98a4f', 'pc-block': '#4fc1c9', 'technical-supply-crate': '#9aa7b8', toolbox: '#9aa7b8', 'grenade-box': '#e08bc0',
@@ -1219,6 +1272,11 @@ function addFeatureLayers(map, key, questLayer) {
   const icon = (p, glyph, text, tip) => L.marker([p.z, p.x], { icon: L.divIcon({ className: 'map-icon', html: `${glyph}${text ? `<small>${esc(text)}</small>` : ''}`, iconSize: null, iconAnchor: [8, 8] }) }).bindTooltip(tip);
   const groups = {};
   const group = name => (groups[name] = groups[name] || L.layerGroup());
+  const def = D.mapDefs && D.mapDefs[key];
+  for (const l of (def && def.labels) || []) {
+    if (!isBuildingLabel(l)) continue;
+    group('Place names').addLayer(L.marker([l.z, l.x], { interactive: false, zIndexOffset: -1000, icon: L.divIcon({ className: 'map-place', html: esc(labelText(l)), iconSize: null, iconAnchor: [0, 0] }) }));
+  }
   if (f) {
     for (const e of f.extracts) {
       const name = e.faction === 'pmc' ? 'PMC extracts' : e.faction === 'scav' ? 'Scav extracts' : 'Shared / co-op extracts';
@@ -1264,8 +1322,21 @@ async function attachRaidMap() {
     live.appendChild(raidMapEl);
     raidMap = L.map(raidMapEl, { crs: tarkovCRS(def), minZoom: def.minZoom, maxZoom: def.maxZoom + 2, zoomSnap: 0.25, attributionControl: false });
     const bounds = gameBounds(def.bounds);
-    if (def.tilePath) L.tileLayer(def.tilePath, { tileSize: def.tileSize, bounds, maxNativeZoom: def.maxZoom, maxZoom: def.maxZoom + 2 }).addTo(raidMap);
-    else if (def.svgPath) L.imageOverlay(def.svgPath, gameBounds(def.svgBounds || def.bounds)).addTo(raidMap);
+    raidTileLayer = def.tilePath ? L.tileLayer(def.tilePath, { tileSize: def.tileSize, bounds, maxNativeZoom: def.maxZoom, maxZoom: def.maxZoom + 2 }).addTo(raidMap) : null;
+    raidOverlay = null; raidOverlayFloor = null;
+    if (hasFloors(def)) {
+      // Floor switcher inside the map: the chosen floor is drawn in place over a faded ground level.
+      const Ctl = L.Control.extend({ onAdd: () => {
+        const box = L.DomUtil.create('div', 'floor-ctl');
+        box.innerHTML = mapFloors(def).slice().reverse().map(f => `<button data-floor="${esc(f)}" title="${esc(f)}">${esc(shortFloor(f))}</button>`).join('');
+        L.DomEvent.disableClickPropagation(box);
+        box.addEventListener('click', ev => { const b = ev.target.closest('button'); if (b) { raidFloor = b.dataset.floor; render(); } });
+        return box;
+      } });
+      raidFloorCtl = new Ctl({ position: 'topleft' }).addTo(raidMap);
+    } else if (!def.tilePath && def.svgPath) {
+      L.imageOverlay(def.svgPath, gameBounds(def.svgBounds || def.bounds)).addTo(raidMap);
+    }
     raidMap.fitBounds(bounds);
     raidMarkers = L.layerGroup().addTo(raidMap);
     addFeatureLayers(raidMap, key, raidMarkers);
@@ -1277,6 +1348,22 @@ async function attachRaidMap() {
     live.appendChild(raidMapEl);
     raidMap.invalidateSize();
   }
+  // Swap the drawn floor when it changed (SVG maps redraw the whole map; tile maps get the floor laid over dimmed tiles).
+  if (hasFloors(def)) {
+    if (!mapFloors(def).includes(raidFloor)) raidFloor = GROUND;
+    for (const b of raidMapEl.querySelectorAll('.floor-ctl button')) b.classList.toggle('on', b.dataset.floor === raidFloor);
+    if (raidOverlayFloor !== raidFloor) {
+      const want = raidFloor, target = raidMap;
+      loadSvgRoot(def.svgPath).then(root => {
+        if (raidMap !== target || raidFloor !== want) return;
+        if (raidOverlay) raidOverlay.remove();
+        raidOverlay = null;
+        if (!raidTileLayer || want !== GROUND) raidOverlay = svgFloorOverlay(root, def, floorLayerId(def, want), !!raidTileLayer).addTo(target).bringToBack();
+        if (raidTileLayer) { raidTileLayer.setOpacity(want === GROUND ? 1 : 0.3); raidTileLayer.bringToBack(); }
+        raidOverlayFloor = want;
+      }).catch(() => { raidOverlayFloor = want; });
+    }
+  }
   raidMarkers.clearLayers();
   const quests = S.raid.quests.map(id => D.byId[id]).filter(Boolean);
   const pts = [];
@@ -1286,15 +1373,22 @@ async function attachRaidMap() {
       if (o.optional || OUT_OF_RAID.has(o.type)) continue;
       const done = !!S.objs[o.id] || S.tasks[t.id] === 'done';
       for (const p of (o.points || []).filter(p => mapKey(p.map) === key)) {
+        const fl = hasFloors(def) ? floorOf(def, p.y) : GROUND;
+        const away = fl !== raidFloor;
         if (p.outline) {
           raidMarkers.addLayer(L.polygon(p.outline.map(([x, z]) => [z, x]), {
-            color: done ? '#555' : color, weight: 1, fillOpacity: done ? 0.05 : 0.18, interactive: false,
+            color: done ? '#555' : color, weight: 1, fillOpacity: done ? 0.05 : away ? 0.06 : 0.18, opacity: away ? 0.5 : 1, dashArray: away ? '3 4' : null, interactive: false,
           }));
+        }
+        if (fl !== GROUND && !done) {
+          raidMarkers.addLayer(L.marker([p.z, p.x], { zIndexOffset: 950, icon: L.divIcon({ className: 'floor-tag' + (away ? '' : ' here'), html: esc(shortFloor(fl)), iconSize: null, iconAnchor: [-9, 20] }) })
+            .bindTooltip(esc(placeText(placeOf(def, p)) || fl) + (away ? ' — click to show this floor' : ''))
+            .on('click', () => { raidFloor = fl; render(); }));
         }
         const m = L.circleMarker([p.z, p.x], {
           radius: p.kind === 'item' ? 5 : 9, color: done ? '#555' : color, fillColor: done ? '#333' : color,
-          fillOpacity: done ? 0.3 : 0.75, weight: 2,
-        }).bindTooltip(`<b>${esc(t.name)}</b><br>${esc(o.description)}${done ? ' ✓' : ''}`);
+          fillOpacity: done ? 0.3 : away ? 0.3 : 0.75, opacity: away ? 0.6 : 1, dashArray: away ? '3 3' : null, weight: 2,
+        }).on('click', () => { if (away) { raidFloor = fl; render(); } }).bindTooltip(`<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`);
         raidMarkers.addLayer(m);
         if (!done) pts.push([p.z, p.x]);
       }
@@ -1331,7 +1425,7 @@ function raidStopGroups(key) {
     if (S.tasks[t.id] === 'done') return;
     for (const o of t.objectives) {
       if (o.optional || OUT_OF_RAID.has(o.type) || S.objs[o.id]) continue;
-      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z }));
+      const cands = (o.points || []).filter(p => mapKey(p.map) === key).map(p => ({ x: p.x, z: p.z, y: p.y }));
       if (cands.length) groups.push({ t, o, color: RAID_COLORS[i % RAID_COLORS.length], cands });
     }
   });
@@ -1526,12 +1620,20 @@ function drawRoute(key) {
   const path = [S.raid.spawn, ...r.stops.map(st => st.p), ...(r.extract ? [r.extract] : [])];
   raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#000', weight: 6, opacity: 0.5, interactive: false }));
   raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#fff', weight: 3, opacity: 0.9, dashArray: '8 6', interactive: false }));
-  r.stops.forEach((st, i) => raidRouteLayer.addLayer(L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
-    icon: L.divIcon({ className: 'route-num', html: String(i + 1), iconSize: [20, 20] }) })
-    .bindTooltip(`<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}`)));
+  const def = D.mapDefs[key];
+  r.stops.forEach((st, i) => {
+    const fl = hasFloors(def) ? floorOf(def, st.p.y || 0) : GROUND;
+    const place = placeText(placeOf(def, st.p));
+    raidRouteLayer.addLayer(L.marker([st.p.z, st.p.x], { zIndexOffset: 900,
+      icon: L.divIcon({ className: 'route-num' + (fl !== raidFloor ? ' away' : ''), html: String(i + 1), iconSize: [20, 20] }) })
+      .bindTooltip(`<b>${i + 1}. ${esc(st.g.t.name)}</b><br>${esc(st.g.o.description)}${place ? `<br><i>${esc(place)}</i>` : ''}`)
+      .on('click', () => { if (fl !== raidFloor) { raidFloor = fl; render(); } }));
+  });
   if (r.extract) raidRouteLayer.addLayer(L.marker([r.extract.z, r.extract.x], { zIndexOffset: 1000,
     icon: L.divIcon({ className: 'map-label route-end', html: `<span class="dot"></span>🏁 ${esc(r.extract.name)}`, iconSize: null, iconAnchor: [7, 7] }) }));
 }
+
+const pointY = st => st.p.y || 0;
 
 function routePanel(key) {
   const options = raidExtractOptions(key);
@@ -1546,7 +1648,8 @@ function routePanel(key) {
     let prev = S.raid.spawn;
     const steps = r.stops.map((st, i) => {
       const d = dist2(prev, st.p); prev = st.p;
-      return `<div class="obj"><span class="route-num static">${i + 1}</span><div><div class="small"><span class="swatch" style="background:${st.g.color}"></span><b>${esc(st.g.t.name)}</b> <span class="muted">· ${Math.round(d)} m</span></div>
+      const place = placeText(placeOf(D.mapDefs[key], st.p.y === undefined ? { ...st.p, y: pointY(st) } : st.p));
+      return `<div class="obj route-step" data-act="routeGo" data-id="${i}" title="Show on the map"><span class="route-num static">${i + 1}</span><div><div class="small"><span class="swatch" style="background:${st.g.color}"></span><b>${esc(st.g.t.name)}</b> <span class="muted">· ${Math.round(d)} m</span>${place ? ` <span class="badge">${esc(place)}</span>` : ''}</div>
         <div class="detail">${esc(st.g.o.description)}</div></div></div>`;
     });
     if (r.extract) steps.push(`<div class="obj"><span class="route-num static">🏁</span><div class="small"><b>Extract: ${esc(r.extract.name)}</b> <span class="muted">· ${Math.round(dist2(prev, r.extract))} m</span></div></div>`);
@@ -1912,6 +2015,7 @@ document.getElementById('layout').addEventListener('click', e => {
     render();
   } else if (act === 'raidStart') {
     S.raid = { map: S.ui.raidMap, quests: [...raidSelection.ids], startedAt: new Date().toISOString() };
+    raidFloor = GROUND;
     update();
   } else if (act === 'raidSpawnPick') {
     pickingSpawn = !pickingSpawn;
@@ -1920,6 +2024,12 @@ document.getElementById('layout').addEventListener('click', e => {
     S.raid.spawn = null;
     pickingSpawn = false;
     update();
+  } else if (act === 'routeGo') {
+    const key = S.raid.map, def = D.mapDefs[key], r = raidRoute(key), st = r && r.stops[Number(id)];
+    if (!st) return;
+    if (hasFloors(def)) raidFloor = floorOf(def, st.p.y || 0);
+    if (raidMap) raidMap.setView([st.p.z, st.p.x], Math.max(raidMap.getZoom(), def.maxZoom - 1));
+    render();
   } else if (act === 'raidFull') {
     if (raidMapEl && raidMapEl.requestFullscreen) raidMapEl.requestFullscreen();
   } else if (act === 'raidEnd') {

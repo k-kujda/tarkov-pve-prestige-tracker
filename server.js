@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 9;
+const CACHE_VERSION = 10;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -111,7 +111,13 @@ async function getMapDefs() {
       if (!m || !m.transform) continue;
       out[g.normalizedName] = {
         transform: m.transform, coordinateRotation: m.coordinateRotation || 0, bounds: m.bounds, svgBounds: m.svgBounds || null,
-        tilePath: m.tilePath || null, svgPath: m.svgPath || null, tileSize: m.tileSize || 256, minZoom: m.minZoom || 1, maxZoom: m.maxZoom || 6,
+        tilePath: m.tilePath || null, svgPath: m.svgPath || null, svgLayer: m.svgLayer || null, tileSize: m.tileSize || 256, minZoom: m.minZoom || 1, maxZoom: m.maxZoom || 6,
+        heightRange: m.heightRange || null,
+        // Floors as height bands (e.g. Streets: 2nd floor = 10–15 m) and the SVG group that draws each one.
+        layers: (m.layers || []).filter(l => l.svgLayer && l.extents && l.extents[0] && l.extents[0].height)
+          .map(l => ({ name: l.name, svgLayer: l.svgLayer, height: l.extents[0].height })),
+        // Place / building names with their [x, z] position.
+        labels: (m.labels || []).filter(l => Array.isArray(l.position)).map(l => ({ text: l.text, x: l.position[0], z: l.position[1], size: l.size || 100, rotation: l.rotation || 0 })),
       };
     }
     return out;
