@@ -1312,6 +1312,8 @@ function fetchQuestImages(t) {
 const TIP_STOP = new Set('locate obtain find mark the with and any inside near your from hand over item items place stash eliminate survive extract visit investigate specified spot using while into this that for are was'.split(' '));
 const tipWords = str => ((str || '').toLowerCase().match(/[a-z0-9]{3,}/g) || []).filter(w => !TIP_STOP.has(w));
 // Pick up to 3 photos for an objective: this map's guide section first (multi-map quests), then captions sharing words with the objective.
+// The guides' map screenshots ("Locations marked on map", "Needle … Interchange Map.png").
+const isMapShot = i => /marked on (the )?map|\bon the map$|^map\b/i.test(i.caption) || /(^|[ _-])map$/i.test(i.file.replace(/\.[a-z0-9]+$/i, ''));
 function photosFor(o, key, imgs) {
   const here = mapName(key).toLowerCase();
   const mapNames = new Set(D.maps.map(m => m.name.toLowerCase()));
@@ -1321,17 +1323,15 @@ function photosFor(o, key, imgs) {
   const names = i => [...mapNames].filter(n => (i.caption + ' ' + i.file).toLowerCase().includes(n));
   if (!byMap && pool.some(i => names(i).includes(here))) pool = pool.filter(i => !names(i).length || names(i).includes(here));
   if (!pool.length) pool = imgs;
+  // Skip the guides' map screenshots ("… marked on map"): the tracker already shows the map.
+  pool = pool.filter(i => !isMapShot(i));
   // Map names appear in most file names, so they don't say which spot a photo shows.
   const mapWords = new Set([...mapNames].flatMap(n => tipWords(n)));
   const want = new Set(tipWords(o.description).filter(w => !mapWords.has(w)));
   const scored = pool.map((im, idx) => ({ im, idx, sc: tipWords(im.caption + ' ' + im.file.replace(/[_.-]/g, ' ')).filter(w => want.has(w)).length }));
   scored.sort((a, b) => b.sc - a.sc || a.idx - b.idx);
   let picks = scored[0] && scored[0].sc > 0 ? scored.filter(x => x.sc > 0).map(x => x.im) : scored.map(x => x.im);
-  picks = picks.slice(0, 3);
-  // Add the guide's "marked on map" overview when there's room.
-  const overview = pool.find(i => /marked on (the )?map/i.test(i.caption));
-  if (overview && !picks.includes(overview) && picks.length < 3) picks.unshift(overview);
-  return picks.sort((a, b) => pool.indexOf(a) - pool.indexOf(b));
+  return picks.slice(0, 3).sort((a, b) => pool.indexOf(a) - pool.indexOf(b));
 }
 function tipItemHtml(o) {
   const it = o.questItem || o.markerItem || (o.type === 'findItem' || o.type === 'plantItem' ? o.items && o.items[0] : null);
