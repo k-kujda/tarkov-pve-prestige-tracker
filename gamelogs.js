@@ -2,6 +2,7 @@
 // Reads quest progress from Escape from Tarkov's own log files (read-only).
 // The game logs every quest start / fail / finish as a chat notification in push-notifications_*.log,
 // and the session mode (Pve / Regular) in application_*.log — the same data TarkovMonitor uses.
+// Prestiging shows up in backend_*.log as the response to /client/prestige/obtain.
 // Only quest ids and timestamps are extracted; nothing else from the logs leaves this module.
 
 const fs = require('fs');
@@ -10,7 +11,8 @@ const { execFileSync } = require('child_process');
 
 const MODE_NAMES = { pve: 'Pve', regular: 'Regular' };
 const STATUS_BY_TYPE = { 10: 'active', 11: 'failed', 12: 'done' };
-// A prestige or wipe shows up as many already-finished quests being started again in a short window.
+// A wipe (or a prestige the backend log doesn't show) appears as many already-finished quests being
+// started again in a short window.
 const RESET_MIN_RESTARTS = 5;
 const RESET_WINDOW_MS = 30 * 60 * 1000;
 
@@ -95,11 +97,11 @@ const folderTime = name => {
   return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : 0;
 };
 
-const parsedFolders = new Map(); // folder -> { signature, modes, events }
+const parsedFolders = new Map(); // folder -> { signature, events, prestiges }
 
 function parseFolder(dir) {
   const files = fs.readdirSync(dir);
-  const relevant = files.filter(n => /(application|notifications)(_\d+)?\.log$/.test(n));
+  const relevant = files.filter(n => /(application|notifications|backend)(_\d+)?\.log$/.test(n));
   const signature = relevant.map(n => `${n}:${fs.statSync(path.join(dir, n)).size}`).join('|');
   const cached = parsedFolders.get(dir);
   if (cached && cached.signature === signature) return cached;
@@ -118,7 +120,10 @@ function parseFolder(dir) {
     const mode = (modes.filter(x => x.at <= m[1]).pop() || modes[0] || {}).mode || null;
     events.push({ at: m[1], questId, status: STATUS_BY_TYPE[msg.type], mode });
   }
-  const entry = { signature, events };
+  // The game server host gives the mode: gw-pve for PvE, anything else is regular PvP.
+  const prestiges = [...read(/backend(_\d+)?\.log$/).matchAll(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\|[^\n]*?<--- Response HTTPS, id \[\d+\]: URL: https:\/\/gw-(\w+)\.escapefromtarkov\.com\/client\/prestige\/obtain\b/gm)]
+    .map(m => ({ at: m[1], mode: m[2] === 'pve' ? 'Pve' : 'Regular' }));
+  const entry = { signature, events, prestiges };
   parsedFolders.set(dir, entry);
   return entry;
 }
@@ -130,23 +135,28 @@ function readProgress(mode) {
   const wanted = MODE_NAMES[mode] || 'Pve';
   const events = folders.flatMap(f => parseFolder(path.join(logsPath, f)).events).filter(e => e.mode === wanted);
   events.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  const prestiges = folders.flatMap(f => parseFolder(path.join(logsPath, f)).prestiges)
+    .filter(p => p.mode === wanted).map(p => p.at).sort();
 
   // Find resets (prestige / wipe) and keep only the current run.
   const resets = [];
   let finished = new Set();
   let restarts = [];
+  let nextPrestige = 0;
+  const reset = at => { resets.push(at); finished = new Set(); restarts = []; };
   for (const e of events) {
+    while (nextPrestige < prestiges.length && prestiges[nextPrestige] <= e.at) reset(prestiges[nextPrestige++]);
     if (e.status === 'done') finished.add(e.questId);
     if (e.status !== 'active' || !finished.has(e.questId)) continue;
     const t = Date.parse(e.at.replace(' ', 'T'));
     restarts = restarts.filter(r => t - r < RESET_WINDOW_MS).concat(t);
     if (restarts.length >= RESET_MIN_RESTARTS) {
       const start = events.find(x => Date.parse(x.at.replace(' ', 'T')) >= restarts[0] && x.status === 'active' && finished.has(x.questId));
-      resets.push(start.at);
-      finished = new Set();
-      restarts = [];
+      reset(start.at);
     }
   }
+  // Prestiged after the last quest event: the new run has no quests yet.
+  while (nextPrestige < prestiges.length) reset(prestiges[nextPrestige++]);
   const since = resets.length ? resets[resets.length - 1] : null;
   const quests = {};
   for (const e of events) if (!since || e.at >= since) quests[e.questId] = e.status;
@@ -154,7 +164,7 @@ function readProgress(mode) {
   return {
     logsPath, mode: wanted, folders: folders.length, events: events.length,
     firstEventAt: events.length ? events[0].at : null, lastEventAt: events.length ? events[events.length - 1].at : null,
-    resets, since, quests,
+    resets, prestiges, since, quests,
   };
 }
 

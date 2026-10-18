@@ -981,8 +981,9 @@ async function readLogFiles(files) {
   return entries;
 }
 
-// Same rules as the server's gamelogs.js: quest chat notifications (type 10/11/12), session mode from application logs,
+// Like the server's gamelogs.js: quest chat notifications (type 10/11/12), session mode from application logs,
 // and a prestige/wipe = 5+ finished quests started again within 30 minutes (only the current run is kept).
+// The server also reads exact prestige times from backend logs; friends aren't asked for those (they hold login tokens).
 function progressFromLogs(entries, wanted, assumeMode) {
   const sessions = new Map();
   for (const e of entries) {
