@@ -267,6 +267,11 @@ function indexData(raw) {
   }
   d.gateGroups = {};
   for (const t of raw.tasks) for (const g of gatesOf(t)) (d.gateGroups[g] = d.gateGroups[g] || []).push(t.id);
+  // Traders a quest unlocks (Introduction -> Jaeger, Easy Money - Part 1 -> Ref): trader key -> quest ids.
+  d.traderUnlockedBy = {};
+  for (const t of raw.tasks) for (const u of (t.finishRewards && t.finishRewards.traderUnlock) || []) {
+    if (u && u.normalizedName) (d.traderUnlockedBy[u.normalizedName] = d.traderUnlockedBy[u.normalizedName] || []).push(t.id);
+  }
   return d;
 }
 
@@ -344,6 +349,56 @@ const counterProgress = o => o.counter.taskIds.filter(id => S.tasks[id] === 'don
 const gateOpen = g => S.ui.ignoreGates || !!S.gates[g];
 const factionOk = t => !t.factionName || t.factionName === 'Any' || t.factionName === S.faction;
 
+// In 1.x traders and maps open up through the Tour story chapter (wiki "Tour"). A stage is complete when
+// any step in `any` (or every step in `all`) is ticked. Ground Zero, Interchange, Therapist, Ragman and Fence
+// are open from the start; a locked map can still be reached by transit, but not picked from the menu.
+// The BTR driver (Streets) and Lightkeeper (Lighthouse) are met in raid, so they open with their map.
+const TOUR_STAGES = [
+  { any: ['68c6a8ea578cb34230742497', '6895c24ec097ed522295a05d'], traders: ['btr-driver'], maps: ['streets-of-tarkov'] },
+  { any: ['68cc123af7f4373ce2365213'], traders: ['skier'], maps: ['customs'] },
+  { any: ['6895c4a6b9a96237b73e15a1'], traders: ['mechanic'], maps: ['factory'] },
+  { any: ['6895daa6f935f3dbe1de0a9d'], traders: ['prapor'], maps: ['woods'] },
+  { all: ['68c42742aba9a345346af424', '69bd84d0e08ef0a8d3a85950'], traders: ['peacekeeper'], maps: ['shoreline'] },
+  // After the Terminal, Reserve, Lighthouse and The Lab are separate branches.
+  { any: ['68c6a97215db207712d81624', '6896020e3af3adc94b263d60'], maps: ['reserve'] },
+  { any: ['68c6a969f7d6765264b9c44f', '6895d2d18f186d19d54d102c'], traders: ['lightkeeper'], maps: ['lighthouse'] },
+  { any: ['68c6b0a3cb1c5c519963e7af', '68c6aa4040bb6d7ff66c0abb'], maps: ['the-lab'] },
+];
+const TOUR_LINEAR_STAGES = 5;
+const tourChapter = () => D.chapterById.tour;
+
+// What the Tour still keeps locked: trader / map key -> the Tour step that unlocks it. Recomputed per render.
+let tourCache = null;
+function tourLocks() {
+  if (tourCache && tourCache.memo === memo) return tourCache;
+  const traders = new Map(), maps = new Map(), chapter = tourChapter();
+  if (chapter) {
+    const done = TOUR_STAGES.map(s => (s.any ? s.any.some(id => S.story[id]) : s.all.every(id => S.story[id])));
+    // The first stages run in order, and every later stage implies the ones before it.
+    for (let i = TOUR_LINEAR_STAGES - 1; i >= 0; i--) done[i] = done[i] || done.slice(i + 1).some(Boolean);
+    TOUR_STAGES.forEach((s, i) => {
+      if (done[i]) return;
+      const ids = s.any || s.all;
+      const step = (chapter.objectives.find(o => o.id === ids[ids.length - 1]) || {}).description || 'Tour';
+      for (const x of s.traders || []) traders.set(x, step);
+      for (const x of s.maps || []) maps.set(x, step);
+    });
+  }
+  tourCache = { memo, traders, maps };
+  return tourCache;
+}
+
+// A started or finished quest from a Tour-unlocked trader proves that stage: tick the main steps up to it.
+// A branch stage (Reserve / Lighthouse / Lab) proves the in-order stages plus only its own steps.
+function proveTourStage(trader) {
+  const chapter = tourChapter(), i = TOUR_STAGES.findIndex(x => (x.traders || []).includes(trader));
+  if (!chapter || i < 0) return;
+  const lastOf = s => (s.any || s.all)[(s.any || s.all).length - 1];
+  const last = lastOf(TOUR_STAGES[Math.min(i, TOUR_LINEAR_STAGES - 1)]);
+  for (const o of chapter.objectives) { if (!o.optional) S.story[o.id] = true; if (o.id === last) break; }
+  if (i >= TOUR_LINEAR_STAGES) for (const id of TOUR_STAGES[i].any || TOUR_STAGES[i].all) S.story[id] = true;
+}
+
 function inFocus(t) {
   // When the prestige needs no quests, every quest is just a source of XP and money.
   if (S.focus === 'all' || (S.focus === 'prestige' && !D.pathSet.size)) return true;
@@ -391,6 +446,12 @@ function taskState(t) {
       }
     }
     for (const o of storyReqsOf(t)) if (!S.story[o.objective.id]) reasons.push(`Story: ${o.storyChapter.name} — ${o.objective.name}`);
+    const tour = tourLocks();
+    if (t.trader && tour.traders.has(t.trader.normalizedName)) reasons.push(`${t.trader.name} not unlocked — Tour: ${tour.traders.get(t.trader.normalizedName)}`);
+    const unlockers = t.trader && D.traderUnlockedBy[t.trader.normalizedName];
+    if (unlockers && !unlockers.some(id => S.tasks[id] === 'done')) reasons.push(`${t.trader.name} not unlocked — finish ${unlockers.map(id => `“${D.byId[id].name}”`).join(' or ')}`);
+    const maps = taskMaps(t).map(m => mapKey(m.normalizedName));
+    if (maps.length && maps.every(k => tour.maps.has(k))) reasons.push(`${maps.map(mapName).join(' / ')} not unlocked — Tour: ${tour.maps.get(maps[0])} (or transit in)`);
     for (const r of t.traderRequirements || []) {
       if (!r.trader) continue;
       if (r.requirementType === 'level' && !cmp(S.traders[r.trader.id] || 1, r.compareMethod, r.value)) reasons.push(`${r.trader.name} LL${r.value}`);
@@ -433,6 +494,7 @@ function markUnlocksProven() {
     const t = D.byId[tid] || {};
     for (const g of gatesOf(t)) S.gates[g] = true;
     for (const o of storyReqsOf(t)) S.story[o.objective.id] = true;
+    if (t.trader) proveTourStage(t.trader.normalizedName);
   }
 }
 
@@ -896,7 +958,10 @@ function mapPlan(key) {
 
 function rankedMaps() {
   const keys = [...new Set(D.maps.map(m => mapKey(m.normalizedName)))].filter(k => D.mapDefs && D.mapDefs[k] || D.maps.some(m => m.normalizedName === k));
-  return keys.map(mapPlan).filter(p => p.finish.length || p.progress.length).sort((a, b) => b.score - a.score);
+  // Maps the Tour hasn't unlocked go last: they're only reachable by transit.
+  const locked = tourLocks().maps;
+  return keys.map(mapPlan).filter(p => p.finish.length || p.progress.length)
+    .sort((a, b) => locked.has(a.key) - locked.has(b.key) || b.score - a.score);
 }
 const mapName = key => (D.maps.find(m => m.normalizedName === key) || { name: key }).name;
 
@@ -1094,9 +1159,11 @@ function viewRaidDebrief() {
 
 function viewRaidPlanner() {
   const ranked = rankedMaps();
-  if (!S.ui.raidMap && ranked.length) S.ui.raidMap = ranked[0].key;
+  const lockedMaps = tourLocks().maps;
+  if (!S.ui.raidMap && ranked.length && !lockedMaps.has(ranked[0].key)) S.ui.raidMap = ranked[0].key;
   const rows = ranked.map((p, i) => `<tr class="${p.key === S.ui.raidMap ? 'on' : ''}">
-      <td>${i === 0 ? '⭐ ' : ''}<b>${esc(mapName(p.key))}</b></td>
+      <td>${i === 0 && !lockedMaps.has(p.key) ? '⭐ ' : ''}<b>${esc(mapName(p.key))}</b>${lockedMaps.has(p.key)
+        ? ` <span class="badge gate" title="Not in the location menu yet — Tour: ${esc(lockedMaps.get(p.key))}. You can still transit in.">locked</span>` : ''}</td>
       <td><b>${p.finish.length}</b> <span class="muted small">(${p.finish.filter(t => S.active[t.id]).length} accepted)</span></td>
       <td>${p.progress.length}</td><td>${p.objectives}</td>${squadMembers().length ? `<td>${p.squad}</td>` : ''}
       <td>${p.finish.reduce((n, t) => n + (t.experience || 0), 0).toLocaleString()}</td>
