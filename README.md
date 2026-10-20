@@ -19,7 +19,7 @@
 
 | | |
 |---|---|
-| 🧭 **Next up** | Only the quests you can do *right now* (prerequisites, level, trader loyalty, story progress), ordered for the fastest prestige: the required quest chain first, otherwise by XP. |
+| 🧭 **Next up** | Only the quests you can do *right now* (prerequisites, level, trader loyalty, story progress, and which traders and maps your Tour progress has unlocked), ordered for the fastest prestige: the required quest chain first, otherwise by XP. |
 | 🔄 **Sync from game** | Reads quest start/finish/fail events straight from Tarkov's own log files (read-only) and keeps the tracker in step every minute. Detects prestige and wipe resets automatically. |
 | 🗺️ **Raid planner** | Ranks every map by the quests you can finish there, then runs a live map with objective zones, extracts, transits, minefields, bosses, locked doors and loot. |
 | 🛣️ **Route planning** | Click where you spawned and get the shortest route through your objectives to the best extract. Exact for typical raids, and it avoids minefields. |
