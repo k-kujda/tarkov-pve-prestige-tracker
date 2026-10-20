@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 13;
+const CACHE_VERSION = 14;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -87,10 +87,16 @@ const wikiImageCache = new Map();
 
 // Keys the wiki says spawn every raid: its "Key Location" section has a ===Map=== subsection per map,
 // and the subsection text says "guaranteed" (e.g. "Guaranteed spawn every raid").
+const wikiClean = t => t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/<[^>]+>/g, ' ').replace(/'''?/g, '').replace(/\{\{[^}]*\}\}/g, '').replace(/\s+/g, ' ').trim();
+const wikiSection = (wikitext, name) => (wikitext.match(new RegExp(`\\n==\\s*${name}\\s*==([\\s\\S]*?)(?=\\n==[^=]|$)`, 'i')) || [])[1] || '';
+// A section's text lines without galleries and images, bullets stripped.
+const wikiLines = sec => sec.split('\n').filter(l => l.trim() && !/^\s*(File:|Image:|<\/?gallery|<li|<\/li|\{\{|\[\[(Category|[a-z]{2}(-[a-z]+)?):)/i.test(l))
+  .map(l => wikiClean(l.replace(/^\s*\*+\s*/, ''))).filter(Boolean);
+
 function parseGuaranteedSpawns(wikitext) {
   const sec = (wikitext.match(/==\s*Key Locations?\s*==([\s\S]*?)(?=\n==[^=]|$)/i) || [])[1];
   if (!sec) return [];
-  const clean = t => t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/<[^>]+>/g, ' ').replace(/'''?/g, '').replace(/\{\{[^}]*\}\}/g, '').replace(/\s+/g, ' ').trim();
+  const clean = wikiClean;
   const parts = sec.split(/\n===\s*([^=]+?)\s*===/);
   const out = [];
   for (let i = 1; i < parts.length; i += 2) {
@@ -101,7 +107,8 @@ function parseGuaranteedSpawns(wikitext) {
   return out;
 }
 
-async function getWikiKeySpawns(keyNames) {
+// Every key's wiki page: guaranteed spawns, what it opens, what's behind the lock and which quests / story chapters use it.
+async function getWikiKeyPages(keyNames) {
   const out = {};
   try {
     for (let i = 0; i < keyNames.length; i += 50) {
@@ -111,15 +118,37 @@ async function getWikiKeySpawns(keyNames) {
       for (const r of [...(body.query.normalized || []), ...(body.query.redirects || [])]) back[r.to] = back[r.from] || r.from;
       for (const p of body.query.pages || []) {
         const text = p.revisions && p.revisions[0].slots.main.content;
-        const spawns = text ? parseGuaranteedSpawns(text) : [];
-        if (spawns.length) out[back[p.title] || p.title] = { title: p.title, spawns };
+        if (!text) continue;
+        const usage = (text.match(/\|\s*usage\s*=([^\n]*)/i) || [])[1];
+        out[back[p.title] || p.title] = {
+          title: p.title, spawns: parseGuaranteedSpawns(text), usage: usage ? wikiClean(usage) : '',
+          lockLocation: wikiLines(wikiSection(text, 'Lock Locations?')).join(' '),
+          behind: wikiLines(wikiSection(text, 'Behind the Lock')),
+          quests: wikiLines(wikiSection(text, 'Quests')),
+        };
       }
     }
     return out;
   } catch (e) {
-    console.warn(`Wiki key spawns unavailable (${e.message})`);
+    console.warn(`Wiki key pages unavailable (${e.message})`);
     return {};
   }
+}
+
+// Rough loot rating of a "Behind the Lock" list: safes, valuables and keycards weigh most; "Nothing" is 0.
+const LOOT_WEIGHTS = [
+  [/bank safe|\bsafe/i, 4], [/multiple (very )?rare/i, 8], [/valuables|very rare|graphics card|gpu|ledx|bitcoin|intelligence folder|keycard/i, 4],
+  [/weapon (box|crate|case)|weapon spawn|weapons\b/i, 2], [/medcase|pc block|jacket|toolbox|filing cabinet|ammo (box|crate)|grenade (box|crate)|supply crate|medical crate|duffle bag|sports? bag|drawer|cash register|plastic suitcase|loose loot|currency|money|cache/i, 1],
+];
+function lootRating(lines) {
+  let score = 0;
+  for (const l of lines) {
+    if (/^nothing\b/i.test(l)) continue;
+    const n = Number((l.match(/^(\d+)\s*x/i) || [])[1]) || 1;
+    const w = LOOT_WEIGHTS.find(([re]) => re.test(l));
+    score += (w ? w[1] : 0.5) * Math.min(n, 4);
+  }
+  return Math.round(score * 10) / 10;
 }
 
 function parseGuideImages(wikitext) {
@@ -276,16 +305,12 @@ async function build(mode) {
     getMapDefs().then(m => { raw.mapDefs = m; }),
   ]);
   raw.wikiLoyalty = await getWikiLoyalty(Object.values(raw.tasks.data.tasks).map(t => t.wikiLink));
-  // Names of every key a quest needs, for the guaranteed-spawn lookup.
+  // Wiki page title of every key and keycard, for guaranteed spawns and the key lookup.
   const dict = Object.assign({}, ...DATASETS.map(n => raw[n].dict));
-  const keyIds = new Set();
-  for (const t of Object.values(raw.tasks.data.tasks)) {
-    for (const k of t.neededKeys || []) for (const id of k.keys || []) keyIds.add(id);
-    for (const o of t.objectives || []) for (const g of o.requiredKeys || []) for (const id of [].concat(g)) keyIds.add(id);
-  }
-  const keyName = id => raw.items.data.items[id] && dict[raw.items.data.items[id].name];
-  raw.keyNames = Object.fromEntries([...keyIds].map(id => [id, keyName(id)]).filter(([, n]) => n));
-  raw.keySpawns = await getWikiKeySpawns(Object.values(raw.keyNames));
+  const keyTitle = it => decodeURIComponent((it.wikiLink || '').split('/wiki/')[1] || '').replace(/_/g, ' ') || dict[it.name];
+  raw.keyNames = Object.fromEntries(Object.values(raw.items.data.items).filter(it => (it.types || []).includes('keys'))
+    .map(it => [it.id, keyTitle(it)]).filter(([, n]) => n));
+  raw.keyPages = await getWikiKeyPages([...new Set(Object.values(raw.keyNames))]);
   return normalize(raw);
 }
 
@@ -315,7 +340,7 @@ function normalize(raw) {
     if (!itemCache.has(id)) {
       const it = itemsRaw[id] || T.questItems[id];
       itemCache.set(id, it
-        ? { id, name: tr(it.name, id), shortName: tr(it.shortName, ''), iconLink: it.iconLink || null }
+        ? { id, name: tr(it.name, id), shortName: tr(it.shortName, ''), iconLink: it.iconLink || null, image: it.gridImageLink || null }
         : { id, name: id, shortName: '', iconLink: null });
     }
     return itemCache.get(id);
@@ -483,18 +508,43 @@ function normalize(raw) {
   // Guaranteed key spawns with positions: dedicated loose-loot spots on that map that only ever hold this key.
   const keySpawns = {};
   const mapByName = Object.fromEntries(Object.values(mapsRaw).map(m => [tr(m.name, m.normalizedName).toLowerCase(), m]));
+  const pos = p => ({ x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, z: Math.round(p.z * 10) / 10 });
+  // Keys that sit in a container made for them (e.g. the Machinery key's jacket in dorm room 205): a container type
+  // placed once on the map whose id was created within the hour of the key's (ObjectIds start with a timestamp).
+  const idTime = id => parseInt(String(id).slice(0, 8), 16);
+  const ownContainer = (m, id) => {
+    const count = new Map();
+    for (const c of m.lootContainers || []) count.set(c.lootContainer, (count.get(c.lootContainer) || 0) + 1);
+    const c = (m.lootContainers || []).find(x => count.get(x.lootContainer) === 1 && Math.abs(idTime(x.lootContainer) - idTime(id)) < 3600);
+    return c ? [pos(c.position)] : [];
+  };
   for (const [id, name] of Object.entries(raw.keyNames || {})) {
-    const w = (raw.keySpawns || {})[name];
-    if (!w) continue;
+    const w = (raw.keyPages || {})[name];
+    if (!w || !w.spawns.length) continue;
     keySpawns[id] = { wikiTitle: w.title, spawns: w.spawns.map(sp => {
       const m = mapByName[sp.mapName.toLowerCase()];
       const spots = m ? (m.lootLoose || []).filter(l => l.position && l.items.includes(id)) : [];
       const own = spots.filter(l => l.items.length === 1);
-      const pts = (own.length ? own : spots.filter(l => l.items.length <= 3)).map(l => ({ x: Math.round(l.position.x * 10) / 10, y: Math.round(l.position.y * 10) / 10, z: Math.round(l.position.z * 10) / 10 }));
+      let pts = (own.length ? own : spots.filter(l => l.items.length <= 3)).map(l => pos(l.position));
+      if (!pts.length && m) pts = ownContainer(m, id);
       return { map: m ? m.normalizedName : null, mapName: sp.mapName, note: sp.note, points: pts };
     }).filter(sp => sp.map) };
   }
-  return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, keySpawns, hideoutStations, traders, maps, prestige, playerLevels };
+
+  // Key lookup: every key and keycard with flea price, the maps with its lock, and the wiki's lock / loot notes.
+  const lockMaps = {};
+  for (const m of Object.values(mapsRaw)) for (const l of m.locks || []) if (l.key) (lockMaps[l.key] = lockMaps[l.key] || new Set()).add(tr(m.name, m.normalizedName));
+  const keys = Object.entries(raw.keyNames || {}).map(([id, title]) => {
+    const it = itemsRaw[id], w = (raw.keyPages || {})[title] || null;
+    const best = Math.max(0, ...(it.sellToTrader || []).map(s => s.priceRUB || 0));
+    return {
+      ...item(id), wikiLink: it.wikiLink || null, uses: (it.properties && it.properties.uses) || null,
+      flea: it.avg24hPrice || it.lastLowPrice || 0, noFlea: (it.types || []).includes('noFlea'), traderPrice: best,
+      lockMaps: [...(lockMaps[id] || [])], usage: w ? w.usage : '', lockLocation: w ? w.lockLocation : '',
+      behind: w ? w.behind : [], lootScore: w ? lootRating(w.behind) : null, wikiQuests: w ? w.quests : [],
+    };
+  });
+  return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, keySpawns, keys, hideoutStations, traders, maps, prestige, playerLevels };
 }
 
 // ---------- cache ----------
