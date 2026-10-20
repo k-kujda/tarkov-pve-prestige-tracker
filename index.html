@@ -85,7 +85,6 @@
   .group-title { margin: 16px 0 6px; font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: .6px; }
   #toast { position: fixed; bottom: 16px; right: 16px; background: var(--panel2); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 6px; display: none; z-index: 20; }
   .loading { padding: 40px; text-align: center; color: var(--muted); }
-  #traderLL { padding: 8px 0; }
   .search { min-width: 220px; }
   #raidMapBox { height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); border: 1px solid var(--line); border-radius: 8px; background: #0d0c0a; }
   .map-place { white-space: nowrap; font: 700 11px/1.1 "Segoe UI", sans-serif; color: #f3e6c4; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000; text-transform: uppercase; letter-spacing: .4px; pointer-events: none; }
@@ -149,6 +148,35 @@
   .objline input { width: 14px; height: 14px; margin-top: 1px; }
   .objline.done span { text-decoration: line-through; opacity: .6; }
   #friendCode { width: 100%; min-height: 54px; font: 12px monospace; }
+  .fold > summary { cursor: pointer; list-style: none; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary h4 { display: inline; }
+  .fold > summary::before { content: '▸ '; color: var(--accent); }
+  .fold[open] > summary::before { content: '▾ '; }
+  .raid-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+  @media (max-width: 1000px) { .raid-cols { grid-template-columns: 1fr; } }
+  .col-title { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--accent); }
+  .raid-quest { border-top: 1px solid var(--line); padding: 8px 0; }
+  .raid-quest:first-of-type { border-top: none; padding-top: 0; }
+  .raid-quest.done { opacity: .55; }
+  .gear-strip { margin: 4px 0 2px; }
+  .gear-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 3px 0; }
+  .gear { display: inline-flex; align-items: center; justify-content: center; height: 52px; min-width: 52px; padding: 2px; background: #0d0c0a; border: 1px solid var(--line); border-radius: 4px; }
+  .gear img { max-height: 46px; max-width: 150px; object-fit: contain; }
+  .gear.not { border-color: var(--bad); opacity: .8; }
+  .key-img { width: 56px; height: 56px; object-fit: contain; flex: none; align-self: flex-start; }
+  .key-card .task-head { align-items: flex-start; }
+  .menu-wrap { position: relative; }
+  .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 270px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 6px 20px rgba(0,0,0,.6); }
+  .menu[hidden] { display: none !important; }
+  .menu button { text-align: left; display: flex; flex-direction: column; }
+  .step-pills { margin-top: 8px; gap: 4px; }
+  .step-pill { border-radius: 999px; font-size: 13px; }
+  .step-pill.on { background: var(--accent); color: #1a1710; border-color: var(--accent); font-weight: 600; }
+  .step-pill.past { border-color: var(--good); }
+  .setup-grid { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; align-items: center; }
+  .setup-grid label { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+  .setup td { vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -163,17 +191,21 @@
       <option value="kappa">Prestige + Kappa</option>
       <option value="all">All quests</option>
     </select></label>
-    <button id="traderBtn">Trader loyalty levels</button>
     <span class="spacer"></span>
     <span id="prestigeNo" class="badge path"></span>
     <button id="sideShow" title="Show the accepted-quest items sidebar">Accepted items ▸</button>
     <button id="syncBtn" class="primary" title="Read your quest progress from the game's log files">Sync from game</button>
-    <button id="refreshBtn" title="Re-download quest/hideout data from tarkov.dev">Refresh data</button>
-    <button id="exportBtn">Export</button>
-    <button id="importBtn">Import</button>
-    <button id="prestigeBtn" class="danger" title="Wipe quests/hideout/items and bump prestige counter">Start new prestige</button>
+    <div class="menu-wrap">
+      <button id="menuBtn" title="Profile setup, data and backups">☰ Menu</button>
+      <div id="menu" class="menu" hidden>
+        <button id="setupBtn" title="Everything the game logs can't tell the tracker, step by step"><b>🧭 Set up my profile</b><span class="small muted">level, traders, skills, hideout, story, keys</span></button>
+        <button id="refreshBtn" title="Re-download quest/hideout data from tarkov.dev">Refresh data</button>
+        <button id="exportBtn">Export progress</button>
+        <button id="importBtn">Import progress</button>
+        <button id="prestigeBtn" class="danger" title="Wipe quests/hideout/items and bump prestige counter">Start new prestige</button>
+      </div>
+    </div>
   </div>
-  <div id="traderLL" class="row" hidden></div>
   <nav id="tabs">
     <button data-tab="next">Next up</button>
     <button data-tab="raid" id="raidTab">Raid planner</button>
@@ -181,6 +213,7 @@
     <button data-tab="prestige">Prestige requirements</button>
     <button data-tab="hideout">Hideout</button>
     <button data-tab="items">Items needed</button>
+    <button data-tab="keys">Keys</button>
     <button data-tab="story">Story</button>
     <button data-tab="completed">Completed quests</button>
   </nav>
@@ -203,8 +236,8 @@ const MAP_ALIASES = { 'ground-zero-21': 'ground-zero', 'ground-zero-tutorial': '
 // ---------- state ----------
 const defaultState = () => ({
   level: 1, faction: 'USEC', mode: 'pve', focus: 'prestige', prestige: 0,
-  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
-  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true },
+  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, skills: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
+  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true, folds: {}, keyFilter: 'all', setupStep: 0, setupBack: 'next' },
 });
 let S = loadState();
 let D = null;
@@ -245,6 +278,7 @@ function indexData(raw) {
     d.stationById[s.id] = s;
     for (const l of s.levels) d.levelById[l.id] = { ...l, station: s };
   }
+  d.keyById = Object.fromEntries((raw.keys || []).map(k => [k.id, k]));
   d.traders = (raw.traders || []).filter(tr => raw.tasks.some(t => t.trader && t.trader.id === tr.id));
   d.descendants = {};
   const desc = id => {
@@ -446,18 +480,22 @@ function taskState(t) {
       }
     }
     for (const o of storyReqsOf(t)) if (!S.story[o.objective.id]) reasons.push(`Story: ${o.storyChapter.name} — ${o.objective.name}`);
+    // Reasons that only depend on the trader (not unlocked yet, loyalty or reputation too low).
+    const traderReasons = [];
     const tour = tourLocks();
-    if (t.trader && tour.traders.has(t.trader.normalizedName)) reasons.push(`${t.trader.name} not unlocked — Tour: ${tour.traders.get(t.trader.normalizedName)}`);
+    if (t.trader && tour.traders.has(t.trader.normalizedName)) traderReasons.push(`${t.trader.name} not unlocked — Tour: ${tour.traders.get(t.trader.normalizedName)}`);
     const unlockers = t.trader && D.traderUnlockedBy[t.trader.normalizedName];
-    if (unlockers && !unlockers.some(id => S.tasks[id] === 'done')) reasons.push(`${t.trader.name} not unlocked — finish ${unlockers.map(id => `“${D.byId[id].name}”`).join(' or ')}`);
-    const maps = taskMaps(t).map(m => mapKey(m.normalizedName));
-    if (maps.length && maps.every(k => tour.maps.has(k))) reasons.push(`${maps.map(mapName).join(' / ')} not unlocked — Tour: ${tour.maps.get(maps[0])} (or transit in)`);
+    if (unlockers && !unlockers.some(id => S.tasks[id] === 'done')) traderReasons.push(`${t.trader.name} not unlocked — finish ${unlockers.map(id => `“${D.byId[id].name}”`).join(' or ')}`);
     for (const r of t.traderRequirements || []) {
       if (!r.trader) continue;
-      if (r.requirementType === 'level' && !cmp(S.traders[r.trader.id] || 1, r.compareMethod, r.value)) reasons.push(`${r.trader.name} LL${r.value}`);
-      if (r.requirementType === 'reputation' && !cmp(S.rep[r.trader.id] || 0, r.compareMethod, r.value)) reasons.push(`${r.trader.name} rep ${r.compareMethod} ${r.value}`);
+      if (r.requirementType === 'level' && !cmp(S.traders[r.trader.id] || 1, r.compareMethod, r.value)) traderReasons.push(`${r.trader.name} LL${r.value}`);
+      if (r.requirementType === 'reputation' && !cmp(S.rep[r.trader.id] || 0, r.compareMethod, r.value)) traderReasons.push(`${r.trader.name} rep ${r.compareMethod} ${r.value}`);
     }
-    res = { status: reasons.length && !S.active[t.id] ? 'locked' : 'available', reasons: S.active[t.id] ? [] : reasons };
+    const maps = taskMaps(t).map(m => mapKey(m.normalizedName));
+    if (maps.length && maps.every(k => tour.maps.has(k))) reasons.push(`${maps.map(mapName).join(' / ')} not unlocked — Tour: ${tour.maps.get(maps[0])} (or transit in)`);
+    const traderOnly = !reasons.length && traderReasons.length > 0;
+    reasons.push(...traderReasons);
+    res = { status: reasons.length && !S.active[t.id] ? 'locked' : 'available', reasons: S.active[t.id] ? [] : reasons, traderOnly: traderOnly && !S.active[t.id] };
   }
   memo.set(t.id, res);
   return res;
@@ -783,6 +821,7 @@ function viewNext() {
   const nextLocked = visible.filter(t => D.pathSet.has(t.id) && taskState(t).status === 'locked').sort((a, b) => (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0)).slice(0, 5);
   const sorts = { fastest: 'Fastest prestige', xp: 'Most XP', money: 'Most money', unlocks: 'Unlocks most quests' };
   return `${syncPanel()}
+    ${setupNudge()}
     ${prestigeSummary()}
     ${correctionsWarning()}
     ${story}
@@ -790,7 +829,7 @@ function viewNext() {
       <div class="chips" style="flex:1">${chips}</div>
       <label class="muted">Sort <select id="sortSel">${Object.entries(sorts).map(([k, v]) => `<option value="${k}" ${S.ui.sort === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
     </div>
-    ${list || '<div class="panel muted">Nothing available — check your level / trader levels, or see the upcoming quests below.</div>'}
+    ${list || '<div class="panel muted">Nothing available — check your level and traders (☰ Menu → Set up my profile), or see the upcoming quests below.</div>'}
     ${gated}
     ${skippedCount ? `<div class="small muted" style="margin-top:8px">${skippedCount} quest(s) marked “won't do” — undo from the All quests tab (tick “show won't do”).</div>` : ''}
     ${snoozedCount ? `<div class="small muted" style="margin-top:8px">${snoozedCount} quest(s) hidden as “not offered in game yet” — un-hide them from the All quests tab.</div>` : ''}
@@ -941,15 +980,22 @@ function raidCandidates() {
 }
 
 // For one map: quests you can fully finish there, and quests you can progress.
+// How much of a quest this map covers: null (nothing here), 'finish' (every in-raid objective left) or 'progress'.
+function mapFit(t, key) {
+  const objs = raidObjectives(t);
+  const here = objs.filter(o => objOnMap(o, t, key)).length;
+  if (!here) return null;
+  return { here, fit: objs.every(o => objOnMap(o, t, key) || objAnywhere(o, t)) ? 'finish' : 'progress' };
+}
+
 function mapPlan(key) {
   const finish = [], progress = [];
   let objectives = 0;
   for (const t of raidCandidates()) {
-    const objs = raidObjectives(t);
-    const here = objs.filter(o => objOnMap(o, t, key));
-    if (!here.length) continue;
-    objectives += here.length;
-    (objs.every(o => objOnMap(o, t, key) || objAnywhere(o, t)) ? finish : progress).push(t);
+    const f = mapFit(t, key);
+    if (!f) continue;
+    objectives += f.here;
+    (f.fit === 'finish' ? finish : progress).push(t);
   }
   const score = q => q.reduce((n, t) => n + (S.active[t.id] ? 3 : S.tasks[t.id] ? 0 : 1) + 2 * squadWith(t).length, 0);
   const squad = [...finish, ...progress].reduce((n, t) => n + squadWith(t).length, 0);
@@ -1173,24 +1219,39 @@ function viewRaidPlanner() {
   if (key) {
     const p = mapPlan(key);
     const quests = [...p.finish, ...p.progress];
-    if (!raidSelection || raidSelection.key !== key) raidSelection = { key, ids: new Set(quests.filter(t => S.active[t.id] || squadWith(t).length).map(t => t.id)) };
-    const list = quests.map(t => {
+    const accepted = quests.filter(t => S.active[t.id] || squadWith(t).length);
+    const notAccepted = quests.filter(t => !accepted.includes(t));
+    // Accepted quests are pre-selected unless they need a key you don't have and can't pick up on this map.
+    if (!raidSelection || raidSelection.key !== key) raidSelection = { key, ids: new Set(accepted.filter(t => keysReady(t, key)).map(t => t.id)) };
+    const row = t => {
+      const keyState = questKeyState(t, key);
+      const fit = p.finish.includes(t) ? (keyState === 'missing' ? '<span class="badge lock" title="Every objective is on this map, but you need a key you haven\'t got">needs key</span>'
+        : keyState === 'pickup' ? '<span class="badge ok" title="The key spawns on this map every raid — the route picks it up first">can finish — grab the key</span>'
+          : '<span class="badge ok">can finish</span>') : '<span class="badge">progress</span>';
       return `<div class="obj"><input type="checkbox" id="rs-${t.id}" data-act="raidSel" data-id="${t.id}" ${raidSelection.ids.has(t.id) ? 'checked' : ''}>
         <div><div><label for="rs-${t.id}" style="cursor:pointer"><b>${esc(t.name)}</b></label> <span class="muted small">${esc(t.trader.name)}</span>
-          ${p.finish.includes(t) ? '<span class="badge ok">can finish</span>' : '<span class="badge">progress</span>'}
+          ${fit}
           ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}
           ${S.active[t.id] ? '' : S.tasks[t.id] || !factionOk(t) || taskState(t).status !== 'available' ? `<span class="badge squad">for squad</span>`
             : '<span class="badge gate" title="Not accepted yet — pick it up from the trader before the raid">accept first</span>'}</div>
           ${objectiveTicks(t, key)}${questKeysHtml(t, key)}</div></div>`;
-    }).join('');
+    };
+    // Quests on this map you can't take yet only because of the trader (locked, or loyalty / reputation too low).
+    const blocked = D.tasks.filter(t => factionOk(t) && !S.tasks[t.id] && !S.active[t.id] && !isSkipped(t) && !quests.includes(t)
+      && taskState(t).traderOnly && mapFit(t, key));
+    const blockedRow = t => `<div class="obj"><span style="width:16px;flex:none">🔒</span><div><div><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
+      ${taskState(t).reasons.map(r => `<span class="badge lock">${esc(r)}</span>`).join('')}</div>
+      <div class="small muted">${t.objectives.filter(o => !o.optional && objOnMap(o, t, key)).map(o => esc(o.description)).join(' · ')}</div></div></div>`;
     plan = `<div class="panel"><div class="row"><b>${esc(mapName(key))}</b><span class="spacer"></span>
         <button class="primary" data-act="raidStart" ${raidSelection.ids.size ? '' : 'disabled'}>Start raid with ${raidSelection.ids.size} quest${raidSelection.ids.size === 1 ? '' : 's'}</button></div>
-      <div class="small muted">Accepted quests are pre-selected. “Can finish” = every remaining in-raid objective can be done on this map.
-        Tick objectives you've already done — the game logs only record whole quests, not single objectives.</div>
-      <div class="sec">${list || '<div class="muted">No quests here.</div>'}</div>
+      <div class="small muted">Accepted quests are pre-selected, except ones that need a key you haven't ticked (and that doesn't spawn here every raid).
+        “Can finish” = every remaining in-raid objective can be done on this map. Tick objectives you've already done — the game logs only record whole quests, not single objectives.</div>
+      <div class="sec"><h4>Accepted (${accepted.length})</h4>${accepted.map(row).join('') || '<div class="muted small">No accepted quests on this map.</div>'}</div>
+      ${foldSection('planNotAccepted', `Not accepted yet — pick up at the trader (${notAccepted.length})`, notAccepted.map(row).join(''), true)}
+      ${foldSection('planBlocked', `Can't accept yet — trader locked or loyalty too low (${blocked.length})`, blocked.map(blockedRow).join(''), false)}
       ${bringList(key, [...raidSelection.ids].map(id => D.byId[id]).filter(Boolean))}</div>`;
   }
-  return `${squadPanel()}<div class="panel"><b>Best maps right now</b> <span class="small muted">— accepted quests count triple; quests you can finish count double.</span>
+  return `${setupNudge()}${squadPanel()}<div class="panel"><b>Best maps right now</b> <span class="small muted">— accepted quests count triple; quests you can finish count double.</span>
       <table class="rank"><thead><tr><th>Map</th><th>Can finish</th><th>Can progress</th><th>Objectives</th>${squadMembers().length ? '<th>Squad quests</th>' : ''}<th>XP (finishable)</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="muted">No quest objectives on any map — sync from game or accept quests.</td></tr>'}</tbody></table></div>
     ${plan}`;
 }
@@ -1228,15 +1289,33 @@ function questKeyGroups(t, key) {
   return [...groups.values()];
 }
 const haveKey = k => (S.have[k.id] || 0) > 0;
+// 'none' (no keys needed), 'ok' (you have them), 'pickup' (the missing ones spawn on this map every raid) or 'missing'.
+function questKeyState(t, key) {
+  const groups = questKeyGroups(t, key);
+  if (!groups.length) return 'none';
+  const missing = groups.filter(g => !g.some(haveKey)).length;
+  if (!missing) return 'ok';
+  return keyPickups(t, key).length >= missing ? 'pickup' : 'missing';
+}
+const keysReady = (t, key) => questKeyState(t, key) !== 'missing';
+
+// A collapsible block whose open/closed state is remembered (S.ui.folds). Empty blocks aren't shown.
+function foldSection(id, title, body, openByDefault) {
+  if (!body) return '';
+  const open = (S.ui.folds || {})[id] ?? openByDefault;
+  return `<details class="fold sec" data-fold="${id}" ${open ? 'open' : ''}><summary><h4>${esc(title)}</h4></summary>${body}</details>`;
+}
 
 // Key chips next to a quest: click to mark owned; the badge says whether you can do it right now.
 function questKeysHtml(t, key) {
   const groups = questKeyGroups(t, key);
   if (!groups.length) return '';
-  const ok = groups.every(g => g.some(haveKey));
+  const state = questKeyState(t, key);
   const chips = groups.map(g => g.map(k => `<span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}"
       title="${haveKey(k) ? 'You have this key — click to unmark' : 'Click if you have this key'}">${k.iconLink ? `<img loading="lazy" src="${esc(k.iconLink)}" alt="">` : ''}${esc(k.shortName || k.name)} ${haveKey(k) ? '✓' : '✗'}</span>`).join(' or ')).join(' ');
-  return `<div class="keys-line">${ok ? '<span class="badge ok">🔑 keys ok</span>' : '<span class="badge lock">🔑 missing key</span>'} ${chips}</div>`;
+  const badge = { ok: '<span class="badge ok">🔑 keys ok</span>', pickup: '<span class="badge gate" title="Not in your stash, but it spawns on this map every raid">🔑 pick up in raid</span>',
+    missing: '<span class="badge lock">🔑 missing key</span>' }[state];
+  return `<div class="keys-line">${badge} ${chips}</div>`;
 }
 
 function bringList(key, quests) {
@@ -1287,27 +1366,74 @@ function viewRaidInProgress() {
   const r = S.raid, key = r.map;
   const quests = r.quests.map(id => D.byId[id]).filter(Boolean);
   const mins = Math.max(0, Math.round((Date.now() - Date.parse(r.startedAt)) / 60000));
-  const blocks = quests.map((t, i) => {
+  // Two columns: objectives tied to a place on this map (go there, pick something up, do something there)
+  // and objectives you can do anywhere on the map (kills, found-in-raid loot, survive…).
+  const spotCol = [], anyCol = [];
+  quests.forEach((t, i) => {
     const color = RAID_COLORS[i % RAID_COLORS.length];
-    if (S.tasks[t.id] === 'done') return `<div class="sec"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="badge ok">completed ✓</span></div>`;
+    const head = (objs, withKeys) => `<div class="row" style="gap:6px"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
+      ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}${S.active[t.id] ? '' : ' <span class="badge squad">for squad</span>'}</div>
+      ${gearStrip(objs)}${withKeys ? questKeysHtml(t, key) : ''}`;
+    if (S.tasks[t.id] === 'done') { spotCol.push(`<div class="raid-quest done"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="badge ok">completed ✓</span></div>`); return; }
     const objs = t.objectives.filter(o => !o.optional && !OUT_OF_RAID.has(o.type) && (objOnMap(o, t, key) || objAnywhere(o, t)));
+    const spot = objs.filter(o => objKind(o, key) !== 'any'), any = objs.filter(o => objKind(o, key) === 'any');
+    const pickups = keyPickups(t, key);
     const after = t.objectives.filter(o => !o.optional && !S.objs[o.id] && OUT_OF_RAID.has(o.type));
-    return `<div class="sec"><span class="swatch" style="background:${color}"></span><b>${esc(t.name)}</b> <span class="muted small">${esc(t.trader.name)}</span>
-      ${squadWith(t).map(n => `<span class="badge squad">👥 ${esc(n)}</span>`).join('')}${S.active[t.id] ? '' : ' <span class="badge squad">for squad</span>'}
-      ${questKeysHtml(t, key)}
-      ${keyPickups(t, key).map(pickupLine).join('')}
-      ${objs.map(o => `<div class="obj ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
-        <div><div class="desc">${esc(o.description)}${(o.points || []).some(p => mapKey(p.map) === key) ? ' 📍' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div></div>`).join('')}
-      ${after.length ? `<div class="small muted">After the raid: ${after.map(o => esc(o.description)).join(' · ')}</div>` : ''}</div>`;
-  }).join('');
+    const afterLine = after.length ? `<div class="small muted">After the raid: ${after.map(o => esc(o.description)).join(' · ')}</div>` : '';
+    const inSpot = spot.length || pickups.length;
+    if (inSpot) spotCol.push(`<div class="raid-quest">${head(spot, true)}${pickups.map(pickupLine).join('')}${spot.map(o => raidObjLine(o, key)).join('')}${any.length ? '' : afterLine}</div>`);
+    if (any.length) anyCol.push(`<div class="raid-quest">${head(any, !inSpot)}${any.map(o => raidObjLine(o, key)).join('')}${afterLine}</div>`);
+    if (!inSpot && !any.length) anyCol.push(`<div class="raid-quest">${head([], true)}<div class="small muted">Nothing left to do in raid.</div>${afterLine}</div>`);
+  });
   const legend = quests.map((t, i) => `<span class="small" style="margin-right:10px"><span class="swatch" style="background:${RAID_COLORS[i % RAID_COLORS.length]}"></span>${esc(t.name)}</span>`).join('');
   return `<div class="panel row"><b>Raid in progress: ${esc(mapName(key))}</b><span class="muted small">started ${mins} min ago · ${quests.filter(t => S.tasks[t.id] === 'done').length}/${quests.length} quests completed</span>
       <span class="spacer"></span><button data-act="raidFull" title="Show the map fullscreen (Esc to leave)">⛶ Fullscreen map</button><button class="primary" data-act="raidEnd">End raid</button><button data-act="raidCancel">Cancel raid</button></div>
     <div class="raid-grid">
       <div><div id="raidMapSlot"></div><div style="margin-top:6px">${legend}</div>
         <div class="small muted">Big dots + shaded areas = objective zones, small dots = possible quest-item spots. Yellow tags (2F, 3F, B) mark objectives off the ground floor — click one, or use the level buttons on the map, to see that floor. On Streets floors are estimated from height above street level. Toggle extracts, transits, hazards, bosses, keys and loot in the map's top-right panel. Map &amp; data: tarkov.dev. Kills and anywhere-on-map objectives have no fixed spot.</div></div>
-      <div class="panel" style="margin:0">${routePanel(key)}${bringList(key, quests)}${blocks}</div>
+      <div class="panel" style="margin:0">${routePanel(key)}${bringList(key, quests)}</div>
+    </div>
+    <div class="raid-cols">
+      <div class="panel"><h4 class="col-title">📍 At a spot — go there, pick up, do something</h4>${spotCol.join('') || '<div class="muted small">Nothing tied to a place on this map.</div>'}</div>
+      <div class="panel"><h4 class="col-title">🌐 Anywhere on the map</h4>${anyCol.join('') || '<div class="muted small">Nothing — every objective has a fixed spot.</div>'}</div>
     </div>`;
+}
+
+// What an in-raid objective asks for: 'go' (visit / extract at a spot), 'pickup' (a quest item or loot at a spot),
+// 'do' (mark, plant, use, kill in a zone) or 'any' (no fixed place on the map).
+const OBJ_ICONS = { go: '🚶', pickup: '✋', do: '🔧', any: '🌐' };
+function objKind(o, key) {
+  const spot = (o.points || []).some(p => mapKey(p.map) === key) || (o.zoneNames && o.zoneNames.length) || (o.type === 'extract' && o.exitName);
+  if (!spot && !['visit', 'mark', 'plantItem', 'plantQuestItem', 'findQuestItem', 'useItem'].includes(o.type)) return 'any';
+  if (o.type === 'findQuestItem' || o.type === 'findItem' || o.questItem) return 'pickup';
+  if (o.type === 'visit' || o.type === 'extract') return 'go';
+  return 'do';
+}
+function raidObjLine(o, key) {
+  const k = objKind(o, key);
+  return `<div class="obj ${S.objs[o.id] ? 'done' : ''}"><input type="checkbox" data-act="obj" data-id="${o.id}" ${S.objs[o.id] ? 'checked' : ''}>
+    <div><div class="desc"><span title="${{ go: 'Go to a spot', pickup: 'Pick something up', do: 'Do something at a spot', any: 'Anywhere on the map' }[k]}">${OBJ_ICONS[k]}</span> ${esc(o.description)}${(o.points || []).some(p => mapKey(p.map) === key) ? ' 📍' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div></div>`;
+}
+
+// Pictures of the weapons, attachments and gear an objective needs (or must not have), and items to plant / mark with.
+function gearStrip(objs) {
+  const pic = (it, cls = '') => `<span class="gear ${cls}" title="${esc(it.name)}"><img loading="lazy" src="${esc(it.image || it.iconLink || '')}" alt="${esc(it.shortName || it.name)}"></span>`;
+  const more = (list, n) => (list.length > n ? `<span class="muted small" title="${esc(list.slice(n).map(i => i.name || i.map(x => x.name).join(' + ')).join(', '))}">+${list.length - n} more</span>` : '');
+  const parts = [];
+  for (const o of objs) {
+    if (S.objs[o.id]) continue;
+    if (o.usingWeapon && o.usingWeapon.length) {
+      const types = (o.weaponTypes || []).map(w => w.name);
+      const label = o.usingWeapon.length === 1 ? o.usingWeapon[0].name : types.length === 1 ? `Any ${types[0]}` : 'One of';
+      parts.push(`<div class="gear-row"><span class="small"><b>🔫 ${esc(label)}</b></span>${o.usingWeapon.slice(0, 4).map(it => pic(it)).join('')}${more(o.usingWeapon, 4)}</div>`);
+    }
+    if (o.usingWeaponMods && o.usingWeaponMods.length) parts.push(`<div class="gear-row"><span class="small"><b>🔧 with</b></span>${o.usingWeaponMods[0].map(it => pic(it)).join('<span class="muted">+</span>')}${o.usingWeaponMods.length > 1 ? `<span class="muted small">or ${o.usingWeaponMods.length - 1} other set${o.usingWeaponMods.length > 2 ? 's' : ''}</span>` : ''}</div>`);
+    if (o.wearing && o.wearing.length) parts.push(`<div class="gear-row"><span class="small"><b>🧥 wear</b></span>${o.wearing[0].map(it => pic(it)).join('<span class="muted">+</span>')}${o.wearing.length > 1 ? `<span class="muted small">or ${o.wearing.length - 1} other set${o.wearing.length > 2 ? 's' : ''}</span>` : ''}</div>`);
+    if (o.notWearing && o.notWearing.length) parts.push(`<div class="gear-row"><span class="small"><b>🚫 no</b></span>${o.notWearing.slice(0, 6).map(it => pic(it, 'not')).join('')}${more(o.notWearing, 6)}</div>`);
+    const use = [o.markerItem, o.type === 'plantItem' && o.items && o.items[0], ...(o.useAny || []).slice(0, 2)].filter(Boolean);
+    if (use.length) parts.push(`<div class="gear-row"><span class="small"><b>🎒 bring</b></span>${use.map(it => pic(it)).join('')}</div>`);
+  }
+  return parts.length ? `<div class="gear-strip">${parts.join('')}</div>` : '';
 }
 
 // ---------- buildings & floors (maps whose SVG has floor layers, e.g. Streets of Tarkov) ----------
@@ -1949,7 +2075,14 @@ function routePanel(key) {
       ${r.minefieldLegs ? `<div class="small" style="color:var(--bad)">⚠ ${r.minefieldLegs} leg${r.minefieldLegs > 1 ? 's' : ''} still cross a minefield — go around the red dashed area.</div>` : ''}
       <div class="small muted">Straight-line distances, routed around minefields where possible: walls, fences and floors aren't accounted for. Objectives without a fixed spot (kills, anywhere-on-map) aren't on the route — do them along the way.</div>`;
   }
-  return `<div class="sec"><h4>Route</h4><div class="row">${pick}${S.raid.spawn ? '<button data-act="raidSpawnClear">Clear</button>' : ''}</div><div style="margin:6px 0">${select}</div>${body}</div>`;
+  // Guaranteed keys with no exact spot (inside a container) can't be a route stop: list them as a first step.
+  const loose = new Map();
+  for (const t of S.raid.quests.map(id => D.byId[id]).filter(Boolean)) {
+    if (S.tasks[t.id] === 'done') continue;
+    for (const pk of keyPickups(t, key)) if (!pk.spawn.points.length) loose.set(pk.key.id, pk);
+  }
+  const looseHtml = [...loose.values()].map(pk => `<div class="obj"><span class="route-num static">🔑</span><div class="small"><b>Pick up ${esc(pk.key.name)} first</b> — ${esc(pk.spawn.note)} <span class="muted">(inside a container, no exact map spot)</span></div></div>`).join('');
+  return `<div class="sec"><h4>Route</h4><div class="row">${pick}${S.raid.spawn ? '<button data-act="raidSpawnClear">Clear</button>' : ''}</div><div style="margin:6px 0">${select}</div>${looseHtml}${body}</div>`;
 }
 
 function viewQuests() {
@@ -1990,6 +2123,7 @@ function conditionMet(c) {
   if (c.playerLevel) return S.level >= c.playerLevel;
   if (c.trader && c.level) return (S.traders[c.trader.id] || 1) >= c.level;
   if (c.type === 'hideoutStation' && c.station) return stationBuilt(c.station.id, c.stationLevel);
+  if (c.type === 'skill' && c.skillLevel && (S.skills[c.skillLevel.name] || 0) >= c.skillLevel.level) return true;
   return !!S.pchecks[c.id];
 }
 
@@ -2036,6 +2170,8 @@ function levelBuildable(l) {
   for (const r of l.traderRequirements || []) {
     if (r.requirementType === 'level' && r.trader && !cmp(S.traders[r.trader.id] || 1, r.compareMethod, r.value)) reasons.push(`${r.trader.name} LL${r.value}`);
   }
+  // Skills only block once you've entered them in the setup.
+  for (const r of l.skillRequirements || []) if (S.skills[r.name] != null && S.skills[r.name] < r.level) reasons.push(`${r.name} ${r.level}`);
   return reasons;
 }
 
@@ -2133,6 +2269,224 @@ function viewItems() {
     <div class="panel"><table><thead><tr><th>Item</th><th>Need</th><th>Have</th><th>For</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="muted">Nothing needed 🎉</td></tr>'}</tbody></table></div>`;
 }
 
+// ---------- key lookup ----------
+// Quests that use each key: needed to open a door, or handed over / found as an item. Built once per data load.
+function keyQuestIndex() {
+  if (D.keyQuests) return D.keyQuests;
+  const out = {};
+  const add = (id, t, how) => { const l = (out[id] = out[id] || []); if (!l.some(x => x.t === t)) l.push({ t, how }); };
+  for (const t of D.tasks) {
+    for (const k of t.neededKeys || []) for (const x of k.keys) add(x.id, t, 'opens a door for it');
+    for (const o of t.objectives) {
+      for (const g of o.requiredKeys || []) for (const x of g) add(x.id, t, 'opens a door for it');
+      if (['giveItem', 'findItem', 'plantItem'].includes(o.type)) for (const it of o.items || []) if (D.keyById[it.id]) add(it.id, t, o.type === 'giveItem' ? 'hand it over' : o.type === 'plantItem' ? 'plant it' : 'find it');
+    }
+  }
+  return (D.keyQuests = out);
+}
+
+const KEY_VERDICTS = {
+  needed: { label: '🔴 Needed for your quests', cls: 'lock', tip: 'A quest you still have to do uses this key — keep it' },
+  story: { label: '📖 Story', cls: 'gate', tip: 'Used in a story chapter (from the wiki)' },
+  high: { label: '💎 High-value loot', cls: 'path', tip: 'Valuable room or expensive key: worth running' },
+  good: { label: '👍 Decent loot', cls: 'ok', tip: 'Some good containers behind it, or it sells well' },
+  trash: { label: '🗑 Trash key', cls: 'skip', tip: 'Not needed for anything you still have to do, little behind it, cheap' },
+};
+function keyVerdict(k) {
+  const quests = (keyQuestIndex()[k.id] || []).filter(q => factionOk(q.t));
+  const open = quests.filter(q => !S.tasks[q.t.id] && !isSkipped(q.t));
+  const story = k.wikiQuests.some(l => /story chapter/i.test(l));
+  const score = k.lootScore || 0;
+  const value = k.flea >= 1e6 || score >= 10 ? 'high' : k.flea >= 150000 || score >= 4 ? 'good' : 'trash';
+  return { quests, open, story, value, main: open.length ? 'needed' : story ? 'story' : value };
+}
+const rub = n => `${Math.round(n).toLocaleString()} ₽`;
+
+function viewKeys() {
+  const q = S.ui.search.trim().toLowerCase();
+  const filter = S.ui.keyFilter || 'all';
+  const rank = { needed: 0, story: 1, high: 2, good: 3, trash: 4 };
+  let list = (D.keys || []).map(k => ({ k, v: keyVerdict(k) }));
+  const counts = {};
+  for (const e of list) for (const f of new Set([e.v.main, e.v.value])) counts[f] = (counts[f] || 0) + 1;
+  if (q) list = list.filter(({ k }) => [k.name, k.shortName, k.usage, k.lockLocation].some(s => (s || '').toLowerCase().includes(q)));
+  if (filter !== 'all') list = list.filter(({ v }) => v.main === filter || v.value === filter);
+  list.sort((a, b) => rank[a.v.main] - rank[b.v.main] || b.k.flea - a.k.flea || a.k.name.localeCompare(b.k.name));
+  const shown = list.slice(0, 80);
+  const chips = [['all', 'All', (D.keys || []).length], ...['needed', 'story', 'high', 'good', 'trash'].map(f => [f, KEY_VERDICTS[f].label, counts[f] || 0])]
+    .map(([f, label, n]) => `<span class="chip ${filter === f ? 'on' : ''}" data-act="keyFilter" data-id="${f}">${esc(label)}<span class="n">${n}</span></span>`).join('');
+  const statusOf = t => S.tasks[t.id] === 'done' ? '<span class="badge ok">done</span>' : S.tasks[t.id] === 'failed' ? '<span class="badge">failed</span>'
+    : isSkipped(t) ? '<span class="badge skip">won\'t do</span>' : S.active[t.id] ? '<span class="badge ok">accepted</span>' : taskState(t).status === 'available' ? '<span class="badge gate">available</span>' : '<span class="badge">later</span>';
+  const cards = shown.map(({ k, v }) => {
+    const verdicts = [v.main, ...(v.main !== v.value ? [v.value] : [])].map(f => `<span class="badge ${KEY_VERDICTS[f].cls}" title="${esc(KEY_VERDICTS[f].tip)}">${esc(KEY_VERDICTS[f].label)}</span>`).join('');
+    const price = [k.noFlea ? 'can\'t be sold on the flea' : k.flea ? `flea ~${rub(k.flea)}` : 'no flea price', k.traderPrice ? `trader buys for ${rub(k.traderPrice)}` : '', k.uses ? `${k.uses} uses` : ''].filter(Boolean).join(' · ');
+    const behind = k.behind.length ? k.behind.map(esc).join(' · ') : '<span class="muted">not on the wiki</span>';
+    const quests = v.quests.map(x => `<a href="#" data-act="goto" data-id="${x.t.id}">${esc(x.t.name)}</a> <span class="muted small">(${esc(x.how)})</span> ${statusOf(x.t)}`).join('<br>');
+    const wikiUses = k.wikiQuests.filter(l => !v.quests.some(x => l.includes(x.t.name)));
+    return `<div class="task key-card"><div class="task-head" style="cursor:default">
+      <img class="key-img" loading="lazy" src="${esc(k.image || k.iconLink || '')}" alt="">
+      <div style="flex:1;min-width:0">
+        <div><span class="name">${esc(k.name)}</span> ${verdicts}</div>
+        <div class="meta">${price}${k.lockMaps.length ? ` · ${k.lockMaps.map(esc).join(', ')}` : ''}${k.lootScore != null ? ` · loot score ${k.lootScore}` : ''}</div>
+        ${k.usage ? `<div class="small">${esc(k.usage)}</div>` : ''}
+        <div class="small"><b>Behind the lock:</b> ${behind}</div>
+        ${quests ? `<div class="small" style="margin-top:3px"><b>Quests:</b><br>${quests}</div>` : ''}
+        ${wikiUses.length ? `<div class="small muted" style="margin-top:3px">${wikiUses.map(esc).join('<br>')}</div>` : ''}
+      </div>
+      <div style="text-align:right;white-space:nowrap">
+        <span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}" title="Tick if it's in your stash — the raid planner uses this">${haveKey(k) ? '✓ I have it' : 'I have it?'}</span>
+        ${k.wikiLink ? `<div class="small"><a href="${esc(k.wikiLink)}" target="_blank" rel="noopener">wiki</a></div>` : ''}
+      </div></div></div>`;
+  }).join('');
+  return `<div class="panel">
+      <div class="row"><input class="search" id="search" placeholder="Search a key by name (e.g. 314, Kiba, cottage)…" value="${esc(S.ui.search)}" style="flex:1">
+        <span class="small muted">${list.length} key${list.length === 1 ? '' : 's'}${list.length > shown.length ? ` · showing ${shown.length}` : ''}</span></div>
+      <div class="chips">${chips}</div>
+      <div class="small muted">“Needed” = a quest you haven't finished uses it. Loot is rated from the wiki's “Behind the lock” list (safes, valuables and keycards weigh most) and the flea price.
+        A cheap key with a good room still shows as decent loot. Prices: tarkov.dev ${S.mode === 'pve' ? 'PvE' : 'PvP'} flea.</div>
+    </div>${cards || '<div class="panel muted">No key matches.</div>'}`;
+}
+
+// ---------- profile setup (everything the game logs can't tell the tracker) ----------
+const SETUP_STEPS = [
+  { id: 'basics', title: 'Character' }, { id: 'traders', title: 'Traders' }, { id: 'skills', title: 'Skills' },
+  { id: 'hideout', title: 'Hideout' }, { id: 'story', title: 'Story' }, { id: 'stash', title: 'Stash & keys' },
+];
+
+// Skills something in the tracker checks: prestige conditions, hideout levels and quest objectives.
+function relevantSkills() {
+  const out = new Map();
+  const add = (name, level, why) => { if (!name) return; const e = out.get(name) || { name, uses: [] }; e.uses.push(`${why} (${level})`); out.set(name, e); };
+  const p = currentPrestige();
+  for (const c of p ? p.conditions : []) if (c.type === 'skill' && c.skillLevel) add(c.skillLevel.name, c.skillLevel.level, p.name);
+  for (const s of D.hideoutStations) for (const l of s.levels) if (!S.hideout[l.id]) for (const r of l.skillRequirements || []) add(r.name, r.level, `${s.name} ${l.level}`);
+  for (const t of D.tasks) if (!S.tasks[t.id] && factionOk(t) && inFocus(t)) for (const o of t.objectives) if (o.type === 'skill' && o.skillLevel) add(o.skillLevel.name, o.skillLevel.level, t.name);
+  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Why a trader isn't available yet (Tour step or unlocking quest), or null.
+function traderLockReason(tr) {
+  const tour = tourLocks();
+  if (tour.traders.has(tr.normalizedName)) return `Tour: ${tour.traders.get(tr.normalizedName)}`;
+  const unlockers = D.traderUnlockedBy[tr.normalizedName];
+  if (unlockers && !unlockers.some(id => S.tasks[id] === 'done')) return `finish ${unlockers.map(id => `“${D.byId[id].name}”`).join(' or ')}`;
+  return null;
+}
+
+function setupStepBody(step) {
+  if (step === 'basics') {
+    const prestiges = Math.max(6, ...(D.prestige || []).map(p => p.prestigeLevel));
+    return `<div class="setup-grid">
+      <label>Character level <input type="number" min="1" max="79" data-setup="level" value="${S.level}"></label>
+      <div class="small muted">The game logs don't record your level, so quests with a level gate depend on this. Look at the top left of the character screen.</div>
+      <label>Faction <select data-setup="faction">${['USEC', 'BEAR'].map(f => `<option ${S.faction === f ? 'selected' : ''}>${f}</option>`).join('')}</select></label>
+      <div class="small muted">A few quests are only for one faction.</div>
+      <label>Game mode <select data-setup="mode"><option value="pve" ${S.mode === 'pve' ? 'selected' : ''}>PvE</option><option value="regular" ${S.mode === 'regular' ? 'selected' : ''}>PvP</option></select></label>
+      <div class="small muted">Quest data, prices and the logs are read for this mode.</div>
+      <label>Prestiges done <select data-setup="prestige">${Array.from({ length: prestiges + 1 }, (_, n) => `<option value="${n}" ${S.prestige === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <div class="small muted">How many times you've prestiged — the tracker plans for prestige ${S.prestige + 1}.</div>
+      <label>Focus <select data-setup="focus">${[['prestige', 'Prestige path only'], ['kappa', 'Prestige + Kappa'], ['all', 'All quests']].map(([k, v]) => `<option value="${k}" ${S.focus === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <div class="small muted">Which quests Next up and the item lists care about.</div>
+    </div>`;
+  }
+  if (step === 'traders') {
+    const rows = D.traders.map(tr => {
+      const lock = traderLockReason(tr);
+      return `<tr><td><b>${esc(tr.name)}</b></td>
+        <td>${lock ? `<span class="badge lock">🔒 ${esc(lock)}</span>` : '<span class="badge ok">unlocked</span>'}</td>
+        <td><select data-trader="${tr.id}">${[1, 2, 3, 4].map(n => `<option ${(S.traders[tr.id] || 1) === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td>
+        <td><input type="number" step="0.01" data-rep="${tr.id}" value="${S.rep[tr.id] || 0}" style="width:80px"></td></tr>`;
+    }).join('');
+    return `<div class="small muted" style="margin-bottom:6px">Open each trader in game: the loyalty level (LL) is the roman number under their portrait, reputation (standing) is the number next to it.
+        Quests and hideout levels check both. Whether a trader is unlocked comes from your story progress and finished quests.</div>
+      <table><thead><tr><th>Trader</th><th>Status</th><th>Loyalty level</th><th>Reputation</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  if (step === 'skills') {
+    const skills = relevantSkills();
+    const rows = skills.map(sk => `<tr><td><b>${esc(sk.name)}</b>${SKILL_TIPS[sk.name] ? `<div class="small muted">${esc(SKILL_TIPS[sk.name])}</div>` : ''}</td>
+      <td><input type="number" min="0" max="51" data-skill="${esc(sk.name)}" value="${S.skills[sk.name] ?? ''}" placeholder="?"></td>
+      <td class="small muted">${esc(sk.uses.slice(0, 4).join(' · '))}${sk.uses.length > 4 ? ` · +${sk.uses.length - 4} more` : ''}</td></tr>`).join('');
+    return `<div class="small muted" style="margin-bottom:6px">Only the skills something still checks are listed. Character screen → Skills shows the level. Leave a skill empty if you don't know it: it won't block anything then.</div>
+      <table><thead><tr><th>Skill</th><th>Level</th><th>Needed for</th></tr></thead><tbody>${rows || '<tr><td class="muted">Nothing checks a skill right now.</td></tr>'}</tbody></table>`;
+  }
+  if (step === 'hideout') {
+    const rows = [...D.hideoutStations].sort((a, b) => a.name.localeCompare(b.name)).map(s => {
+      const levels = [...s.levels].sort((a, b) => a.level - b.level);
+      const built = Math.max(0, ...levels.filter(l => S.hideout[l.id]).map(l => l.level));
+      const need = levels.filter(l => D.hideoutPath.has(l.id) && !S.hideout[l.id]).map(l => l.level);
+      return `<tr><td><b>${esc(s.name)}</b></td><td><select data-station="${s.id}">${[0, ...levels.map(l => l.level)].map(n => `<option value="${n}" ${built === n ? 'selected' : ''}>${n === 0 ? 'not built' : 'level ' + n}</option>`).join('')}</select></td>
+        <td>${need.length ? `<span class="badge path">prestige needs level ${Math.max(...need)}</span>` : ''}</td></tr>`;
+    }).join('');
+    return `<div class="small muted" style="margin-bottom:6px">Pick the level each station is built to (hideout screen). Upgrades in progress don't count yet.</div>
+      <table><thead><tr><th>Station</th><th>Built</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  if (step === 'story') {
+    if (!D.storyChapters.length) return '<div class="muted">Story chapter data couldn’t be loaded from tarkovtracker.org. Try “Refresh data” later.</div>';
+    const rows = D.storyChapters.map(c => {
+      const main = c.objectives.filter(o => !o.optional);
+      let last = -1;
+      main.forEach((o, i) => { if (S.story[o.id]) last = i; });
+      const unlocks = [...c.mapUnlocks, ...c.traderUnlocks];
+      return `<tr><td><b>${esc(c.name)}</b>${unlocks.length ? `<div class="small muted">Unlocks ${esc(unlocks.join(', '))}</div>` : ''}</td>
+        <td><select data-chapter="${esc(c.id)}" style="max-width:420px">
+          <option value="-1">${chapterStarted(c) && last < 0 ? 'started, no step done' : 'not started'}</option>
+          ${main.map((o, i) => `<option value="${i}" ${last === i ? 'selected' : ''}>${i === main.length - 1 ? '✓ finished' : `step ${i + 1} done`}: ${esc(o.description.length > 70 ? o.description.slice(0, 68) + '…' : o.description)}</option>`).join('')}
+        </select></td></tr>`;
+    }).join('');
+    return `<div class="small muted" style="margin-bottom:6px">Pick the last step you've done in each chapter (game menu → Story / the task list's storyline). The Tour decides which traders and maps you have.
+        Quests you start or finish already tick the steps they prove; the Story tab has every step if you need more detail.</div>
+      <table><thead><tr><th>Chapter</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  // stash: hand-ticked prestige conditions and the keys your quests use.
+  const p = currentPrestige();
+  const manual = (p ? p.conditions : []).filter(c => !conditionAuto(c) && c.type !== 'skill');
+  const checks = manual.map(c => `<label class="obj"><input type="checkbox" data-act="pcheck" data-id="${c.id}" ${conditionMet(c) ? 'checked' : ''}> <span>${esc(c.description)}</span></label>`).join('');
+  const wanted = new Map();
+  for (const t of D.tasks) {
+    if (S.tasks[t.id] || isSkipped(t) || !factionOk(t) || !(S.active[t.id] || taskState(t).status === 'available')) continue;
+    for (const g of [...(t.neededKeys || []).map(k => k.keys), ...t.objectives.filter(o => !o.optional && !S.objs[o.id]).flatMap(o => o.requiredKeys || [])]) {
+      for (const k of g) { const e = wanted.get(k.id) || { k, quests: new Set() }; e.quests.add(t.name); wanted.set(k.id, e); }
+    }
+  }
+  const keys = [...wanted.values()].sort((a, b) => a.k.name.localeCompare(b.k.name)).map(({ k, quests }) => `<div class="side-item">
+      ${k.iconLink ? `<img loading="lazy" src="${esc(k.iconLink)}" alt="">` : ''}<div class="info"><div class="small">${esc(k.name)}</div><div class="for">${esc([...quests].join(' · '))}</div></div>
+      <span class="item key ${haveKey(k) ? 'have' : 'missing'}" data-act="keyToggle" data-id="${k.id}">${haveKey(k) ? '✓ have it' : 'have it?'}</span></div>`).join('');
+  return `${checks ? `<div class="sec"><h4>Prestige ${p.prestigeLevel}: stash items</h4><div class="small muted">Tick what's already in your stash.</div>${checks}</div>` : ''}
+    <div class="sec"><h4>Keys for your accepted and available quests</h4><div class="small muted">Tick the keys in your stash or key tool — the raid planner pre-selects quests by this. The Keys tab looks up any other key.</div>
+      ${keys || '<div class="muted small">None of these quests need a key.</div>'}</div>`;
+}
+
+function viewSetup() {
+  const i = Math.max(0, Math.min(SETUP_STEPS.length - 1, S.ui.setupStep || 0));
+  const step = SETUP_STEPS[i];
+  const pills = SETUP_STEPS.map((s, n) => `<button class="step-pill ${n === i ? 'on' : n < i ? 'past' : ''}" data-act="setupStep" data-id="${n}">${n + 1}. ${esc(s.title)}</button>`).join('');
+  return `<div class="panel setup">
+      <div class="row"><b>Set up your profile</b><span class="small muted">— what the game logs can't tell the tracker. Changes save as you go.</span><span class="spacer"></span>
+        <button data-act="setupDone">Close</button></div>
+      <div class="row step-pills">${pills}</div>
+      <h3 style="margin:10px 0 6px">${esc(step.title)}</h3>
+      ${setupStepBody(step.id)}
+      <div class="row" style="margin-top:12px">
+        ${i > 0 ? `<button data-act="setupStep" data-id="${i - 1}">◂ Back</button>` : ''}<span class="spacer"></span>
+        ${i < SETUP_STEPS.length - 1 ? `<button class="primary" data-act="setupStep" data-id="${i + 1}">Next: ${esc(SETUP_STEPS[i + 1].title)} ▸</button>` : '<button class="primary" data-act="setupDone">Done</button>'}
+      </div></div>`;
+}
+
+// Shown on the main views while the profile still looks unset (level 1 with progress, no loyalty levels).
+function setupNudge() {
+  const progress = Object.keys(S.tasks).length + Object.keys(S.active).length;
+  const missing = [S.level <= 1 && progress > 3 ? 'your level is still 1' : '', progress > 10 && !Object.keys(S.traders).length ? 'no trader loyalty levels' : ''].filter(Boolean);
+  if (!missing.length) return '';
+  return `<div class="panel row" style="border-color:var(--warn)"><span>⚠ ${esc(missing.join(' and '))} — quests may show as locked or available when they aren't.</span><span class="spacer"></span>
+    <button class="primary" data-act="openSetup">Set up my profile</button></div>`;
+}
+
+function openSetup() {
+  if (S.ui.tab !== 'setup') S.ui.setupBack = S.ui.tab;
+  S.ui.tab = 'setup';
+  update();
+}
+
 // ---------- shell ----------
 function render() {
   memo = new Map();
@@ -2143,7 +2497,7 @@ function render() {
   document.getElementById('prestigeNo').textContent = `Prestige ${S.prestige} → ${S.prestige + 1}`;
   for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('on', b.dataset.tab === S.ui.tab);
   if (!D) return;
-  const v = { raid: viewRaid, next: viewNext, quests: viewQuests, prestige: viewPrestige, hideout: viewHideout, items: viewItems, story: viewStory, completed: viewCompleted }[S.ui.tab] || viewNext;
+  const v = { raid: viewRaid, next: viewNext, quests: viewQuests, prestige: viewPrestige, hideout: viewHideout, items: viewItems, keys: viewKeys, story: viewStory, completed: viewCompleted, setup: viewSetup }[S.ui.tab] || viewNext;
   const focused = document.activeElement && document.activeElement.id;
   const caret = focused === 'search' ? document.activeElement.selectionStart : null;
   document.getElementById('view').innerHTML = v();
@@ -2226,14 +2580,6 @@ function renderSide() {
   </div>`;
 }
 
-function renderTraderLL() {
-  const box = document.getElementById('traderLL');
-  if (!D) return;
-  box.innerHTML = D.traders.map(tr => `<label class="muted">${esc(tr.name)} LL <select data-trader="${tr.id}">${[1, 2, 3, 4].map(n => `<option ${(S.traders[tr.id] || 1) === n ? 'selected' : ''}>${n}</option>`).join('')}</select>
-    rep <input type="number" step="0.01" data-rep="${tr.id}" value="${S.rep[tr.id] || 0}" style="width:70px"></label>`).join('')
-    + '<span class="small muted">Loyalty level and reputation as shown on the trader screen — quests check both.</span>';
-}
-
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -2281,6 +2627,14 @@ document.getElementById('layout').addEventListener('click', e => {
   } else if (act === 'keyToggle') {
     e.preventDefault();
     S.have[id] = haveKey({ id }) ? 0 : 1;
+    // In the planner, ticking a key selects the accepted quests it was holding back (and unticking deselects them).
+    if (raidSelection && !S.raid && S.ui.raidMap === raidSelection.key) {
+      const key = raidSelection.key, p = mapPlan(key);
+      for (const t of [...p.finish, ...p.progress]) {
+        if (!(S.active[t.id] || squadWith(t).length) || !questKeyGroups(t, key).some(g => g.some(k => k.id === id))) continue;
+        keysReady(t, key) ? raidSelection.ids.add(t.id) : raidSelection.ids.delete(t.id);
+      }
+    }
     update();
   } else if (act === 'friendAdd') {
     const box = document.getElementById('friendCode');
@@ -2376,6 +2730,18 @@ document.getElementById('layout').addEventListener('click', e => {
     S.gates[id] = true;
     toast(`Unlocked ${D.gateGroups[id].length} quests`);
     update();
+  } else if (act === 'setupStep') {
+    S.ui.setupStep = Number(id);
+    update();
+    window.scrollTo(0, 0);
+  } else if (act === 'setupDone') {
+    S.ui.tab = S.ui.setupBack && S.ui.setupBack !== 'setup' ? S.ui.setupBack : 'next';
+    update();
+  } else if (act === 'openSetup') {
+    openSetup();
+  } else if (act === 'keyFilter') {
+    S.ui.keyFilter = id;
+    update();
   } else if (act === 'map') {
     S.ui.map = id; update();
   } else if (act === 'pcheck') {
@@ -2397,6 +2763,7 @@ document.getElementById('layout').addEventListener('click', e => {
 document.getElementById('layout').addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.act === 'haveSet') { S.have[el.dataset.id] = Math.max(0, Number(el.value) || 0); update(); return; }
+  if (onSetupChange(el)) return;
   const flags = ['showDone', 'showLocked', 'showSkipped', 'hideoutNextOnly', 'hideoutPrestigeOnly', 'itemsHideDone', 'ignoreGates'];
   if (flags.includes(el.id)) { S.ui[el.id] = el.checked; update(); }
   if (el.id === 'traderFilter') { S.ui.trader = el.value; update(); }
@@ -2409,6 +2776,14 @@ document.getElementById('layout').addEventListener('change', e => {
     importFriendLogs([...el.files]).then(msg => { toast(msg); update(); }).catch(err => toast('Could not import logs: ' + err.message));
   }
 });
+
+// <details> toggle events don't bubble, so listen in the capture phase.
+document.getElementById('layout').addEventListener('toggle', e => {
+  const id = e.target.dataset && e.target.dataset.fold;
+  if (!id) return;
+  S.ui.folds = { ...(S.ui.folds || {}), [id]: e.target.open };
+  save();
+}, true);
 
 document.getElementById('layout').addEventListener('input', e => {
   if (e.target.id === 'friendName') { friendNameDraft = e.target.value; return; }
@@ -2423,13 +2798,35 @@ document.getElementById('lvl').addEventListener('change', e => { S.level = Math.
 document.getElementById('faction').addEventListener('change', e => { S.faction = e.target.value; update(); });
 document.getElementById('focus').addEventListener('change', e => { S.focus = e.target.value; update(); });
 document.getElementById('mode').addEventListener('change', e => { S.mode = e.target.value; save(); boot(false); });
-document.getElementById('traderBtn').addEventListener('click', () => { const b = document.getElementById('traderLL'); b.hidden = !b.hidden; renderTraderLL(); });
-document.getElementById('traderLL').addEventListener('change', e => {
-  const { trader, rep } = e.target.dataset;
-  if (trader) S.traders[trader] = Number(e.target.value);
-  if (rep) S.rep[rep] = Number(e.target.value) || 0;
-  if (trader || rep) update();
-});
+// Inputs of the profile setup. Returns true when the change was one of them.
+function onSetupChange(el) {
+  const d = el.dataset;
+  if (d.setup === 'level') S.level = Math.max(1, Math.min(79, Number(el.value) || 1));
+  else if (d.setup === 'faction') S.faction = el.value;
+  else if (d.setup === 'focus') S.focus = el.value;
+  else if (d.setup === 'prestige') { S.prestige = Number(el.value) || 0; computeSets(); }
+  else if (d.setup === 'mode') { S.mode = el.value; save(); boot(false); return true; }
+  else if (d.trader) S.traders[d.trader] = Number(el.value);
+  else if (d.rep) S.rep[d.rep] = Number(el.value) || 0;
+  else if (d.skill) { if (el.value === '') delete S.skills[d.skill]; else S.skills[d.skill] = Math.max(0, Number(el.value) || 0); }
+  else if (d.station) {
+    const n = Number(el.value);
+    for (const l of D.stationById[d.station].levels) l.level <= n ? (S.hideout[l.id] = true) : delete S.hideout[l.id];
+  } else if (d.chapter) {
+    // Main steps up to the chosen one are done, later ones aren't; optional (branch) steps are left alone.
+    const c = D.chapterById[d.chapter], upTo = Number(el.value);
+    c.objectives.filter(o => !o.optional).forEach((o, i) => { i <= upTo ? (S.story[o.id] = true) : delete S.story[o.id]; });
+    if (upTo >= 0) S.storyStarted[c.id] = true;
+  } else return false;
+  update();
+  return true;
+}
+
+const menu = document.getElementById('menu');
+document.getElementById('menuBtn').addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; });
+menu.addEventListener('click', () => { menu.hidden = true; });
+document.addEventListener('click', e => { if (!e.target.closest('.menu-wrap')) menu.hidden = true; });
+document.getElementById('setupBtn').addEventListener('click', openSetup);
 document.getElementById('refreshBtn').addEventListener('click', () => boot(true));
 document.getElementById('syncBtn').addEventListener('click', () => syncFromGame(true));
 document.getElementById('layout').addEventListener('dragover', e => { if (e.target.id === 'friendCode' || e.target.id === 'friendLogDrop') e.preventDefault(); });
@@ -2472,8 +2869,8 @@ document.getElementById('prestigeBtn').addEventListener('click', () => {
   if (!confirm(`Start prestige ${S.prestige + 1}? This clears quests, objectives, hideout, item counts and trader levels (your current run is archived in the export file).`)) return;
   S.history.push({ prestige: S.prestige, finishedAt: new Date().toISOString(), questsDone: Object.keys(S.tasks).length });
   S.prestige += 1;
-  Object.assign(S, { level: 1, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, traders: {}, gates: {}, story: {}, storyStarted: {}, rep: {}, active: {} });
-  save(); computeSets(); renderTraderLL(); render();
+  Object.assign(S, { level: 1, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, traders: {}, gates: {}, story: {}, storyStarted: {}, rep: {}, skills: {}, active: {} });
+  save(); computeSets(); render();
   toast(`Good luck on prestige ${S.prestige + 1}`);
 });
 
@@ -2482,7 +2879,6 @@ async function boot(force) {
   try {
     D = indexData(await loadData(force));
     computeSets();
-    renderTraderLL();
     render();
     if (force) toast('Data refreshed');
     if (!S.logSync || S.logSync.auto) syncFromGame(false);

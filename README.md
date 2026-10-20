@@ -21,9 +21,11 @@
 |---|---|
 | 🧭 **Next up** | Only the quests you can do *right now* (prerequisites, level, trader loyalty, story progress, and which traders and maps your Tour progress has unlocked), ordered for the fastest prestige: the required quest chain first, otherwise by XP. |
 | 🔄 **Sync from game** | Reads quest start/finish/fail events straight from Tarkov's own log files (read-only) and keeps the tracker in step every minute. Detects prestige and wipe resets automatically. |
-| 🗺️ **Raid planner** | Ranks every map by the quests you can finish there, then runs a live map with objective zones, extracts, transits, minefields, bosses, locked doors and loot. |
+| 🗺️ **Raid planner** | Ranks every map by the quests you can finish there, then runs a live map with objective zones, extracts, transits, minefields, bosses, locked doors and loot. In raid, quests are split into *at a spot* and *anywhere on the map*, with pictures of the weapons and gear they require. |
 | 🛣️ **Route planning** | Click where you spawned and get the shortest route through your objectives to the best extract. Exact for typical raids, and it avoids minefields. |
-| 🔑 **Keys & items** | A sidebar of everything your accepted quests need (FIR flags, counts, keys), and key checks next to each quest in the planner. |
+| 🔑 **Keys & items** | A sidebar of everything your accepted quests need (FIR flags, counts, keys), and key checks next to each quest in the planner. Quests whose key you don't have start unticked, unless the key spawns on that map every raid: then the route picks it up first. |
+| 🔎 **Key lookup** | Search any key: whether a quest or story chapter still needs it, its flea price, and what's behind the lock, rated from trash to high-value. |
+| 🧭 **Profile setup** | One step-by-step form (☰ Menu) for everything the logs can't tell: level, trader loyalty and reputation, skills, hideout, story progress, stash and keys. |
 | 👥 **Squad sync** | Friends share their progress as a sync code from their own tracker, or by sending their raw log files, so you can plan raids around everyone's quests. |
 | 🏆 **Prestige, hideout & story** | Prestige checklists, the hideout levels you need (with prerequisites), and every storyline chapter with how to start it. |
 
@@ -45,10 +47,10 @@
 1. Install [Node.js](https://nodejs.org) 18 or newer. No npm packages are needed.
 2. Download this repo (**Code → Download ZIP**) and unzip it anywhere.
 3. Double-click **`start-tracker.bat`**. The tracker opens at <http://localhost:4747>.
-4. Set your **level**, **faction** and **trader loyalty levels / reputation**. Then press **Sync from game**, or let it sync on its own.
+4. Press **Sync from game** (or let it sync on its own), then open **☰ Menu → Set up my profile** and step through level, traders, skills, hideout, story and keys: the things the game logs don't record.
 
 > [!TIP]
-> Your progress lives in your browser's local storage. Use **Export** now and then to keep a backup file.
+> Your progress lives in your browser's local storage. Use **☰ Menu → Export progress** now and then to keep a backup file.
 
 Prefer a terminal? `node server.js --open`
 
