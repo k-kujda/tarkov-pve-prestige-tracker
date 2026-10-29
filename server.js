@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const gamelogs = require('./gamelogs');
+const gunsmith = require('./gunsmith');
 
 const PORT = Number(process.env.PORT) || 4747;
 const UPSTREAM = 'https://json.tarkov.dev';
@@ -548,6 +549,45 @@ function normalize(raw) {
   return { tasks: finalTasks, corrections, storyChapters: raw.story || [], mapDefs: raw.mapDefs || {}, mapFeatures, keySpawns, keys, hideoutStations, traders, maps, prestige, playerLevels };
 }
 
+// ---------- gunsmith ----------
+// Weapons and attachments (gunsmith.js) get their own catalogue file, built from the raw items dataset and
+// refreshed with the same TTL. Solving runs in a worker thread that reads this file.
+const GUNSMITH_VERSION = 1;
+const gunsmithFile = mode => path.join(CACHE_DIR, `gunsmith-${mode}-v${GUNSMITH_VERSION}.json`);
+const gunsmithBuilding = new Map();
+function gunsmithCatalog(mode) {
+  const file = gunsmithFile(mode);
+  try { if (Date.now() - fs.statSync(file).mtimeMs < TTL_MS) return Promise.resolve(file); } catch (e) { /* not built yet */ }
+  if (!gunsmithBuilding.has(mode)) {
+    gunsmithBuilding.set(mode, (async () => {
+      try {
+        const [base, en] = await Promise.all([getJson(`${UPSTREAM}/${mode}/items`), getJson(`${UPSTREAM}/${mode}/items_en`)]);
+        const catalog = gunsmith.buildCatalog(base.data, en.data || {});
+        fs.mkdirSync(CACHE_DIR, { recursive: true });
+        fs.writeFileSync(file, JSON.stringify({ at: Date.now(), catalog }));
+        return file;
+      } catch (e) {
+        if (fs.existsSync(file)) { console.warn(`gunsmith ${mode}: using the old catalogue (${e.message})`); return file; }
+        throw e;
+      } finally {
+        gunsmithBuilding.delete(mode);
+      }
+    })());
+  }
+  return gunsmithBuilding.get(mode);
+}
+let gunsmithList = null;
+function gunsmithWeapons(file) {
+  const mtime = fs.statSync(file).mtimeMs;
+  if (gunsmithList && gunsmithList.file === file && gunsmithList.mtime === mtime) return gunsmithList.body;
+  const { at, catalog } = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const weapons = Object.values(catalog.weapons)
+    .map(w => ({ id: w.id, name: w.name, short: w.short, icon: w.icon, cls: w.cls, caliber: w.caliber, ergo: w.ergo, recoilV: w.recoilV, slots: w.slots.length }))
+    .sort((a, b) => a.cls.localeCompare(b.cls) || a.name.localeCompare(b.name));
+  gunsmithList = { file, mtime, body: JSON.stringify({ at, weapons }) };
+  return gunsmithList.body;
+}
+
 // ---------- cache ----------
 const memory = new Map();
 const inFlight = new Map();
@@ -767,6 +807,28 @@ const server = http.createServer(async (req, res) => {
       const title = (url.searchParams.get('title') || '').slice(0, 200);
       if (!title || /[<>{}\[\]|#]/.test(title)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad title' }));
       return send(req, res, 200, 'application/json', JSON.stringify({ title, images: await questImages(title) }));
+    }
+    if (url.pathname.startsWith('/api/gunsmith/')) {
+      const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';
+      const file = await gunsmithCatalog(mode);
+      const op = url.pathname.slice('/api/gunsmith/'.length);
+      if (op === 'weapons') return send(req, res, 200, 'application/json', gunsmithWeapons(file));
+      const weapon = url.searchParams.get('weapon') || '';
+      if (!/^[0-9a-f]{24}$/.test(weapon)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad weapon id' }));
+      if (op === 'solve') {
+        const started = Date.now();
+        const result = await gunsmith.inWorker({ op: 'solve', file, weapon });
+        console.log(`[${new Date().toLocaleTimeString()}] gunsmith ${mode}: ${result.weapon.name}, ${result.points.length} points in ${Date.now() - started} ms`);
+        return send(req, res, 200, 'application/json', JSON.stringify(result));
+      }
+      if (op === 'build') {
+        const key = url.searchParams.get('key') || '';
+        if (!/^\d+$/.test(key)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad key' }));
+        const result = await gunsmith.inWorker({ op: 'build', file, weapon, key });
+        if (!result) return send(req, res, 404, 'application/json', JSON.stringify({ error: 'no such point' }));
+        return send(req, res, 200, 'application/json', JSON.stringify(result));
+      }
+      return send(req, res, 404, 'text/plain', 'Not found');
     }
     if (url.pathname === '/api/game-progress') {
       const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';
