@@ -25,6 +25,7 @@
 | 🛣️ **Route planning** | Click where you spawned and get the shortest *walking* route through your objectives to the best extract: around walls and fences, up and down stairs, through doors (locked ones only with a key you have or pick up on the way), over ledges you can drop off, climb or vault, and around minefields. Every floor has its own view (Icebreaker's 16 decks, the Lab's levels, Reserve's bunkers…) with the walls of that floor, and a *Level transitions* layer marks the stairs, ramps, ladders and drops between floors. Quests that need a named exit or transit end the route there. |
 | 🔑 **Keys & items** | A sidebar of everything your accepted quests need (FIR flags, counts, keys), and key checks next to each quest in the planner. Quests whose key you don't have start unticked, unless the key spawns on that map every raid: then the route picks it up first. |
 | 🔎 **Key lookup** | Search any key: whether a quest or story chapter still needs it, its flea price, and what's behind the lock, rated from trash to high-value. |
+| 🔧 **Gunsmith** | Pick a weapon and every attachment that fits it, and fits whatever it's mounted on, is combined: often 10<sup>30</sup>+ builds. Every ergonomics / vertical recoil value pair a conflict-free build reaches is plotted, with the best trade-offs highlighted. Click any point to see that exact build on a simulated modding screen: the attachment tree, each part's effect, and the totals, weight and price. |
 | 🧭 **Profile setup** | One step-by-step form (☰ Menu) for everything the logs can't tell: level, trader loyalty and reputation, skills, hideout, story progress, stash and keys. |
 | 👥 **Squad sync** | Friends share their progress as a sync code from their own tracker, or by sending their raw log files, so you can plan raids around everyone's quests. |
 | 🏆 **Prestige, hideout & story** | Prestige checklists, the hideout levels you need (with prerequisites), and every storyline chapter with how to start it. |
@@ -88,6 +89,14 @@ PY=<python> RECAST_DIR=<folder with node_modules/recast-navigation> tools/build_
 
 Without `navmesh/` files the planner falls back to straight lines.
 
+## 🔧 How the gunsmith solves a weapon
+
+Listing builds is hopeless: an M4A1 has about 10<sup>37</sup> attachment combinations. Ergonomics and recoil modifiers simply add up over everything installed, though, so `gunsmith.js` works with the *set of reachable values* instead. A slot's set is the union of its options' sets (plus "empty" unless the slot is required); a part's set is its own stats plus one point from each of its slots. Points are kept in buckets of half an ergonomics point and half a percent of recoil.
+
+Some parts can't go together: a long handguard on a short barrel, two scopes on one rail, two stocks. Each way of reaching a point carries a fingerprint of the conflict-prone parts it uses, and two partial builds are only added together when they don't clash. Every point keeps up to six differently-fingerprinted ways. So every plotted point has a real conflict-free build, and clicking it rebuilds that build exactly by following the recorded choices. A point can only be missed when its bucket runs out of fingerprint room.
+
+Solving runs in a worker thread (AR-15 platforms take ~13 s, most weapons under 2 s), and the last four weapons stay in memory. The weapon and attachment catalogue (`cache/gunsmith-<mode>-v1.json`) is rebuilt from json.tarkov.dev's items every 6 hours. Ergonomics are shown as the raw sum. `tools/ui_gunsmith_test.mjs` drives the tab end to end in headless Edge and checks that the clicked point and the build's totals match.
+
 ## 👥 Raiding with friends
 
 Two ways to get a friend's progress into your Squad panel (Raid planner tab):
@@ -119,6 +128,7 @@ Either way, nobody has to run a script or program someone else sent them.
 | `index.html` | The whole tracker UI (single page, vanilla JS) |
 | `server.js` | Local server: serves the page and builds the combined game data (cached 6 h) |
 | `gamelogs.js` | Reads quest progress from the game's log files |
+| `gunsmith.js` | Weapon / attachment catalogue and the solver behind the Gunsmith tab (runs in a worker thread) |
 | `start-tracker.bat` | Starts the server and opens your browser |
 | `data/` | Local fixes laid over the downloaded data: quest spots from the game files, floors and extracts tarkov.dev lacks, level transitions per map, and objectives a patch changed before tarkov.dev caught up (`quest-overrides.json`) |
 | `tools/` | Builds the navmesh, quest zones and level transitions from your game install |
