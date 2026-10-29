@@ -651,7 +651,28 @@ function withLocalData(data) {
         return { ...l, ...(f.offset ? { offset: f.offset } : {}), ...(f.height ? { height: f.height, extents: [{ height: f.height, areas: [] }] } : {}) };
       }) };
   }
-  return { ...withQuestLocations({ ...data, mapFeatures }), mapDefs, mapFeatures };
+  return { ...withQuestLocations(withQuestOverrides({ ...data, mapFeatures })), mapDefs, mapFeatures };
+}
+// Objectives a game patch changed before json.tarkov.dev caught up (quest-overrides.json, keyed by objective id,
+// only entries marked verified). An entry replaces the objective's description, count and/or maps (normalized names).
+function withQuestOverrides(data) {
+  const fixes = localJson('quest-overrides.json');
+  const mapRef = Object.fromEntries((data.maps || []).map(m => [m.normalizedName, m]));
+  const fix = o => fixes[o.id] && fixes[o.id].verified ? fixes[o.id] : null;
+  return { ...data, tasks: data.tasks.map(t => !t.objectives.some(fix) ? t : {
+    ...t,
+    objectives: t.objectives.map(o => {
+      const f = fix(o);
+      if (!f) return o;
+      return {
+        ...o,
+        ...(f.description ? { description: f.description } : {}),
+        ...(f.count != null ? { count: f.count } : {}),
+        ...(f.maps ? { maps: f.maps.map(n => mapRef[n]).filter(Boolean) } : {}),
+        override: { source: f.source, patch: f.patch },
+      };
+    }),
+  }) };
 }
 function withQuestLocations(data) {
   const fixes = localJson('quest-locations.json');

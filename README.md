@@ -78,6 +78,8 @@ It's checked against the bots' own navmesh (walking distances agree to a median 
 
 **Quest locations** come from tarkov.dev, checked against the game's own quest triggers: of 533 zones with the same id in both, all sit at the same spot (median 0.00 m). Objectives tarkov.dev has no position for are filled from the game files (`tools/extract_zones.py` → `tools/build_quest_locations.js` → `data/quest-locations.json`): interactive quest spots name the objective they complete, e.g. *Wiring the Vessel*'s three repairs on Icebreaker. Boss kills route to the boss's spawn spots. Every in-raid objective that has a place now has an exact spot; only "anywhere on the map" kills and extracts don't.
 
+**After a game patch** json.tarkov.dev (and tarkovtracker.org's corrections) can lag the game by days, while the wiki is usually updated within hours. `python tools/quest_wiki_check.py` lists quests whose wiki objectives name other maps than tarkov.dev, newest edit first, with both texts side by side. Real changes go into `data/quest-overrides.json` (objective id → new description, count and/or maps, applied once marked `verified`); the quest shows an "updated for patch" badge. Patch 1.3.0 (29 Oct 2026) moved *Job for a Patriot* from Lighthouse/Customs/Reserve to Streets of Tarkov, Shoreline and Ground Zero.
+
 The built meshes live in `navmesh/`. After a game update, rebuild them (needs Python with `UnityPy numpy pillow` and `npm install recast-navigation` somewhere):
 
 ```
@@ -118,7 +120,7 @@ Either way, nobody has to run a script or program someone else sent them.
 | `server.js` | Local server: serves the page and builds the combined game data (cached 6 h) |
 | `gamelogs.js` | Reads quest progress from the game's log files |
 | `start-tracker.bat` | Starts the server and opens your browser |
-| `data/` | Local fixes laid over the downloaded data: quest spots from the game files, floors and extracts tarkov.dev lacks, level transitions per map |
+| `data/` | Local fixes laid over the downloaded data: quest spots from the game files, floors and extracts tarkov.dev lacks, level transitions per map, and objectives a patch changed before tarkov.dev caught up (`quest-overrides.json`) |
 | `tools/` | Builds the navmesh, quest zones and level transitions from your game install |
 
 ---
