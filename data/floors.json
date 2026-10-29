@@ -1,0 +1,14 @@
+{
+  "_about": "Floors for maps tarkov.dev's map definitions have no floor layers for (the Labyrinth, Terminal). Height bands (game y, metres) come from the walkable navmesh's surface heights; the band the PMC spawns stand on is the ground floor and isn't listed. 'short' is the floor button label.",
+  "the-labyrinth": [
+    { "name": "Lower level", "short": "B", "height": [-1000, -1.5] },
+    { "name": "Upper level", "short": "2F", "height": [2.5, 1000] }
+  ],
+  "terminal": [
+    { "name": "2nd Floor", "short": "2F", "height": [-58.6, -55.1] },
+    { "name": "3rd Floor", "short": "3F", "height": [-55.1, -51.7] },
+    { "name": "4th Floor", "short": "4F", "height": [-51.7, -48.3] },
+    { "name": "5th Floor", "short": "5F", "height": [-48.3, -44.7] },
+    { "name": "6th Floor and up", "short": "6F", "height": [-44.7, 1000] }
+  ]
+}

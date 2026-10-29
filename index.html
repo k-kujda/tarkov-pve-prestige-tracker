@@ -128,6 +128,9 @@
   .map-label.route-end .dot { background: #fff; }
   .map-icon { font-size: 15px; line-height: 1; text-shadow: 0 0 3px #000; }
   .map-icon small { font: 600 10px "Segoe UI", sans-serif; color: #fff; margin-left: 2px; }
+  .map-transition span { display: inline-flex; align-items: center; font-size: 12px; line-height: 1; padding: 1px 3px; border-radius: 4px;
+    background: rgba(20, 60, 80, 0.85); border: 1px solid rgba(120, 230, 255, 0.8); cursor: pointer; white-space: nowrap; }
+  .map-transition small { font: 700 10px "Segoe UI", sans-serif; color: #9fe8ff; margin-left: 1px; }
   .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .raid-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; }
   .raid-grid > .panel { max-height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); overflow-y: auto; }
@@ -1443,20 +1446,22 @@ async function loadSvgRoot(url) {
   return new DOMParser().parseFromString(await svgTextCache[url], 'image/svg+xml').documentElement;
 }
 // One floor visible: the base (ground) layer plus groups kept with it, or a floor drawn over a faded ground level.
-function svgFloorOverlay(root, def, floorLayer, hideBase = false) {
+function svgFloorOverlay(root, def, floorLayer, hideBase = false, dimBase = false) {
   const svg = document.importNode(root, true);
   const base = def.svgLayer;
   const layerGroups = [...svg.children].filter(g => g.tagName.toLowerCase() === 'g' && g.dataset && g.dataset.layer);
   for (const g of layerGroups) {
     const isBase = g.id === base || g.dataset.keepWithGroup === base;
-    if (!floorLayer) g.style.display = isBase ? '' : 'none';
+    if (!floorLayer) { g.style.display = isBase ? '' : 'none'; if (isBase && dimBase) g.style.opacity = '0.35'; } // a floor without its own drawing
     else if (g.id === floorLayer) g.style.display = '';
     else if (isBase && !hideBase) { g.style.display = ''; g.style.opacity = '0.22'; }
     else g.style.display = 'none';
   }
   return L.svgOverlay(svg, gameBounds(def.svgBounds || def.bounds), { interactive: false });
 }
-const hasFloors = def => !!(def && def.svgPath && def.layers && def.layers.length);
+// Floors come from tarkov.dev's map layers, or (marked manual) from data/floors.json for maps it has none for: there the
+// map image has no per-floor drawing, so other floors are shown by the walls layer over the dimmed map.
+const hasFloors = def => !!(def && def.layers && def.layers.length);
 const GROUND = 'Ground floor';
 const mapFloors = def => [GROUND, ...def.layers.slice().sort((a, b) => a.height[0] - b.height[0]).map(l => l.name)];
 // A point is on a floor when its height is in one of the floor's bands and, if that band is limited to
@@ -1499,7 +1504,7 @@ function localGround(key, p) {
 }
 // Building floor: 1 = ground floor, -1 = basement; null when not estimated (area-based maps, no reference points).
 function buildingFloor(def, p) {
-  if (usesAreas(def) || !def._key) return null;
+  if (usesAreas(def) || manualFloors(def) || !def._key) return null;
   const g = localGround(def._key, p);
   if (g === null) return null;
   // Streets' streets differ in height by several metres, so "below the nearest spawns" isn't reliably a basement:
@@ -1517,7 +1522,12 @@ function floorTag(def, p) {
   return fl === GROUND ? null : shortFloor(fl);
 }
 // Label for a floor button: real floors on area-based maps, drawing levels ("L2") on height-band maps.
-const floorButtonLabel = (def, f) => (usesAreas(def) ? shortFloor(f) : f === GROUND ? 'L1' : /under/i.test(f) ? 'UG' : 'L' + ((f.match(/\d+/) || ['?'])[0]));
+const manualFloors = def => (def.layers || []).some(l => l.manual);
+// Named floors without a number (Icebreaker's "Engine Room (upper)", the Lab's "Technical") keep a shortened name.
+const namedFloor = f => f.replace(/\s*\((.+)\)/, (m, w) => ' ' + w[0].toUpperCase() + w.slice(1)).replace(/\b(\w{5})\w{4,}/g, '$1.');
+const floorButtonLabel = (def, f) => (def.layers.find(l => l.name === f) || {}).short || (usesAreas(def) || manualFloors(def) ? shortFloor(f)
+  : f === GROUND ? (def.layers.some(l => !/\d/.test(l.name) && !/under/i.test(l.name)) ? 'Main' : 'L1')
+  : /under/i.test(f) ? 'UG' : /\d/.test(f) ? 'L' + f.match(/\d+/)[0] : namedFloor(f));
 const floorLayerId = (def, name) => { const l = (def.layers || []).find(l => l.name === name); return l ? l.svgLayer : null; };
 const isBuildingLabel = l => l.size !== 80 && !/\b(St\.|Ave\.|Alley)$/.test(l.text);
 const buildingLabels = def => (def.labels || []).filter(isBuildingLabel);
@@ -1621,6 +1631,21 @@ function ensureLeaflet() {
   return leafletReady;
 }
 
+// A floor image drawn a few pixels off the map's projection (data/map-transforms.json: Icebreaker's deck images are
+// drawn at a slight tilt, so each deck sits a little further along the ship): shift its tiles by [dx, dy] zoom-0 px.
+function offsetTiles(layer, off) {
+  if (!off || (!off[0] && !off[1])) return layer;
+  const place = () => {
+    const c = layer.getContainer(), m = layer._map;
+    if (!c || !m) return;
+    const k = Math.pow(2, m.getZoom());
+    c.style.marginLeft = off[0] * k + 'px'; c.style.marginTop = off[1] * k + 'px';
+  };
+  layer.on('add', () => { place(); layer._map.on('zoomend', place); });
+  layer.on('remove', () => { if (layer._map) layer._map.off('zoomend', place); });
+  return layer;
+}
+
 // Same projection as tarkov.dev's interactive maps: game (x, z) -> rotated -> affine transform.
 function tarkovCRS(def) {
   const rotate = (latLng, deg) => {
@@ -1639,7 +1664,7 @@ function tarkovCRS(def) {
 const gameBounds = b => L.latLngBounds([b[0][1], b[0][0]], [b[1][1], b[1][0]]);
 
 // Map overlays (extracts, transits, keys, hazards, bosses…), toggleable and remembered.
-const MAP_LAYER_DEFAULTS = { 'Walls (game navmesh)': true, 'Place names': true, 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
+const MAP_LAYER_DEFAULTS = { 'Walls (game navmesh)': true, 'Level transitions': true,'Place names': true, 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
   'Hazards': true, 'Bosses': true, 'Locked doors (keys)': false, 'Stationary weapons': false, 'Loot containers': false };
 const LOOT_COLORS = { safe: '#ffd24a', 'weapon-box': '#d9705a', medcase: '#6fdc5f', 'medical-supply-crate': '#6fdc5f', 'ground-cache': '#c98a4f',
   'buried-barrel-cache': '#c98a4f', 'pc-block': '#4fc1c9', 'technical-supply-crate': '#9aa7b8', toolbox: '#9aa7b8', 'grenade-box': '#e08bc0',
@@ -1673,6 +1698,12 @@ function addFeatureLayers(map, key, questLayer) {
     for (const w of f.stationary) group('Stationary weapons').addLayer(icon(w, '🔫', '', esc(w.name)));
     for (const c of f.loot) group('Loot containers').addLayer(L.circleMarker([c.z, c.x], { radius: 4, color: '#000', weight: 1, fillColor: LOOT_COLORS[c.kind] || '#aaa', fillOpacity: 0.9 }).bindTooltip(esc(c.name)));
   }
+  raidTransitions = { key, group: group('Level transitions'), list: null };
+  fetch(`/api/transitions?map=${encodeURIComponent(key)}`).then(r => (r.ok ? r.json() : null)).then(j => {
+    if (!raidTransitions || raidTransitions.key !== key) return;
+    raidTransitions.list = Array.isArray(j) ? j : (j && j.transitions) || [];
+    drawTransitions();
+  }).catch(() => {});
   raidWallsLayer = null;
   if (navReady(key) || navStatus[key] === 'loading') {
     NavWallsLayer = NavWallsLayer || makeNavWallsLayer();
@@ -1738,11 +1769,19 @@ async function attachRaidMap() {
     for (const b of raidMapEl.querySelectorAll('.floor-ctl button')) b.classList.toggle('on', b.dataset.floor === raidFloor);
     if (raidOverlayFloor !== raidFloor) {
       const want = raidFloor, target = raidMap;
-      loadSvgRoot(def.svgPath).then(root => {
+      const fl = (def.layers || []).find(l => l.name === want);
+      if (!def.svgPath || (fl && fl.tilePath && raidTileLayer)) {
+        // The floor's own map tiles (tarkov.dev draws Icebreaker's decks, the Lab's levels, Reserve's bunkers this way)
+        // over the dimmed ground floor; floors without a drawing (data/floors.json) only dim the map for the walls layer.
+        if (raidOverlay) raidOverlay.remove();
+        raidOverlay = fl && fl.tilePath ? offsetTiles(L.tileLayer(fl.tilePath, { tileSize: def.tileSize, bounds: gameBounds(def.bounds), maxNativeZoom: def.maxZoom, maxZoom: def.maxZoom + 2 }), fl.offset).addTo(raidMap) : null;
+        if (raidTileLayer) raidTileLayer.setOpacity(want === GROUND ? 1 : 0.3);
+        raidOverlayFloor = want;
+      } else loadSvgRoot(def.svgPath).then(root => {
         if (raidMap !== target || raidFloor !== want) return;
         if (raidOverlay) raidOverlay.remove();
         raidOverlay = null;
-        if (!raidTileLayer || want !== GROUND) raidOverlay = svgFloorOverlay(root, def, floorLayerId(def, want), !!raidTileLayer).addTo(target).bringToBack();
+        if (!raidTileLayer || want !== GROUND) raidOverlay = svgFloorOverlay(root, def, floorLayerId(def, want), !!raidTileLayer, want !== GROUND).addTo(target).bringToBack();
         if (raidTileLayer) { raidTileLayer.setOpacity(want === GROUND ? 1 : 0.3); raidTileLayer.bringToBack(); }
         raidOverlayFloor = want;
       }).catch(() => { raidOverlayFloor = want; });
@@ -1775,7 +1814,8 @@ async function attachRaidMap() {
           fillOpacity: done ? 0.3 : away ? 0.3 : 0.75, opacity: away ? 0.6 : 1, dashArray: away ? '3 3' : null, weight: 2,
         }).on('click', () => { if (away) { raidFloor = fl; render(); } });
         const spots = (o.points || []).filter(q => mapKey(q.map) === key).length;
-        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`, spots > 1);
+        const extra = p.kind === 'boss' ? `<br><i>${esc(p.zone || 'Boss spawn')}${p.chance ? ` · ${Math.round(p.chance * 100)}% spawn chance` : ''}</i>` : o.locationNote ? `<br><i>${esc(o.locationNote)}</i>` : '';
+        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${extra}${done ? ' ✓' : ''}`, spots > 1);
         raidMarkers.addLayer(m);
         if (!done) pts.push([p.z, p.x]);
       }
@@ -1805,6 +1845,40 @@ async function attachRaidMap() {
   }
   drawRoute(key);
   if (raidWallsLayer) raidWallsLayer._redraw(); // the floor may have changed
+  drawTransitions();
+}
+
+// ---------- level transitions (stairs, ramps, ladders, hatches, drops) ----------
+// Built from the navmesh by tools/build_transitions.mjs: every place the walkable mesh joins two levels. Shown when
+// one end is on the floor being displayed; clicking switches to the other end's floor.
+let raidTransitions = null;
+const TRANSITION_GLYPH = { stairs: '🪜', ladder: '🪜', ramp: '↗', hatch: '⛶', drop: '⤓', climb: '⤒', elevator: '⇕' };
+function drawTransitions() {
+  const t = raidTransitions;
+  if (!t || !t.list || t.key !== S.raid.map) return;
+  const def = D.mapDefs[t.key];
+  t.group.clearLayers();
+  const floors = hasFloors(def);
+  for (const tr of t.list) {
+    if (!tr.from || !tr.to) continue;
+    const fa = floors ? floorOf(def, tr.from) : GROUND, fb = floors ? floorOf(def, tr.to) : GROUND;
+    // On maps with one drawn level, only connectors between real levels (more than a storey apart) are worth a marker.
+    if (fa === fb && Math.abs((tr.from.y || 0) - (tr.to.y || 0)) < 2.5) continue;
+    let here = tr.from, there = tr.to, other = fb;
+    if (floors && fa !== raidFloor) {
+      if (fb !== raidFloor) continue;
+      here = tr.to; there = tr.from; other = fa;
+    }
+    const up = (there.y || 0) > (here.y || 0);
+    const kind = tr.kind || 'stairs';
+    const glyph = TRANSITION_GLYPH[kind] || '⇕';
+    const dy = Math.abs((there.y || 0) - (here.y || 0));
+    const tip = `<b>${esc(titleCase(kind))}</b> ${up ? 'up' : 'down'} ${dy.toFixed(1)} m${other !== raidFloor || floors ? ` to ${esc(other)}` : ''}${tr.building ? `<br>${esc(tr.building)}` : ''}${floors && other !== raidFloor ? '<br><i>click to show that floor</i>' : ''}`;
+    const m = L.marker([here.z, here.x], { zIndexOffset: 200, icon: L.divIcon({ className: 'map-transition', html: `<span>${glyph}<small>${up ? '↑' : '↓'}</small></span>`, iconSize: null, iconAnchor: [9, 9] }) })
+      .bindTooltip(tip);
+    if (floors && other !== raidFloor) m.on('click', () => { raidFloor = other; render(); });
+    t.group.addLayer(m);
+  }
 }
 
 // ---------- walls from the game's navmesh ----------
@@ -1909,7 +1983,8 @@ function enforceKeyOrder(stops) {
 function raidExtractOptions(key) {
   const f = D.mapFeatures && D.mapFeatures[key];
   const seen = new Set();
-  return (f ? f.extracts : []).filter(e => e.faction !== 'scav' && !seen.has(e.name) && seen.add(e.name));
+  // Transits can end the route too (quests that need one, or picked by hand).
+  return [...(f ? f.extracts : []), ...(f ? f.transits : []).map(t => ({ ...t, faction: 'transit' }))].filter(e => e.faction !== 'scav' && !seen.has(e.name) && seen.add(e.name));
 }
 
 // Shortest open path from the spawn through one spot of every stop group, ending at the best of the given extracts.
@@ -2138,7 +2213,11 @@ function raidRoute(key) {
   if (!S.raid || !S.raid.spawn) return null;
   const groups = raidStopGroups(key);
   const options = raidExtractOptions(key);
-  const forced = S.raid.extract && S.raid.extract !== 'auto' ? options.filter(e => e.name === S.raid.extract) : [];
+  // A quest that must be extracted through a named exit decides the extract unless one was picked.
+  const questExits = new Set(S.raid.quests.map(id => D.byId[id]).filter(t => t && S.tasks[t.id] !== 'done')
+    .flatMap(t => t.objectives.filter(o => o.type === 'extract' && o.exitName && !o.optional && !S.objs[o.id]).map(o => o.exitName.toLowerCase())));
+  const forced = S.raid.extract && S.raid.extract !== 'auto' ? options.filter(e => e.name === S.raid.extract)
+    : options.filter(e => questExits.has(e.name.toLowerCase()));
   const ends = forced.length ? forced : options.filter(e => e.faction === 'pmc');
   const sig = JSON.stringify([key, S.raid.spawn, S.raid.extract, groups.map(g => g.o.id), routeKeys(key), navStatus[key] || '']);
   if (routeCache.sig === sig) return routeCache.route;
@@ -2272,7 +2351,7 @@ const pointY = st => st.p.y || 0;
 function routePanel(key) {
   const options = raidExtractOptions(key);
   const select = `<select id="raidExtract"><option value="auto">Best PMC extract (auto)</option>${options.map(e =>
-    `<option value="${esc(e.name)}" ${S.raid.extract === e.name ? 'selected' : ''}>${esc(e.name)}${e.faction === 'shared' ? ' (co-op)' : ''}</option>`).join('')}</select>`;
+    `<option value="${esc(e.name)}" ${S.raid.extract === e.name ? 'selected' : ''}>${esc(e.name)}${e.faction === 'shared' ? ' (co-op)' : e.faction === 'transit' ? ' (transit)' : ''}</option>`).join('')}</select>`;
   const pick = `<button data-act="raidSpawnPick" class="${pickingSpawn ? 'primary' : ''}">${pickingSpawn ? 'Click your spawn on the map… (cancel)' : S.raid.spawn ? '📍 Change spawn' : '📍 Set spawn'}</button>`;
   let body;
   const r = raidRoute(key);

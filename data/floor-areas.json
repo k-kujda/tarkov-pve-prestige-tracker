@@ -1,0 +1,7 @@
+{
+  "_about": "Building areas for floors tarkov.dev defines as map-wide height bands, so terrain at that height (hills, cliffs) stays on the ground floor. Each area is [x1, z1, x2, z2, name] in game coordinates.",
+  "shoreline": {
+    "2nd Floor": [[-380, -175, -120, -55, "resort"]],
+    "3rd Floor": [[-380, -175, -120, -55, "resort"]]
+  }
+}

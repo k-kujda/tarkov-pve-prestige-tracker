@@ -1,0 +1,1676 @@
+[
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": -108.65,
+      "y": 9.76,
+      "z": -753.93
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -108.99,
+      "y": 12.73,
+      "z": -753.69
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -95.69,
+      "y": 10.9,
+      "z": -748.37
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -95.82,
+      "y": 14,
+      "z": -748.65
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -112.39,
+      "y": 5.02,
+      "z": -747
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -112.5,
+      "y": 11.5,
+      "z": -746.92
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -129.45,
+      "y": 4.99,
+      "z": -732.69
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -129.55,
+      "y": 11.7,
+      "z": -732.77
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -117.99,
+      "y": 5.02,
+      "z": -734.93
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -117.98,
+      "y": 10.79,
+      "z": -734.82
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -109.15,
+      "y": 5,
+      "z": -729.11
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -109.93,
+      "y": 11.06,
+      "z": -728.76
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -101.04,
+      "y": 5,
+      "z": -728.8
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -99.05,
+      "y": 8.16,
+      "z": -728.85
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -194,
+      "y": 5.18,
+      "z": -665.16
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -193.63,
+      "y": 13.44,
+      "z": -665.38
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -194.64,
+      "y": 5.22,
+      "z": -652.74
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -194.74,
+      "y": 12.11,
+      "z": -652.48
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -172.86,
+      "y": 5.1,
+      "z": -659.9
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -172.42,
+      "y": 12.98,
+      "z": -659.14
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -191.53,
+      "y": 5.04,
+      "z": -638.79
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -191.45,
+      "y": 10.73,
+      "z": -638.31
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -175.11,
+      "y": 5.05,
+      "z": -636.66
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -174.79,
+      "y": 11.59,
+      "z": -636.85
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 33.64,
+      "y": 5.01,
+      "z": -648.1
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 33.52,
+      "y": 9.3,
+      "z": -648.03
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 43.27,
+      "y": 5.01,
+      "z": -653.83
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 43.19,
+      "y": 9.11,
+      "z": -653.93
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 51.37,
+      "y": 5.01,
+      "z": -643.86
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 51.36,
+      "y": 10.35,
+      "z": -643.72
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 29.78,
+      "y": 5.05,
+      "z": -634.31
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 30,
+      "y": 11.46,
+      "z": -634.71
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 50.12,
+      "y": 5.06,
+      "z": -634.46
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 49.77,
+      "y": 10.83,
+      "z": -634.86
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 52.91,
+      "y": 5.07,
+      "z": -620.57
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 53.07,
+      "y": 12.57,
+      "z": -620.76
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 50.14,
+      "y": 4.72,
+      "z": -555.4
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 49.95,
+      "y": 7.47,
+      "z": -554.96
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -167.03,
+      "y": 4.73,
+      "z": -471.98
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -167.01,
+      "y": 7.6,
+      "z": -471.29
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -245.34,
+      "y": 2.85,
+      "z": -318.16
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -245.75,
+      "y": 12.34,
+      "z": -318.13
+    },
+    "building": "Cabins",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -74.13,
+      "y": 5.87,
+      "z": -291.09
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -73.55,
+      "y": 9.1,
+      "z": -291.25
+    },
+    "building": "Red Brick",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -75.22,
+      "y": 5.99,
+      "z": -278.54
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -75.6,
+      "y": 9.1,
+      "z": -278.93
+    },
+    "building": "Red Brick",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -173.37,
+      "y": 11.53,
+      "z": -222.35
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -175,
+      "y": 14.17,
+      "z": -222.09
+    },
+    "building": "Cottages",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -188.4,
+      "y": 12.45,
+      "z": -206.15
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -188.26,
+      "y": 15.41,
+      "z": -206.25
+    },
+    "building": "Cottages",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -74.69,
+      "y": 18.21,
+      "z": -86.13
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -74.89,
+      "y": 21.91,
+      "z": -86.37
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": 142.62,
+      "y": 1,
+      "z": -134.14
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 142.53,
+      "y": 3.37,
+      "z": -134.23
+    },
+    "building": "Boathouses",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 147.68,
+      "y": 0.83,
+      "z": -123.94
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 148.21,
+      "y": 3.37,
+      "z": -123.35
+    },
+    "building": "Boathouses",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": -85.19,
+      "y": 18.32,
+      "z": -79.14
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -85.38,
+      "y": 21.93,
+      "z": -78.83
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": -81.61,
+      "y": 18.33,
+      "z": -68.92
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -81.84,
+      "y": 21.93,
+      "z": -69.25
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -78.16,
+      "y": 18.2,
+      "z": -57.03
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -78.24,
+      "y": 21.95,
+      "z": -56.71
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -131.43,
+      "y": 20.81,
+      "z": -30.19
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -131.58,
+      "y": 31.21,
+      "z": -29.86
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -117.69,
+      "y": 18.26,
+      "z": -15.53
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -117.19,
+      "y": 21,
+      "z": -15.43
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": -106.44,
+      "y": 17.91,
+      "z": -13.51
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -106.85,
+      "y": 21,
+      "z": -13.08
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -236.34,
+      "y": 2.53,
+      "z": 405.5
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -235.45,
+      "y": 5.79,
+      "z": 405.43
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": -224.64,
+      "y": 3.07,
+      "z": 409.09
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -224.7,
+      "y": 5.43,
+      "z": 409.03
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -214.33,
+      "y": 2.72,
+      "z": 430.42
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -215.1,
+      "y": 6.14,
+      "z": 430.77
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -159.74,
+      "y": 13.1,
+      "z": 419.74
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -159.9,
+      "y": 15.63,
+      "z": 420.05
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 338.24,
+      "y": 2,
+      "z": 483.68
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 337.99,
+      "y": 5.03,
+      "z": 484.08
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 323.71,
+      "y": 1.99,
+      "z": 495.46
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 322.38,
+      "y": 5.04,
+      "z": 495.5
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ramp",
+    "from": {
+      "floor": "Storey 2",
+      "x": 326.41,
+      "y": 1.99,
+      "z": 524.63
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 326.26,
+      "y": 5.15,
+      "z": 522.8
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 368.02,
+      "y": 16.2,
+      "z": 536.67
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 368.08,
+      "y": 19.11,
+      "z": 536.91
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 356.83,
+      "y": 15.35,
+      "z": 550.82
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 357.03,
+      "y": 20,
+      "z": 550.32
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 364.65,
+      "y": 15.3,
+      "z": 549.95
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 364.23,
+      "y": 19.69,
+      "z": 549.9
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 348.55,
+      "y": 15.39,
+      "z": 557.72
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 348.53,
+      "y": 20,
+      "z": 557.07
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 34.61,
+      "y": 9.25,
+      "z": -649.66
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 34.05,
+      "y": 14.06,
+      "z": -649.43
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 143.81,
+      "y": 3.37,
+      "z": -135.12
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 143.98,
+      "y": 5.82,
+      "z": -134.33
+    },
+    "building": "Boathouses",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": -81.87,
+      "y": 21.92,
+      "z": -77.13
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -82.35,
+      "y": 26.3,
+      "z": -77.23
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 436.54,
+      "y": 25.3,
+      "z": 459.78
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 436.74,
+      "y": 30.27,
+      "z": 459.35
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 445.81,
+      "y": 26.11,
+      "z": 457.93
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 445.74,
+      "y": 31.05,
+      "z": 458.19
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 455.84,
+      "y": 24.21,
+      "z": 464.25
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 455.77,
+      "y": 28.92,
+      "z": 463.54
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 359.84,
+      "y": 19.99,
+      "z": 547.71
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 359.68,
+      "y": 26.3,
+      "z": 547.02
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -109.74,
+      "y": 8.62,
+      "z": -736.41
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -109.97,
+      "y": 14.15,
+      "z": -737.62
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -172.48,
+      "y": 9.16,
+      "z": -654.28
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -172.03,
+      "y": 14,
+      "z": -654.72
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 35.61,
+      "y": 5.01,
+      "z": -647.06
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 35.67,
+      "y": 14.08,
+      "z": -647.49
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 28.33,
+      "y": 9.59,
+      "z": -636.6
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 28.83,
+      "y": 14.18,
+      "z": -636.67
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 30.44,
+      "y": 10.37,
+      "z": -625.92
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 29.18,
+      "y": 14.1,
+      "z": -626.2
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 146.53,
+      "y": 0.47,
+      "z": -137.47
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 147.53,
+      "y": 5.82,
+      "z": -134.02
+    },
+    "building": "Boathouses",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 341.12,
+      "y": 15.93,
+      "z": 538.51
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 340.96,
+      "y": 21.22,
+      "z": 537.72
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": 359.47,
+      "y": 15.33,
+      "z": 547.97
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 359.93,
+      "y": 21.35,
+      "z": 547.95
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 4",
+      "x": 448.77,
+      "y": 31.45,
+      "z": 456.2
+    },
+    "to": {
+      "floor": "Storey 5",
+      "x": 448.67,
+      "y": 36.54,
+      "z": 456.13
+    },
+    "building": null,
+    "fromFloor": "Storey 4",
+    "toFloor": "Storey 5"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 443.54,
+      "y": 26.11,
+      "z": 458.92
+    },
+    "to": {
+      "floor": "Storey 5",
+      "x": 442.98,
+      "y": 32.62,
+      "z": 459.23
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 5"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 5",
+      "x": 443.42,
+      "y": 35.54,
+      "z": 456.21
+    },
+    "to": {
+      "floor": "Storey 6",
+      "x": 444.51,
+      "y": 42.21,
+      "z": 457.3
+    },
+    "building": null,
+    "fromFloor": "Storey 5",
+    "toFloor": "Storey 6"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 4",
+      "x": 445.6,
+      "y": 35.61,
+      "z": 457.74
+    },
+    "to": {
+      "floor": "Storey 6",
+      "x": 445.37,
+      "y": 45.61,
+      "z": 457.15
+    },
+    "building": null,
+    "fromFloor": "Storey 4",
+    "toFloor": "Storey 6"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": 443.98,
+      "y": 36.12,
+      "z": 457.48
+    },
+    "to": {
+      "floor": "Storey 6",
+      "x": 442.1,
+      "y": 45.6,
+      "z": 458.26
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 6"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "Storey 2",
+      "x": -169.57,
+      "y": 4.7,
+      "z": -657.17
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -168.48,
+      "y": 7.25,
+      "z": -654.5
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "ladder",
+    "from": {
+      "floor": "Storey 2",
+      "x": 24.8,
+      "y": 7.65,
+      "z": -636.68
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 26.3,
+      "y": 12.05,
+      "z": -636.58
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "Storey 2",
+      "x": 130.8,
+      "y": 1.92,
+      "z": -186.75
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 130.6,
+      "y": 4.42,
+      "z": -187.55
+    },
+    "building": "Boathouses",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -95.49,
+      "y": 11.75,
+      "z": -738.14
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -94.97,
+      "y": 14.34,
+      "z": -740.17
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": -110.67,
+      "y": 8.35,
+      "z": -726.59
+    },
+    "to": {
+      "floor": "Storey 2",
+      "x": -109.94,
+      "y": 11.12,
+      "z": -726.34
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 2"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": 38.9,
+      "y": 4.7,
+      "z": -669.71
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 38.63,
+      "y": 7,
+      "z": -669.98
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": 52.23,
+      "y": 14.03,
+      "z": -621.87
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": 51.6,
+      "y": 16.4,
+      "z": -622.8
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -147.43,
+      "y": 11.64,
+      "z": -207.24
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -147.77,
+      "y": 14.1,
+      "z": -207.72
+    },
+    "building": "Cottages",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -112.72,
+      "y": 17.6,
+      "z": -139.5
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -112.28,
+      "y": 20.14,
+      "z": -140.08
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": 140.08,
+      "y": 3.53,
+      "z": -188.43
+    },
+    "to": {
+      "floor": "Storey 2",
+      "x": 140.58,
+      "y": 5.82,
+      "z": -190.5
+    },
+    "building": "Boathouses",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 2"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": -129.94,
+      "y": 25.25,
+      "z": -2.2
+    },
+    "to": {
+      "floor": "Storey 2",
+      "x": -131.76,
+      "y": 28.01,
+      "z": -0.53
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 2"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -70.37,
+      "y": 26.8,
+      "z": 111.28
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -68,
+      "y": 29.2,
+      "z": 111.9
+    },
+    "building": "Tennis Court",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -104.7,
+      "y": 14,
+      "z": -753.27
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -106.55,
+      "y": 16.4,
+      "z": -751.9
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": 43.51,
+      "y": 14,
+      "z": -653.89
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 42.65,
+      "y": 16.4,
+      "z": -653.45
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -170.82,
+      "y": 7.25,
+      "z": -490.92
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -171.75,
+      "y": 10,
+      "z": -492.6
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": 23.28,
+      "y": 8.87,
+      "z": -242.62
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 24.65,
+      "y": 11.2,
+      "z": -241.77
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -226.6,
+      "y": 8.8,
+      "z": 421.78
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -227.63,
+      "y": 11.2,
+      "z": 422.27
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 4",
+      "x": -107.88,
+      "y": 14,
+      "z": -751.2
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -107.01,
+      "y": 16.4,
+      "z": -751.7
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 4",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 4",
+      "x": -196.68,
+      "y": 14.05,
+      "z": -656.79
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -195.7,
+      "y": 16.3,
+      "z": -660.13
+    },
+    "building": "Plant 3",
+    "fromFloor": "Storey 4",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": 40.19,
+      "y": 14,
+      "z": -656.49
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 42.65,
+      "y": 16.4,
+      "z": -653.45
+    },
+    "building": "Plant 1",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": -173.23,
+      "y": 7.7,
+      "z": -490.7
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -171.75,
+      "y": 10,
+      "z": -492.6
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": -180.5,
+      "y": 15.85,
+      "z": -203.2
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -184.32,
+      "y": 19.2,
+      "z": -201.64
+    },
+    "building": "Cottages",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": -226.65,
+      "y": 8.55,
+      "z": 421.3
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -227.63,
+      "y": 11.2,
+      "z": 422.27
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": 324.31,
+      "y": 6.66,
+      "z": 511.34
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": 325.35,
+      "y": 8.95,
+      "z": 514.62
+    },
+    "building": null,
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "Storey 2",
+      "x": -75.75,
+      "y": 26.82,
+      "z": -54.92
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -75.45,
+      "y": 29.2,
+      "z": -54.35
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 3",
+      "x": -94.9,
+      "y": 14,
+      "z": -746.98
+    },
+    "to": {
+      "floor": "Storey 5",
+      "x": -94,
+      "y": 16.6,
+      "z": -743.75
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 5"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 4",
+      "x": -108.78,
+      "y": 14,
+      "z": -736.58
+    },
+    "to": {
+      "floor": "Storey 5",
+      "x": -106.55,
+      "y": 16.4,
+      "z": -733.45
+    },
+    "building": "Plant 2",
+    "fromFloor": "Storey 4",
+    "toFloor": "Storey 5"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 4",
+      "x": -80.5,
+      "y": 27.7,
+      "z": -57.25
+    },
+    "to": {
+      "floor": "Storey 5",
+      "x": -77.55,
+      "y": 30.15,
+      "z": -54.37
+    },
+    "building": "Pikes Peak Resort",
+    "fromFloor": "Storey 4",
+    "toFloor": "Storey 5"
+  }
+]

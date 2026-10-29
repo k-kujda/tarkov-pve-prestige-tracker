@@ -1,0 +1,5 @@
+{
+  "lighthouse": [
+    { "name": "Road to Military Base V-Ex", "faction": "pmc", "x": -329, "y": 16.7, "z": -784.4, "source": "game: ExfiltrationPoint 'V-Ex_light' in Lighthouse_DesignMain, missing from tarkov.dev (needed by Information Source)" }
+  ]
+}

@@ -1,0 +1,1136 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -18.67,
+      "y": 5.08,
+      "z": -5.15
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -20.27,
+      "y": 7.41,
+      "z": -5.15
+    },
+    "building": "Med Tent",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 28.9,
+      "y": 3.58,
+      "z": -26.07
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 30.85,
+      "y": 7.53,
+      "z": -25.9
+    },
+    "building": "East Halls",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 54.16,
+      "y": 3.24,
+      "z": -24.94
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 54.35,
+      "y": 7.45,
+      "z": -27.18
+    },
+    "building": "East Halls",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -18.75,
+      "y": 5.08,
+      "z": 13.2
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -20.37,
+      "y": 7.41,
+      "z": 13.15
+    },
+    "building": "Scav Bunker",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -36.17,
+      "y": 4.25,
+      "z": 47.4
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -37.2,
+      "y": 7.55,
+      "z": 47.25
+    },
+    "building": "Wood Room",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 28.47,
+      "y": 4.71,
+      "z": 19.83
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 30.25,
+      "y": 7.81,
+      "z": 20
+    },
+    "building": "Connector",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 8.32,
+      "y": 4.58,
+      "z": 40.53
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 8.6,
+      "y": 7.96,
+      "z": 42.57
+    },
+    "building": "South Stairs",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 34.55,
+      "y": 4.6,
+      "z": 40.57
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 34.8,
+      "y": 8.05,
+      "z": 42.57
+    },
+    "building": "North Stairs",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 46.55,
+      "y": 4.59,
+      "z": 42.72
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 47.7,
+      "y": 7.65,
+      "z": 43.91
+    },
+    "building": "North Stairs",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 3.05,
+      "y": 4.58,
+      "z": 52.7
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 4.65,
+      "y": 7.72,
+      "z": 52.7
+    },
+    "building": "South Stairs",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -21.73,
+      "y": 0.23,
+      "z": -3.97
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -20,
+      "y": 5.08,
+      "z": -3.8
+    },
+    "building": "Med Tent",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 3.03,
+      "y": 0.02,
+      "z": -43.01
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 2.82,
+      "y": 3.46,
+      "z": -40.99
+    },
+    "building": "Underground Stash",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 31.78,
+      "y": 0.12,
+      "z": -25.9
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 34.34,
+      "y": 3.57,
+      "z": -26.31
+    },
+    "building": "East Halls",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 53.3,
+      "y": 0.12,
+      "z": -28.37
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 53.04,
+      "y": 3.3,
+      "z": -27.4
+    },
+    "building": "East Halls",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 53.15,
+      "y": 0.11,
+      "z": -3.12
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 50.73,
+      "y": 3.81,
+      "z": -3.2
+    },
+    "building": "Boilers",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -21.73,
+      "y": 0.29,
+      "z": 14.4
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -20,
+      "y": 5.08,
+      "z": 14.55
+    },
+    "building": "Scav Bunker",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -37.55,
+      "y": 1.24,
+      "z": 47.25
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -39.12,
+      "y": 4.25,
+      "z": 47.25
+    },
+    "building": "Wood Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -11.45,
+      "y": 1.07,
+      "z": 41.3
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -11.68,
+      "y": 3.78,
+      "z": 39.32
+    },
+    "building": "Platform",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -39.35,
+      "y": 1.25,
+      "z": 62.85
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -33.38,
+      "y": 4.25,
+      "z": 63.02
+    },
+    "building": "Wood Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 38.71,
+      "y": 0.16,
+      "z": 21.1
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 38.18,
+      "y": 4.16,
+      "z": 20.84
+    },
+    "building": "Sky Bridge",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 58.47,
+      "y": 0.09,
+      "z": 15.45
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 60.27,
+      "y": 4.08,
+      "z": 15.17
+    },
+    "building": "Boilers",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 6.53,
+      "y": 0.92,
+      "z": 42
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 6.94,
+      "y": 4.58,
+      "z": 40.04
+    },
+    "building": "South Stairs",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 7.96,
+      "y": 1.2,
+      "z": 53.07
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 8.57,
+      "y": 4.58,
+      "z": 51.52
+    },
+    "building": "Sinks",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 36.03,
+      "y": 0.57,
+      "z": 42.47
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 36.35,
+      "y": 4.6,
+      "z": 40.47
+    },
+    "building": "North Stairs",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 46.12,
+      "y": 0.59,
+      "z": 45.1
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 45.21,
+      "y": 4.6,
+      "z": 44.1
+    },
+    "building": "North Stairs",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": -20.25,
+      "y": -3.77,
+      "z": -9.42
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -20.22,
+      "y": 0.21,
+      "z": -15.05
+    },
+    "building": "Med Tent",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 38.3,
+      "y": -2.59,
+      "z": -31.95
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 38.52,
+      "y": 0.17,
+      "z": -35.25
+    },
+    "building": "East Halls",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 30.04,
+      "y": -2.59,
+      "z": -23.22
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 32.6,
+      "y": 0.12,
+      "z": -23.81
+    },
+    "building": "Heli Crash",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 66.7,
+      "y": -2.6,
+      "z": -33.03
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 66.54,
+      "y": 0.09,
+      "z": -31.5
+    },
+    "building": "Forklifts",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 26.65,
+      "y": -2.59,
+      "z": -7.05
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 25.46,
+      "y": 0.1,
+      "z": -6.57
+    },
+    "building": "Heli Crash",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 38.5,
+      "y": -2.59,
+      "z": -9.52
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 38.87,
+      "y": 0.12,
+      "z": -7.59
+    },
+    "building": "Pumping Station",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 11.07,
+      "y": -2.6,
+      "z": 16.63
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 12.86,
+      "y": 0.16,
+      "z": 16.6
+    },
+    "building": "Silos",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 47.4,
+      "y": -2.59,
+      "z": 11.95
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 47.4,
+      "y": 0.11,
+      "z": 13.55
+    },
+    "building": "Boilers",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 69.83,
+      "y": -2.59,
+      "z": 12.07
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 69.94,
+      "y": 0.09,
+      "z": 13.44
+    },
+    "building": "Boilers",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": -40.97,
+      "y": -1.93,
+      "z": 40.03
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -40.55,
+      "y": 1.21,
+      "z": 41.31
+    },
+    "building": "Wood Room",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 3.56,
+      "y": -2.6,
+      "z": 39.15
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 2.21,
+      "y": 0.89,
+      "z": 39.81
+    },
+    "building": "South Stairs",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 34.6,
+      "y": -2.59,
+      "z": 40.85
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 34.88,
+      "y": 0.63,
+      "z": 42.47
+    },
+    "building": "North Stairs",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Tunnels",
+      "x": 1.68,
+      "y": -2.53,
+      "z": 66.85
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 3.7,
+      "y": 1.19,
+      "z": 66.78
+    },
+    "building": "Blue Containers",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -20,
+      "y": 3.88,
+      "z": -3.8
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -20.27,
+      "y": 6.71,
+      "z": -5.15
+    },
+    "building": "Med Tent",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 53.11,
+      "y": 4.34,
+      "z": -26.19
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 53,
+      "y": 6.96,
+      "z": -24.35
+    },
+    "building": "East Halls",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -19.12,
+      "y": 4.48,
+      "z": 14.46
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -20.37,
+      "y": 6.78,
+      "z": 13.15
+    },
+    "building": "Scav Bunker",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 1.98,
+      "y": 3.89,
+      "z": 36.25
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 0.6,
+      "y": 6.49,
+      "z": 35.2
+    },
+    "building": "Platform",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 3.86,
+      "y": 4.34,
+      "z": 51.28
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 3.19,
+      "y": 7.51,
+      "z": 50.68
+    },
+    "building": "South Stairs",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -19.62,
+      "y": 1.16,
+      "z": -5.15
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -20,
+      "y": 3.88,
+      "z": -3.8
+    },
+    "building": "Med Tent",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -2.45,
+      "y": 1.58,
+      "z": 33.42
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -2.85,
+      "y": 3.88,
+      "z": 35.55
+    },
+    "building": "Platform",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -38.77,
+      "y": 1.38,
+      "z": 47.91
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -38.54,
+      "y": 3.79,
+      "z": 48.15
+    },
+    "building": "Wood Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -37.1,
+      "y": 1.63,
+      "z": 61.77
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -33.38,
+      "y": 5.58,
+      "z": 63.02
+    },
+    "building": "Wood Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -23.92,
+      "y": 1.28,
+      "z": 57.25
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -22.32,
+      "y": 3.71,
+      "z": 57.66
+    },
+    "building": "Blue Containers",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -9.88,
+      "y": 1.56,
+      "z": 57.48
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -11.7,
+      "y": 3.78,
+      "z": 57.17
+    },
+    "building": "Blue Containers",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 6.22,
+      "y": 1.08,
+      "z": 20.94
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 6.47,
+      "y": 3.89,
+      "z": 18.32
+    },
+    "building": "Pit",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 30.6,
+      "y": 1.43,
+      "z": 20
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 29.53,
+      "y": 4.33,
+      "z": 18.6
+    },
+    "building": "Connector",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 72.2,
+      "y": 0.18,
+      "z": 33.27
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 69.77,
+      "y": 3.13,
+      "z": 33.54
+    },
+    "building": "Boilers",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 43.78,
+      "y": 1.59,
+      "z": 49.12
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 42.9,
+      "y": 3.83,
+      "z": 46.67
+    },
+    "building": "North Stairs",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 18.8,
+      "y": 1.56,
+      "z": 54.7
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 17.92,
+      "y": 3.78,
+      "z": 57.45
+    },
+    "building": "Hole",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 30.1,
+      "y": 1.53,
+      "z": 64.08
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 31.61,
+      "y": 3.78,
+      "z": 64.58
+    },
+    "building": "Locker Rooms",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": -20.25,
+      "y": -2.74,
+      "z": -9.42
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -22.32,
+      "y": 0.13,
+      "z": -9.27
+    },
+    "building": "Med Tent",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": -4.78,
+      "y": -2.9,
+      "z": -10.9
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -5.68,
+      "y": -0.14,
+      "z": -8.84
+    },
+    "building": "Underground Stash",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": 55.61,
+      "y": -2.31,
+      "z": -28.22
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 55.37,
+      "y": 0.09,
+      "z": -28.07
+    },
+    "building": "East Halls",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": 11.1,
+      "y": -2.17,
+      "z": -21.33
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 11.07,
+      "y": 0.07,
+      "z": -18.46
+    },
+    "building": "Underground Stash",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": 38,
+      "y": -2.52,
+      "z": 4.15
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 38.4,
+      "y": -0.04,
+      "z": 4.55
+    },
+    "building": "Heli Crash",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": 69.76,
+      "y": -2.16,
+      "z": 8.88
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 68.57,
+      "y": 0.1,
+      "z": 10.86
+    },
+    "building": "Boilers",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": -8.93,
+      "y": -2.49,
+      "z": 19.38
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -4.18,
+      "y": 0.24,
+      "z": 22.6
+    },
+    "building": "Pit",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Tunnels",
+      "x": 3.42,
+      "y": -1.98,
+      "z": 38.78
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 4.21,
+      "y": 0.43,
+      "z": 38.73
+    },
+    "building": "South Stairs",
+    "fromFloor": "Tunnels",
+    "toFloor": "Ground floor"
+  }
+]

@@ -7,4 +7,5 @@ navmesh/ai/
 navmesh/tmp/
 navmesh/render/
 navmesh/logs/
+navmesh/zones/
 tools/__pycache__/

@@ -1,0 +1,524 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -37.1,
+      "y": 30.24,
+      "z": -56.47
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -38.07,
+      "y": 38.9,
+      "z": -55.6
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 136.63,
+      "y": 30.28,
+      "z": -7.87
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 136.8,
+      "y": 33.75,
+      "z": -5.85
+    },
+    "building": "Skyside",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -15.77,
+      "y": 31.44,
+      "z": 333.53
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -15.5,
+      "y": 33.86,
+      "z": 335.83
+    },
+    "building": "Nakatani",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -75.87,
+      "y": 24.59,
+      "z": -88.23
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -75.98,
+      "y": 28.9,
+      "z": -86.75
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -46.17,
+      "y": 26.99,
+      "z": -47.33
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -44.83,
+      "y": 29.36,
+      "z": -43.78
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -34.4,
+      "y": 26.67,
+      "z": -39.18
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -31.88,
+      "y": 30.06,
+      "z": -40.33
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -57.63,
+      "y": 24.59,
+      "z": 150.4
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -57.53,
+      "y": 28.9,
+      "z": 148.88
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -33.48,
+      "y": 24.23,
+      "z": 46.72
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -40.1,
+      "y": 29.7,
+      "z": 46.6
+    },
+    "building": "Science Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 45.17,
+      "y": 23.5,
+      "z": 150.03
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 46.7,
+      "y": 30.9,
+      "z": 149.8
+    },
+    "building": "Tarbank",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 18,
+      "y": 26.73,
+      "z": 161.78
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 15.38,
+      "y": 29.82,
+      "z": 163.74
+    },
+    "building": "Tarbank",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 135.8,
+      "y": 24.41,
+      "z": 106.08
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 136.2,
+      "y": 28.9,
+      "z": 104.62
+    },
+    "building": "Oasis",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 121.16,
+      "y": 24.41,
+      "z": 139.52
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 119.9,
+      "y": 29.03,
+      "z": 139.07
+    },
+    "building": "Fusion",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 102.3,
+      "y": 23.47,
+      "z": 170.77
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 102.24,
+      "y": 28.96,
+      "z": 173.81
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 95.98,
+      "y": 22.8,
+      "z": 224.87
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 95.01,
+      "y": 27.3,
+      "z": 224.11
+    },
+    "building": "M Showroom",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 113.93,
+      "y": 24.03,
+      "z": 170
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 114.55,
+      "y": 29.02,
+      "z": 168.23
+    },
+    "building": "Fusion",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 109.4,
+      "y": 23.11,
+      "z": 190.9
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 109.14,
+      "y": 28.08,
+      "z": 190.24
+    },
+    "building": "M Showroom",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Garage",
+      "x": 98.92,
+      "y": 20.56,
+      "z": -68.95
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 99.08,
+      "y": 22.85,
+      "z": -66.97
+    },
+    "building": null,
+    "fromFloor": "Garage",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Garage",
+      "x": 49.57,
+      "y": 14.74,
+      "z": 151.53
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 48.5,
+      "y": 23.5,
+      "z": 152.02
+    },
+    "building": "Tarbank",
+    "fromFloor": "Garage",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Garage",
+      "x": 116.2,
+      "y": 14.65,
+      "z": 14.65
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 115.76,
+      "y": 22.82,
+      "z": 16.62
+    },
+    "building": "ASAP Winery",
+    "fromFloor": "Garage",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Garage",
+      "x": 103.7,
+      "y": 14.13,
+      "z": 176.45
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 104.52,
+      "y": 23.32,
+      "z": 173.48
+    },
+    "building": null,
+    "fromFloor": "Garage",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 135.44,
+      "y": 27.96,
+      "z": -4.4
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 134.6,
+      "y": 31.05,
+      "z": -6.75
+    },
+    "building": "Skyside",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -58.97,
+      "y": 26.65,
+      "z": 148.68
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -58.83,
+      "y": 28.9,
+      "z": 144.68
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 17.9,
+      "y": 26.6,
+      "z": 160.68
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 14.88,
+      "y": 29,
+      "z": 164.63
+    },
+    "building": "Tarbank",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 189.25,
+      "y": 25.9,
+      "z": 130.89
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 190.3,
+      "y": 28.2,
+      "z": 133.8
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -73.6,
+      "y": 30.75,
+      "z": 291.1
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -76.05,
+      "y": 33.6,
+      "z": 290.52
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -73.6,
+      "y": 30.75,
+      "z": 300.8
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -76.05,
+      "y": 33.6,
+      "z": 300.8
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -73.6,
+      "y": 30.75,
+      "z": 313.6
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -76.05,
+      "y": 33.6,
+      "z": 313.6
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -75.03,
+      "y": 31.37,
+      "z": 328.97
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -76.08,
+      "y": 33.6,
+      "z": 325.8
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -17.13,
+      "y": 31.05,
+      "z": 337.5
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -16.95,
+      "y": 33.42,
+      "z": 337.49
+    },
+    "building": "Nakatani",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  }
+]
