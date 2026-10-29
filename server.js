@@ -594,11 +594,39 @@ function send(req, res, code, type, body) {
   res.end(body);
 }
 
+// Navmesh files are several MB: gzip each once and keep it until the file changes.
+const NAV_DIR = path.join(__dirname, 'navmesh');
+const gzCache = new Map();
+function sendCached(req, res, file, type) {
+  const mtime = fs.statSync(file).mtimeMs;
+  let c = gzCache.get(file);
+  if (!c || c.mtime !== mtime) {
+    const raw = fs.readFileSync(file);
+    c = { mtime, raw, gz: zlib.gzipSync(raw, { level: 6 }) };
+    gzCache.set(file, c);
+  }
+  const gz = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', ...(gz ? { 'Content-Encoding': 'gzip' } : {}) });
+  res.end(gz ? c.gz : c.raw);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   try {
     if (url.pathname === '/' || url.pathname === '/index.html') {
       return send(req, res, 200, 'text/html; charset=utf-8', fs.readFileSync(path.join(__dirname, 'index.html')));
+    }
+    if (url.pathname === '/nav.js' || url.pathname === '/nav-worker.js') {
+      return send(req, res, 200, 'text/javascript; charset=utf-8', fs.readFileSync(path.join(__dirname, url.pathname.slice(1))));
+    }
+    if (url.pathname === '/api/navmesh') {
+      // Walkable mesh of a map (built from the game files by tools/), or its door list with ?meta=1.
+      const map = url.searchParams.get('map') || '';
+      if (!/^[a-z0-9-]+$/.test(map)) return send(req, res, 400, 'text/plain', 'bad map');
+      const meta = url.searchParams.get('meta') === '1';
+      const file = path.join(NAV_DIR, map + (meta ? '.json' : '.bin'));
+      if (!fs.existsSync(file)) return send(req, res, 404, 'text/plain', 'no navmesh for ' + map);
+      return sendCached(req, res, file, meta ? 'application/json' : 'application/octet-stream');
     }
     if (url.pathname === '/api/data') {
       const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';
