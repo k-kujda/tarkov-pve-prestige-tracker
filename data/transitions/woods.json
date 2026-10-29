@@ -1,0 +1,92 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -510.67,
+      "y": 15.17,
+      "z": -391.21
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -511.08,
+      "y": 19.09,
+      "z": -391.6
+    },
+    "building": "Scav Town",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 2",
+      "x": -661.36,
+      "y": 8.03,
+      "z": 113.4
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -661.28,
+      "y": 10.82,
+      "z": 113.61
+    },
+    "building": null,
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storey 3",
+      "x": -463.69,
+      "y": 20.66,
+      "z": -409.18
+    },
+    "to": {
+      "floor": "Storey 4",
+      "x": -461.86,
+      "y": 22.94,
+      "z": -409.68
+    },
+    "building": "Scav Town",
+    "fromFloor": "Storey 3",
+    "toFloor": "Storey 4"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -518.51,
+      "y": 14.98,
+      "z": -405.05
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -515.65,
+      "y": 17.69,
+      "z": -405.4
+    },
+    "building": "Scav Town",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Storey 2",
+      "x": -509.18,
+      "y": 15.11,
+      "z": -401.83
+    },
+    "to": {
+      "floor": "Storey 3",
+      "x": -508.9,
+      "y": 17.54,
+      "z": -401.85
+    },
+    "building": "Scav Town",
+    "fromFloor": "Storey 2",
+    "toFloor": "Storey 3"
+  }
+]

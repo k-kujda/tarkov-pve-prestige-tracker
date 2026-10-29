@@ -1,0 +1,632 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -187.6,
+      "y": 0.1,
+      "z": -413.17
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -185.65,
+      "y": 4.2,
+      "z": -412.95
+    },
+    "building": "Offices #1",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -255.47,
+      "y": 0.1,
+      "z": -380.53
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -255.6,
+      "y": 4.2,
+      "z": -377.6
+    },
+    "building": "Vestibules #1",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -207.83,
+      "y": 0.1,
+      "z": -380.83
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -207.6,
+      "y": 4.2,
+      "z": -379.27
+    },
+    "building": "Security #2",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -187.52,
+      "y": 0.1,
+      "z": -382.65
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -192.44,
+      "y": 4.2,
+      "z": -382.4
+    },
+    "building": "Offices #1",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -237.07,
+      "y": 0.13,
+      "z": -368.25
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -241.9,
+      "y": 4.2,
+      "z": -368.6
+    },
+    "building": "Security #1",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -213.55,
+      "y": 0.11,
+      "z": -368.3
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -208.23,
+      "y": 4.2,
+      "z": -368
+    },
+    "building": "Security #2",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -257.5,
+      "y": 0.11,
+      "z": -356.95
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -252.8,
+      "y": 4.2,
+      "z": -356.95
+    },
+    "building": "Administrative Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -255.52,
+      "y": 0.1,
+      "z": -344.17
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -250.5,
+      "y": 4.2,
+      "z": -344.53
+    },
+    "building": "Reception",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -186.7,
+      "y": 0.1,
+      "z": -350.84
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -190.98,
+      "y": 4.2,
+      "z": -350.18
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -214.65,
+      "y": 0.1,
+      "z": -343.15
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -211.8,
+      "y": 4.26,
+      "z": -343.97
+    },
+    "building": "Recreation Area",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -186.82,
+      "y": 0.11,
+      "z": -334.9
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -190.73,
+      "y": 4.2,
+      "z": -334.9
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -252.85,
+      "y": 0.14,
+      "z": -330.12
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -251,
+      "y": 4.16,
+      "z": -330.55
+    },
+    "building": "Security Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -213.55,
+      "y": 0.22,
+      "z": -318.4
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -208.35,
+      "y": 4.2,
+      "z": -319.46
+    },
+    "building": "Lecture Hall",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -237.07,
+      "y": 0.11,
+      "z": -318.4
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -242.34,
+      "y": 4.2,
+      "z": -318.62
+    },
+    "building": "Security Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -108.05,
+      "y": 0.13,
+      "z": -418.45
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -110.5,
+      "y": 4.22,
+      "z": -418.9
+    },
+    "building": "Infirmary Lvl 2",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -155.8,
+      "y": 0.1,
+      "z": -382.75
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -151.1,
+      "y": 4.17,
+      "z": -382.75
+    },
+    "building": "Negotiation Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -156.85,
+      "y": 0.12,
+      "z": -350.65
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -151.55,
+      "y": 4.2,
+      "z": -350.67
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -156.85,
+      "y": 0.12,
+      "z": -335.1
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -151.5,
+      "y": 4.2,
+      "z": -335.05
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -253.2,
+      "y": 0.1,
+      "z": -306.22
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -251,
+      "y": 4.2,
+      "z": -305.92
+    },
+    "building": "Security Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -187.87,
+      "y": 0.14,
+      "z": -304.45
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -192.35,
+      "y": 4.23,
+      "z": -304.42
+    },
+    "building": "Lecture Hall",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -184.44,
+      "y": 1.03,
+      "z": -273.25
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -181.7,
+      "y": 6.3,
+      "z": -276.6
+    },
+    "building": "Control Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -155.75,
+      "y": 0.11,
+      "z": -304.45
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -151.07,
+      "y": 4.2,
+      "z": -304.45
+    },
+    "building": "Control Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -160.54,
+      "y": 1.51,
+      "z": -271.26
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -161.95,
+      "y": 5.83,
+      "z": -274.64
+    },
+    "building": "Warehouse",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -268.6,
+      "y": -3.96,
+      "z": -391.83
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -265.96,
+      "y": 0.1,
+      "z": -392.18
+    },
+    "building": "Vestibules #1",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -263.35,
+      "y": -3.52,
+      "z": -363.52
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -263.1,
+      "y": 0.1,
+      "z": -360.82
+    },
+    "building": "Administrative Office",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -168.5,
+      "y": -4,
+      "z": -356.7
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -166.15,
+      "y": 0.12,
+      "z": -356.7
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -168.67,
+      "y": -4.04,
+      "z": -329.1
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -166.15,
+      "y": 0.13,
+      "z": -329.1
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -108.27,
+      "y": -3.98,
+      "z": -418.63
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -110.86,
+      "y": 0.13,
+      "z": -418.84
+    },
+    "building": "Infirmary Lvl 2",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -124.82,
+      "y": -4,
+      "z": -333.52
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -123.07,
+      "y": 0.63,
+      "z": -333.8
+    },
+    "building": "Test Room",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Technical",
+      "x": -253.35,
+      "y": -4,
+      "z": -301.4
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -253.27,
+      "y": 0.1,
+      "z": -298.65
+    },
+    "building": "Gym",
+    "fromFloor": "Technical",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -186.63,
+      "y": 0.1,
+      "z": -414.29
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -185.65,
+      "y": 3.2,
+      "z": -412.95
+    },
+    "building": "Offices #1",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -253.77,
+      "y": 0.9,
+      "z": -355.4
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -252.8,
+      "y": 3.2,
+      "z": -356.95
+    },
+    "building": "Administrative Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -186.82,
+      "y": 2.76,
+      "z": -334.9
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -190.75,
+      "y": 5,
+      "z": -333.12
+    },
+    "building": "Main Working Area",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -144.24,
+      "y": 1.75,
+      "z": -290.15
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -142.6,
+      "y": 4.1,
+      "z": -290.99
+    },
+    "building": "Server Room",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "Ground floor",
+      "x": -254.4,
+      "y": 0.9,
+      "z": -343.15
+    },
+    "to": {
+      "floor": "Second Level",
+      "x": -249.8,
+      "y": 3.57,
+      "z": -343.2
+    },
+    "building": "Reception",
+    "fromFloor": "Ground floor",
+    "toFloor": "Second Level"
+  }
+]

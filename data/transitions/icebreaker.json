@@ -1,0 +1,704 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": -10.2,
+      "y": 16.02,
+      "z": -55
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -10.2,
+      "y": 18.55,
+      "z": -53.2
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": 5.68,
+      "y": 16.04,
+      "z": -57.1
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 6.15,
+      "y": 18.55,
+      "z": -55.96
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": -0.28,
+      "y": 15.72,
+      "z": -20.59
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -0.34,
+      "y": 18.42,
+      "z": -20.64
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": -8.47,
+      "y": 15.82,
+      "z": -6.47
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -8.62,
+      "y": 18.43,
+      "z": -7.35
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": 1.05,
+      "y": 15.72,
+      "z": 5.36
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 2.08,
+      "y": 18.42,
+      "z": 5.78
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": -8.17,
+      "y": 15.72,
+      "z": 15.9
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -7.17,
+      "y": 18.42,
+      "z": 15.05
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": 8.53,
+      "y": 15.93,
+      "z": -6.97
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 8.55,
+      "y": 18.47,
+      "z": -8.67
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Storage/Security",
+      "x": 2.7,
+      "y": 15.73,
+      "z": 39.5
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 1.03,
+      "y": 18.47,
+      "z": 39.63
+    },
+    "building": null,
+    "fromFloor": "Storage/Security",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 10.38,
+      "y": 18.54,
+      "z": -27.79
+    },
+    "to": {
+      "floor": "Helipad",
+      "x": 10.81,
+      "y": 21.13,
+      "z": -26.92
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "Helipad"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -5.44,
+      "y": 18.51,
+      "z": -22.56
+    },
+    "to": {
+      "floor": "Helipad",
+      "x": -3.94,
+      "y": 21.14,
+      "z": -21.52
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "Helipad"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -14.5,
+      "y": 18.52,
+      "z": 9.05
+    },
+    "to": {
+      "floor": "Helipad",
+      "x": -14.52,
+      "y": 21.12,
+      "z": 6.23
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "Helipad"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 2.78,
+      "y": 18.47,
+      "z": 39.47
+    },
+    "to": {
+      "floor": "Helipad",
+      "x": 1.1,
+      "y": 21.14,
+      "z": 39.63
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "Helipad"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": 7.9,
+      "y": 13.05,
+      "z": -58.05
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": 7.9,
+      "y": 16.03,
+      "z": -56.35
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": -4.36,
+      "y": 13.02,
+      "z": -15.01
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": -4.51,
+      "y": 15.72,
+      "z": -16.71
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": 0.38,
+      "y": 13.02,
+      "z": 1.49
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": -0.31,
+      "y": 15.72,
+      "z": -0.47
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": 6.15,
+      "y": 13.02,
+      "z": -14.82
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": 6.2,
+      "y": 15.72,
+      "z": -16.47
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Accommodation (lower)",
+      "x": 3.14,
+      "y": 26.52,
+      "z": 39.44
+    },
+    "to": {
+      "floor": "Accommodation (mid)",
+      "x": 1.03,
+      "y": 29.22,
+      "z": 39.63
+    },
+    "building": null,
+    "fromFloor": "Accommodation (lower)",
+    "toFloor": "Accommodation (mid)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Helipad",
+      "x": -8.7,
+      "y": 21.14,
+      "z": -25.5
+    },
+    "to": {
+      "floor": "Gym/Canteen",
+      "x": -8.7,
+      "y": 23.84,
+      "z": -23.77
+    },
+    "building": null,
+    "fromFloor": "Helipad",
+    "toFloor": "Gym/Canteen"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Helipad",
+      "x": -10.05,
+      "y": 21.12,
+      "z": 14.75
+    },
+    "to": {
+      "floor": "Gym/Canteen",
+      "x": -10.1,
+      "y": 23.82,
+      "z": 16.55
+    },
+    "building": null,
+    "fromFloor": "Helipad",
+    "toFloor": "Gym/Canteen"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Helipad",
+      "x": 8.7,
+      "y": 21.13,
+      "z": -25.5
+    },
+    "to": {
+      "floor": "Gym/Canteen",
+      "x": 8.7,
+      "y": 23.84,
+      "z": -23.8
+    },
+    "building": null,
+    "fromFloor": "Helipad",
+    "toFloor": "Gym/Canteen"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Helipad",
+      "x": 10.05,
+      "y": 21.12,
+      "z": 14.75
+    },
+    "to": {
+      "floor": "Gym/Canteen",
+      "x": 10.1,
+      "y": 23.82,
+      "z": 16.55
+    },
+    "building": null,
+    "fromFloor": "Helipad",
+    "toFloor": "Gym/Canteen"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Gym/Canteen",
+      "x": 0,
+      "y": 23.83,
+      "z": -25.2
+    },
+    "to": {
+      "floor": "Accommodation (lower)",
+      "x": 0.01,
+      "y": 26.85,
+      "z": -23.48
+    },
+    "building": null,
+    "fromFloor": "Gym/Canteen",
+    "toFloor": "Accommodation (lower)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Gym/Canteen",
+      "x": -10.1,
+      "y": 23.82,
+      "z": 14.6
+    },
+    "to": {
+      "floor": "Accommodation (lower)",
+      "x": -10.1,
+      "y": 26.52,
+      "z": 16.5
+    },
+    "building": null,
+    "fromFloor": "Gym/Canteen",
+    "toFloor": "Accommodation (lower)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Gym/Canteen",
+      "x": 10.1,
+      "y": 23.82,
+      "z": 14.6
+    },
+    "to": {
+      "floor": "Accommodation (lower)",
+      "x": 10.1,
+      "y": 26.52,
+      "z": 16.5
+    },
+    "building": null,
+    "fromFloor": "Gym/Canteen",
+    "toFloor": "Accommodation (lower)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Gym/Canteen",
+      "x": 2.78,
+      "y": 23.82,
+      "z": 39.58
+    },
+    "to": {
+      "floor": "Accommodation (lower)",
+      "x": 1.03,
+      "y": 26.52,
+      "z": 39.63
+    },
+    "building": null,
+    "fromFloor": "Gym/Canteen",
+    "toFloor": "Accommodation (lower)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Accommodation (mid)",
+      "x": -7.95,
+      "y": 29.22,
+      "z": 13.95
+    },
+    "to": {
+      "floor": "Accommodation (upper)",
+      "x": -8.2,
+      "y": 31.92,
+      "z": 15.88
+    },
+    "building": null,
+    "fromFloor": "Accommodation (mid)",
+    "toFloor": "Accommodation (upper)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Accommodation (mid)",
+      "x": 8.25,
+      "y": 29.22,
+      "z": 15.1
+    },
+    "to": {
+      "floor": "Accommodation (upper)",
+      "x": 8.3,
+      "y": 31.92,
+      "z": 16.88
+    },
+    "building": null,
+    "fromFloor": "Accommodation (mid)",
+    "toFloor": "Accommodation (upper)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Officers' Deck",
+      "x": -8.35,
+      "y": 34.63,
+      "z": 19.65
+    },
+    "to": {
+      "floor": "Stairs (blocked)",
+      "x": -8.35,
+      "y": 37.32,
+      "z": 21.28
+    },
+    "building": null,
+    "fromFloor": "Officers' Deck",
+    "toFloor": "Stairs (blocked)"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Stairs (blocked)",
+      "x": -9,
+      "y": 37.33,
+      "z": 33.05
+    },
+    "to": {
+      "floor": "Bridge",
+      "x": -9,
+      "y": 40.02,
+      "z": 34.67
+    },
+    "building": null,
+    "fromFloor": "Stairs (blocked)",
+    "toFloor": "Bridge"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Stairs (blocked)",
+      "x": 4.09,
+      "y": 37.33,
+      "z": 31.29
+    },
+    "to": {
+      "floor": "Bridge",
+      "x": 3.11,
+      "y": 40.02,
+      "z": 30.21
+    },
+    "building": null,
+    "fromFloor": "Stairs (blocked)",
+    "toFloor": "Bridge"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bridge",
+      "x": 6.73,
+      "y": 40.02,
+      "z": 34.2
+    },
+    "to": {
+      "floor": "Bridge Roof",
+      "x": 6.7,
+      "y": 43.32,
+      "z": 35.83
+    },
+    "building": null,
+    "fromFloor": "Bridge",
+    "toFloor": "Bridge Roof"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Accommodation (upper)",
+      "x": 2.82,
+      "y": 31.92,
+      "z": 39.56
+    },
+    "to": {
+      "floor": "Officers' Deck",
+      "x": 1.03,
+      "y": 34.62,
+      "z": 39.63
+    },
+    "building": null,
+    "fromFloor": "Accommodation (upper)",
+    "toFloor": "Officers' Deck"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -13.34,
+      "y": 18.55,
+      "z": -46.97
+    },
+    "to": {
+      "floor": "Helipad",
+      "x": -14.11,
+      "y": 20.87,
+      "z": -46.83
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "Helipad"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 12.96,
+      "y": 18.55,
+      "z": -46.93
+    },
+    "to": {
+      "floor": "Helipad",
+      "x": 13.88,
+      "y": 20.87,
+      "z": -46.44
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "Helipad"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": -6.2,
+      "y": 13.3,
+      "z": 0.7
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": -7.17,
+      "y": 15.72,
+      "z": 1.37
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": 6.28,
+      "y": 13.32,
+      "z": -13.02
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": 7.35,
+      "y": 15.72,
+      "z": -14.55
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Fuel Pumps",
+      "x": 6.45,
+      "y": 13.15,
+      "z": 2.12
+    },
+    "to": {
+      "floor": "Storage/Security",
+      "x": 6.56,
+      "y": 15.72,
+      "z": 1.34
+    },
+    "building": null,
+    "fromFloor": "Fuel Pumps",
+    "toFloor": "Storage/Security"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Accommodation (lower)",
+      "x": -6.51,
+      "y": 26.52,
+      "z": -13.11
+    },
+    "to": {
+      "floor": "Accommodation (mid)",
+      "x": -6.25,
+      "y": 28.81,
+      "z": -13.71
+    },
+    "building": null,
+    "fromFloor": "Accommodation (lower)",
+    "toFloor": "Accommodation (mid)"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "Stairs (blocked)",
+      "x": 3.1,
+      "y": 35.97,
+      "z": 28.68
+    },
+    "to": {
+      "floor": "Bridge",
+      "x": 1.15,
+      "y": 38.67,
+      "z": 28.75
+    },
+    "building": null,
+    "fromFloor": "Stairs (blocked)",
+    "toFloor": "Bridge"
+  }
+]

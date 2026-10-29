@@ -128,6 +128,9 @@
   .map-label.route-end .dot { background: #fff; }
   .map-icon { font-size: 15px; line-height: 1; text-shadow: 0 0 3px #000; }
   .map-icon small { font: 600 10px "Segoe UI", sans-serif; color: #fff; margin-left: 2px; }
+  .map-transition span { display: inline-flex; align-items: center; font-size: 12px; line-height: 1; padding: 1px 3px; border-radius: 4px;
+    background: rgba(20, 60, 80, 0.85); border: 1px solid rgba(120, 230, 255, 0.8); cursor: pointer; white-space: nowrap; }
+  .map-transition small { font: 700 10px "Segoe UI", sans-serif; color: #9fe8ff; margin-left: 1px; }
   .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .raid-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; }
   .raid-grid > .panel { max-height: max(520px, calc(100vh - var(--hdr, 150px) - 110px)); overflow-y: auto; }
@@ -1443,20 +1446,22 @@ async function loadSvgRoot(url) {
   return new DOMParser().parseFromString(await svgTextCache[url], 'image/svg+xml').documentElement;
 }
 // One floor visible: the base (ground) layer plus groups kept with it, or a floor drawn over a faded ground level.
-function svgFloorOverlay(root, def, floorLayer, hideBase = false) {
+function svgFloorOverlay(root, def, floorLayer, hideBase = false, dimBase = false) {
   const svg = document.importNode(root, true);
   const base = def.svgLayer;
   const layerGroups = [...svg.children].filter(g => g.tagName.toLowerCase() === 'g' && g.dataset && g.dataset.layer);
   for (const g of layerGroups) {
     const isBase = g.id === base || g.dataset.keepWithGroup === base;
-    if (!floorLayer) g.style.display = isBase ? '' : 'none';
+    if (!floorLayer) { g.style.display = isBase ? '' : 'none'; if (isBase && dimBase) g.style.opacity = '0.35'; } // a floor without its own drawing
     else if (g.id === floorLayer) g.style.display = '';
     else if (isBase && !hideBase) { g.style.display = ''; g.style.opacity = '0.22'; }
     else g.style.display = 'none';
   }
   return L.svgOverlay(svg, gameBounds(def.svgBounds || def.bounds), { interactive: false });
 }
-const hasFloors = def => !!(def && def.svgPath && def.layers && def.layers.length);
+// Floors come from tarkov.dev's map layers, or (marked manual) from data/floors.json for maps it has none for: there the
+// map image has no per-floor drawing, so other floors are shown by the walls layer over the dimmed map.
+const hasFloors = def => !!(def && def.layers && def.layers.length);
 const GROUND = 'Ground floor';
 const mapFloors = def => [GROUND, ...def.layers.slice().sort((a, b) => a.height[0] - b.height[0]).map(l => l.name)];
 // A point is on a floor when its height is in one of the floor's bands and, if that band is limited to
@@ -1499,7 +1504,7 @@ function localGround(key, p) {
 }
 // Building floor: 1 = ground floor, -1 = basement; null when not estimated (area-based maps, no reference points).
 function buildingFloor(def, p) {
-  if (usesAreas(def) || !def._key) return null;
+  if (usesAreas(def) || manualFloors(def) || !def._key) return null;
   const g = localGround(def._key, p);
   if (g === null) return null;
   // Streets' streets differ in height by several metres, so "below the nearest spawns" isn't reliably a basement:
@@ -1517,7 +1522,12 @@ function floorTag(def, p) {
   return fl === GROUND ? null : shortFloor(fl);
 }
 // Label for a floor button: real floors on area-based maps, drawing levels ("L2") on height-band maps.
-const floorButtonLabel = (def, f) => (usesAreas(def) ? shortFloor(f) : f === GROUND ? 'L1' : /under/i.test(f) ? 'UG' : 'L' + ((f.match(/\d+/) || ['?'])[0]));
+const manualFloors = def => (def.layers || []).some(l => l.manual);
+// Named floors without a number (Icebreaker's "Engine Room (upper)", the Lab's "Technical") keep a shortened name.
+const namedFloor = f => f.replace(/\s*\((.+)\)/, (m, w) => ' ' + w[0].toUpperCase() + w.slice(1)).replace(/\b(\w{5})\w{4,}/g, '$1.');
+const floorButtonLabel = (def, f) => (def.layers.find(l => l.name === f) || {}).short || (usesAreas(def) || manualFloors(def) ? shortFloor(f)
+  : f === GROUND ? (def.layers.some(l => !/\d/.test(l.name) && !/under/i.test(l.name)) ? 'Main' : 'L1')
+  : /under/i.test(f) ? 'UG' : /\d/.test(f) ? 'L' + f.match(/\d+/)[0] : namedFloor(f));
 const floorLayerId = (def, name) => { const l = (def.layers || []).find(l => l.name === name); return l ? l.svgLayer : null; };
 const isBuildingLabel = l => l.size !== 80 && !/\b(St\.|Ave\.|Alley)$/.test(l.text);
 const buildingLabels = def => (def.labels || []).filter(isBuildingLabel);
@@ -1539,7 +1549,8 @@ function placeOf(def, p) {
 const placeText = pl => (pl ? [pl.building, pl.floor].filter(Boolean).join(' · ') : '');
 // The floor shown on the raid map, and the SVG overlay currently drawing it.
 let raidFloor = GROUND, raidOverlay = null, raidOverlayFloor = null, raidTileLayer = null, raidFloorCtl = null;
-const shortFloor = name => (name === GROUND ? 'G' : /under/i.test(name) ? 'UG' : (name.match(/\d+/) || [name])[0] + 'F');
+// "2nd Floor" -> "2F"; floors without a number keep their name ("Bunkers", "Tunnels", "Garage").
+const shortFloor = name => (name === GROUND ? 'G' : /under/i.test(name) ? 'UG' : /\d/.test(name) ? name.match(/\d+/)[0] + 'F' : name);
 
 // ---------- location photos in map tooltips (wiki quest guides) ----------
 const questImageCache = {};
@@ -1620,6 +1631,21 @@ function ensureLeaflet() {
   return leafletReady;
 }
 
+// A floor image drawn a few pixels off the map's projection (data/map-transforms.json: Icebreaker's deck images are
+// drawn at a slight tilt, so each deck sits a little further along the ship): shift its tiles by [dx, dy] zoom-0 px.
+function offsetTiles(layer, off) {
+  if (!off || (!off[0] && !off[1])) return layer;
+  const place = () => {
+    const c = layer.getContainer(), m = layer._map;
+    if (!c || !m) return;
+    const k = Math.pow(2, m.getZoom());
+    c.style.marginLeft = off[0] * k + 'px'; c.style.marginTop = off[1] * k + 'px';
+  };
+  layer.on('add', () => { place(); layer._map.on('zoomend', place); });
+  layer.on('remove', () => { if (layer._map) layer._map.off('zoomend', place); });
+  return layer;
+}
+
 // Same projection as tarkov.dev's interactive maps: game (x, z) -> rotated -> affine transform.
 function tarkovCRS(def) {
   const rotate = (latLng, deg) => {
@@ -1638,7 +1664,7 @@ function tarkovCRS(def) {
 const gameBounds = b => L.latLngBounds([b[0][1], b[0][0]], [b[1][1], b[1][0]]);
 
 // Map overlays (extracts, transits, keys, hazards, bosses…), toggleable and remembered.
-const MAP_LAYER_DEFAULTS = { 'Place names': true, 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
+const MAP_LAYER_DEFAULTS = { 'Walls (game navmesh)': true, 'Level transitions': true,'Place names': true, 'PMC extracts': true, 'Shared / co-op extracts': true, 'Scav extracts': false, 'Transits': true,
   'Hazards': true, 'Bosses': true, 'Locked doors (keys)': false, 'Stationary weapons': false, 'Loot containers': false };
 const LOOT_COLORS = { safe: '#ffd24a', 'weapon-box': '#d9705a', medcase: '#6fdc5f', 'medical-supply-crate': '#6fdc5f', 'ground-cache': '#c98a4f',
   'buried-barrel-cache': '#c98a4f', 'pc-block': '#4fc1c9', 'technical-supply-crate': '#9aa7b8', toolbox: '#9aa7b8', 'grenade-box': '#e08bc0',
@@ -1671,6 +1697,17 @@ function addFeatureLayers(map, key, questLayer) {
     for (const l of f.locks) group('Locked doors (keys)').addLayer(icon(l, '🔑', '', `${esc(l.key.name)}${l.needsPower ? ' (needs power)' : ''}`));
     for (const w of f.stationary) group('Stationary weapons').addLayer(icon(w, '🔫', '', esc(w.name)));
     for (const c of f.loot) group('Loot containers').addLayer(L.circleMarker([c.z, c.x], { radius: 4, color: '#000', weight: 1, fillColor: LOOT_COLORS[c.kind] || '#aaa', fillOpacity: 0.9 }).bindTooltip(esc(c.name)));
+  }
+  raidTransitions = { key, group: group('Level transitions'), list: null };
+  fetch(`/api/transitions?map=${encodeURIComponent(key)}`).then(r => (r.ok ? r.json() : null)).then(j => {
+    if (!raidTransitions || raidTransitions.key !== key) return;
+    raidTransitions.list = Array.isArray(j) ? j : (j && j.transitions) || [];
+    drawTransitions();
+  }).catch(() => {});
+  raidWallsLayer = null;
+  if (navReady(key) || navStatus[key] === 'loading') {
+    NavWallsLayer = NavWallsLayer || makeNavWallsLayer();
+    groups['Walls (game navmesh)'] = raidWallsLayer = new NavWallsLayer(key);
   }
   const saved = S.ui.mapLayers || {};
   const overlays = { 'Quest objectives': questLayer };
@@ -1732,11 +1769,19 @@ async function attachRaidMap() {
     for (const b of raidMapEl.querySelectorAll('.floor-ctl button')) b.classList.toggle('on', b.dataset.floor === raidFloor);
     if (raidOverlayFloor !== raidFloor) {
       const want = raidFloor, target = raidMap;
-      loadSvgRoot(def.svgPath).then(root => {
+      const fl = (def.layers || []).find(l => l.name === want);
+      if (!def.svgPath || (fl && fl.tilePath && raidTileLayer)) {
+        // The floor's own map tiles (tarkov.dev draws Icebreaker's decks, the Lab's levels, Reserve's bunkers this way)
+        // over the dimmed ground floor; floors without a drawing (data/floors.json) only dim the map for the walls layer.
+        if (raidOverlay) raidOverlay.remove();
+        raidOverlay = fl && fl.tilePath ? offsetTiles(L.tileLayer(fl.tilePath, { tileSize: def.tileSize, bounds: gameBounds(def.bounds), maxNativeZoom: def.maxZoom, maxZoom: def.maxZoom + 2 }), fl.offset).addTo(raidMap) : null;
+        if (raidTileLayer) raidTileLayer.setOpacity(want === GROUND ? 1 : 0.3);
+        raidOverlayFloor = want;
+      } else loadSvgRoot(def.svgPath).then(root => {
         if (raidMap !== target || raidFloor !== want) return;
         if (raidOverlay) raidOverlay.remove();
         raidOverlay = null;
-        if (!raidTileLayer || want !== GROUND) raidOverlay = svgFloorOverlay(root, def, floorLayerId(def, want), !!raidTileLayer).addTo(target).bringToBack();
+        if (!raidTileLayer || want !== GROUND) raidOverlay = svgFloorOverlay(root, def, floorLayerId(def, want), !!raidTileLayer, want !== GROUND).addTo(target).bringToBack();
         if (raidTileLayer) { raidTileLayer.setOpacity(want === GROUND ? 1 : 0.3); raidTileLayer.bringToBack(); }
         raidOverlayFloor = want;
       }).catch(() => { raidOverlayFloor = want; });
@@ -1769,7 +1814,8 @@ async function attachRaidMap() {
           fillOpacity: done ? 0.3 : away ? 0.3 : 0.75, opacity: away ? 0.6 : 1, dashArray: away ? '3 3' : null, weight: 2,
         }).on('click', () => { if (away) { raidFloor = fl; render(); } });
         const spots = (o.points || []).filter(q => mapKey(q.map) === key).length;
-        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${done ? ' ✓' : ''}`, spots > 1);
+        const extra = p.kind === 'boss' ? `<br><i>${esc(p.zone || 'Boss spawn')}${p.chance ? ` · ${Math.round(p.chance * 100)}% spawn chance` : ''}</i>` : o.locationNote ? `<br><i>${esc(o.locationNote)}</i>` : '';
+        bindObjectiveTip(m, t, o, key, `<b>${esc(t.name)}</b><br>${esc(o.description)}${placeText(placeOf(def, p)) ? `<br><i>${esc(placeText(placeOf(def, p)))}</i>` : ''}${extra}${done ? ' ✓' : ''}`, spots > 1);
         raidMarkers.addLayer(m);
         if (!done) pts.push([p.z, p.x]);
       }
@@ -1798,13 +1844,102 @@ async function attachRaidMap() {
     raidMapEl.style.cursor = '';
   }
   drawRoute(key);
+  if (raidWallsLayer) raidWallsLayer._redraw(); // the floor may have changed
+  drawTransitions();
+}
+
+// ---------- level transitions (stairs, ramps, ladders, hatches, drops) ----------
+// Built from the navmesh by tools/build_transitions.mjs: every place the walkable mesh joins two levels. Shown when
+// one end is on the floor being displayed; clicking switches to the other end's floor.
+let raidTransitions = null;
+const TRANSITION_GLYPH = { stairs: '🪜', ladder: '🪜', ramp: '↗', hatch: '⛶', drop: '⤓', climb: '⤒', elevator: '⇕' };
+function drawTransitions() {
+  const t = raidTransitions;
+  if (!t || !t.list || t.key !== S.raid.map) return;
+  const def = D.mapDefs[t.key];
+  t.group.clearLayers();
+  const floors = hasFloors(def);
+  for (const tr of t.list) {
+    if (!tr.from || !tr.to) continue;
+    const fa = floors ? floorOf(def, tr.from) : GROUND, fb = floors ? floorOf(def, tr.to) : GROUND;
+    // On maps with one drawn level, only connectors between real levels (more than a storey apart) are worth a marker.
+    if (fa === fb && Math.abs((tr.from.y || 0) - (tr.to.y || 0)) < 2.5) continue;
+    let here = tr.from, there = tr.to, other = fb;
+    if (floors && fa !== raidFloor) {
+      if (fb !== raidFloor) continue;
+      here = tr.to; there = tr.from; other = fa;
+    }
+    const up = (there.y || 0) > (here.y || 0);
+    const kind = tr.kind || 'stairs';
+    const glyph = TRANSITION_GLYPH[kind] || '⇕';
+    const dy = Math.abs((there.y || 0) - (here.y || 0));
+    const tip = `<b>${esc(titleCase(kind))}</b> ${up ? 'up' : 'down'} ${dy.toFixed(1)} m${other !== raidFloor || floors ? ` to ${esc(other)}` : ''}${tr.building ? `<br>${esc(tr.building)}` : ''}${floors && other !== raidFloor ? '<br><i>click to show that floor</i>' : ''}`;
+    const m = L.marker([here.z, here.x], { zIndexOffset: 200, icon: L.divIcon({ className: 'map-transition', html: `<span>${glyph}<small>${up ? '↑' : '↓'}</small></span>`, iconSize: null, iconAnchor: [9, 9] }) })
+      .bindTooltip(tip);
+    if (floors && other !== raidFloor) m.on('click', () => { raidFloor = other; render(); });
+    t.group.addLayer(m);
+  }
+}
+
+// ---------- walls from the game's navmesh ----------
+// Edges of the walkable area (walls, fences, ledges) for the floor being shown, drawn on a canvas when zoomed in.
+// Edges are projected once (zoom 0) and scaled on redraw, so pans and zooms stay quick with ~10⁵ lines.
+let NavWallsLayer = null, raidWallsLayer = null; // the class needs Leaflet, so it's made on first use
+function makeNavWallsLayer() {
+  return window.L.Layer.extend({
+    initialize(key) { this._key = key; this._lines = null; this._floorCache = {}; },
+    onAdd(map) {
+      this._map = map;
+      this._canvas = window.L.DomUtil.create('canvas', 'nav-walls leaflet-zoom-hide');
+      this._canvas.style.pointerEvents = 'none';
+      // own pane above the floor drawings (overlayPane 400), below markers (600)
+      const pane = map.getPane('navWalls') || map.createPane('navWalls');
+      pane.style.zIndex = 450; pane.style.pointerEvents = 'none';
+      pane.appendChild(this._canvas);
+      map.on('moveend zoomend resize viewreset', this._redraw, this);
+      if (!this._lines) navCall('walls', { map: this._key }).then(r => { this._lines = r.lines; this._redraw(); }).catch(() => {});
+      this._redraw();
+    },
+    onRemove(map) { map.off('moveend zoomend resize viewreset', this._redraw, this); this._canvas.remove(); },
+    // Projected segments (zoom-0 pixels) on the given floor: [x1, y1, x2, y2, ...]
+    _forFloor(fl) {
+      if (this._floorCache[fl]) return this._floorCache[fl];
+      const def = D.mapDefs[this._key], L5 = this._lines, out = [];
+      for (let i = 0; i < L5.length; i += 5) {
+        const mx = (L5[i] + L5[i + 2]) / 2, mz = (L5[i + 1] + L5[i + 3]) / 2;
+        if (hasFloors(def) && floorOf(def, { x: mx, y: L5[i + 4] + 0.5, z: mz }) !== fl) continue;
+        const a = this._map.project([L5[i + 1], L5[i]], 0), b = this._map.project([L5[i + 3], L5[i + 2]], 0);
+        out.push(a.x, a.y, b.x, b.y);
+      }
+      return (this._floorCache[fl] = new Float32Array(out));
+    },
+    _redraw() {
+      const map = this._map;
+      if (!map || !this._canvas) return;
+      const size = map.getSize(), c = this._canvas;
+      window.L.DomUtil.setPosition(c, map.containerPointToLayerPoint([0, 0]));
+      c.width = size.x; c.height = size.y;
+      const ctx = c.getContext('2d');
+      const def = D.mapDefs[this._key];
+      if (!this._lines || map.getZoom() < def.maxZoom - 2.5) return;
+      const segs = this._forFloor(hasFloors(def) ? raidFloor : GROUND);
+      const k = Math.pow(2, map.getZoom()), o = map.getPixelBounds().min;
+      ctx.strokeStyle = 'rgba(120, 230, 255, 0.75)'; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (let i = 0; i < segs.length; i += 4) {
+        const x1 = segs[i] * k - o.x, y1 = segs[i + 1] * k - o.y, x2 = segs[i + 2] * k - o.x, y2 = segs[i + 3] * k - o.y;
+        if ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0) || (x1 > size.x && x2 > size.x) || (y1 > size.y && y2 > size.y)) continue;
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      }
+      ctx.stroke();
+    },
+  });
 }
 
 // ---------- route planning ----------
 // Straight-line routing: there is no walkable-path data, so this orders stops sensibly rather than giving turn-by-turn directions.
 const ROUTE_SPEED = 4; // m/s — a mix of sprinting and walking with stamina breaks
 const dist2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-let pickingSpawn = false, raidRouteLayer = null, raidSpawnLayer = null, routeCache = { sig: null, route: null };
+let pickingSpawn = false, raidRouteLayer = null, raidSpawnLayer = null, routeCache = { sig: null, route: null }, straightCache = { sig: null, route: null };
 
 // One stop per unfinished in-raid objective with a map position; quest items list every possible spot as a candidate.
 function raidStopGroups(key) {
@@ -1848,7 +1983,8 @@ function enforceKeyOrder(stops) {
 function raidExtractOptions(key) {
   const f = D.mapFeatures && D.mapFeatures[key];
   const seen = new Set();
-  return (f ? f.extracts : []).filter(e => e.faction !== 'scav' && !seen.has(e.name) && seen.add(e.name));
+  // Transits can end the route too (quests that need one, or picked by hand).
+  return [...(f ? f.extracts : []), ...(f ? f.transits : []).map(t => ({ ...t, faction: 'transit' }))].filter(e => e.faction !== 'scav' && !seen.has(e.name) && seen.add(e.name));
 }
 
 // Shortest open path from the spawn through one spot of every stop group, ending at the best of the given extracts.
@@ -1874,9 +2010,25 @@ function crossesMinefield(a, b) {
   }
   return false;
 }
-const legCost = (a, b) => { const d = dist2(a, b); return routeMinefields.length && crossesMinefield(a, b) ? d * 3 : d; };
+// While a walking-distance matrix is set (navLegs), legs cost their walking distance on the game's navmesh instead.
+let navLegs = null;
+// Straight-line leg costs are memoised per planning run (the exact planner asks for the same pair millions of times,
+// and the minefield test is costly on maps with many minefields).
+let legMemo = new WeakMap();
+const legCost = (a, b) => {
+  if (navLegs) {
+    const i = navLegs.index.get(a), j = navLegs.index.get(b);
+    if (i !== undefined && j !== undefined) { const v = navLegs.dist[i * navLegs.n + j]; return isFinite(v) ? v : dist2(a, b) * 3 + 2000; }
+  }
+  let row = legMemo.get(a);
+  if (!row) legMemo.set(a, (row = new Map()));
+  let v = row.get(b);
+  if (v === undefined) { const d = dist2(a, b); v = routeMinefields.length && crossesMinefield(a, b) ? d * 3 : d; row.set(b, v); }
+  return v;
+};
 
 function planRoute(start, groups, ends) {
+  legMemo = new WeakMap();
   if (!groups.length) {
     const e = ends.reduce((b, x) => (!b || legCost(start, x) < legCost(start, b) ? x : b), null);
     return { stops: [], total: e ? legCost(start, e) : 0, end: e };
@@ -1992,31 +2144,125 @@ function improveRoute(start, stops, end) {
   }
 }
 
+// ---------- walking routes on the game's navmesh ----------
+// The bots' navmesh doesn't cover whole maps, so tools/ builds a player navmesh from the game's collision geometry
+// (walls, floors, stairs, doors, ledges to drop/climb/vault). A worker does the path searches.
+// A few workers: distance-matrix rows are spread over all of them, everything else goes to the first.
+const NAV_WORKERS = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 4) - 2));
+let navWorkers = null, navSeq = 0;
+const navPending = new Map(), navStatus = {}, navJobs = new Set();
+function navCall(type, payload, w = 0) {
+  if (!navWorkers) {
+    navWorkers = Array.from({ length: NAV_WORKERS }, (_, wi) => {
+      const wk = new Worker('/nav-worker.js');
+      wk.onmessage = ev => {
+        const p = navPending.get(ev.data.id);
+        if (!p) return;
+        navPending.delete(ev.data.id);
+        if (ev.data.error) p.reject(new Error(ev.data.error)); else p.resolve(ev.data);
+      };
+      // a crashed worker (e.g. out of memory) fails its requests instead of leaving the route "working out" forever
+      wk.onerror = e => {
+        console.warn('route worker failed:', e.message);
+        for (const [id, p] of navPending) if (p.w === wi) { navPending.delete(id); p.reject(new Error(e.message || 'route worker failed')); }
+      };
+      return wk;
+    });
+  }
+  const id = ++navSeq;
+  return new Promise((resolve, reject) => { navPending.set(id, { resolve, reject, w }); navWorkers[w].postMessage({ id, type, ...payload }); });
+}
+async function navMatrix(payload) {
+  const n = payload.points.length, dist = new Float64Array(n * n);
+  const rows = Array.from({ length: n }, (_, i) => i);
+  const parts = await Promise.all(Array.from({ length: NAV_WORKERS }, (_, w) =>
+    navCall('matrix', { ...payload, rows: rows.filter(i => i % NAV_WORKERS === w) }, w)));
+  for (const p of parts) p.rows.forEach((i, k) => dist.set(p.dist.subarray(k * n, (k + 1) * n), i * n));
+  return { dist };
+}
+// 'ready' once the map's navmesh is loaded in the workers; starts loading on first ask.
+function navReady(key) {
+  if (!(key in navStatus)) {
+    navStatus[key] = 'loading';
+    Promise.all(Array.from({ length: NAV_WORKERS }, (_, w) => navCall('load', { map: key }, w)))
+      .then(() => { navStatus[key] = 'ready'; routeCache.sig = null; render(); })
+      .catch(() => { navStatus[key] = 'missing'; });
+  }
+  return navStatus[key] === 'ready';
+}
+// Locked doors a route may open: keys the player has, and keys the route picks up.
+const routeKeys = key => [...new Set([...Object.keys(S.have).filter(id => S.have[id] > 0), ...raidStopGroups(key).filter(g => g.keyId).map(g => g.keyId)])].sort();
+const pt3 = p => ({ x: p.x, y: typeof p.y === 'number' ? p.y : undefined, z: p.z });
+
+async function navRouteJob(sig, key, start, groups, ends, hazards) {
+  const keys = routeKeys(key);
+  const pts = [start];
+  for (const g of groups) for (const c of g.cands) pts.push(c);
+  for (const e of ends) pts.push(e);
+  const { dist } = await navMatrix({ map: key, points: pts.map(pt3), keys, hazards });
+  navLegs = { index: new Map(pts.map((p, i) => [p, i])), dist, n: pts.length };
+  let r;
+  try { r = planRoute(start, groups, ends); } finally { navLegs = null; }
+  const seq = [start, ...r.stops.map(st => st.p), ...(r.end && r.end !== start ? [r.end] : [])];
+  const { legs } = await navCall('paths', { map: key, points: seq.map(pt3), keys, hazards });
+  return { stops: r.stops, extract: r.end && r.end !== start ? r.end : null, legs, walking: true,
+    total: legs.reduce((s, l, i) => s + (l && !l.blocked ? l.length : dist2(seq[i], seq[i + 1])), 0), unreachable: legs.filter(l => !l || l.blocked).length, minefieldLegs: 0 };
+}
+
 function raidRoute(key) {
   if (!S.raid || !S.raid.spawn) return null;
   const groups = raidStopGroups(key);
   const options = raidExtractOptions(key);
-  const forced = S.raid.extract && S.raid.extract !== 'auto' ? options.filter(e => e.name === S.raid.extract) : [];
+  // A quest that must be extracted through a named exit decides the extract unless one was picked.
+  const questExits = new Set(S.raid.quests.map(id => D.byId[id]).filter(t => t && S.tasks[t.id] !== 'done')
+    .flatMap(t => t.objectives.filter(o => o.type === 'extract' && o.exitName && !o.optional && !S.objs[o.id]).map(o => o.exitName.toLowerCase())));
+  const forced = S.raid.extract && S.raid.extract !== 'auto' ? options.filter(e => e.name === S.raid.extract)
+    : options.filter(e => questExits.has(e.name.toLowerCase()));
   const ends = forced.length ? forced : options.filter(e => e.faction === 'pmc');
-  const sig = JSON.stringify([key, S.raid.spawn, S.raid.extract, groups.map(g => g.o.id)]);
+  const sig = JSON.stringify([key, S.raid.spawn, S.raid.extract, groups.map(g => g.o.id), routeKeys(key), navStatus[key] || '']);
   if (routeCache.sig === sig) return routeCache.route;
   const f = D.mapFeatures && D.mapFeatures[key];
   routeMinefields = f ? f.hazards.filter(h => h.type === 'minefield' && h.outline && h.outline.length > 2).map(h => h.outline.map(([x, z]) => ({ x, z }))) : [];
+  // Walking route: computed in the background, the straight-line plan shows until it's ready.
+  if (navReady(key) && !navJobs.has(sig)) {
+    navJobs.add(sig);
+    const zones = type => (f ? f.hazards : []).filter(h => h.type === type && h.outline && h.outline.length > 2).map(h => h.outline);
+    const bd = D.mapDefs[key] && D.mapDefs[key].bounds;
+    const hazards = { mines: zones('minefield'), snipers: zones('sniper'),
+      bounds: bd ? [Math.min(bd[0][0], bd[1][0]), Math.min(bd[0][1], bd[1][1]), Math.max(bd[0][0], bd[1][0]), Math.max(bd[0][1], bd[1][1])] : null };
+    navRouteJob(sig, key, S.raid.spawn, groups, ends.length ? ends : [S.raid.spawn], hazards)
+      .then(route => { routeCache = { sig, route }; render(); })
+      .catch(e => { console.warn('walking route failed:', e); navStatus[key] = 'missing'; routeCache.sig = null; render(); });
+  }
+  if (straightCache.sig === sig) return straightCache.route;
   const r = planRoute(S.raid.spawn, groups, ends.length ? ends : [S.raid.spawn]);
   // Report real walking distance, not the penalised planning cost.
   let total = 0, prev = S.raid.spawn;
   for (const st of r.stops) { total += dist2(prev, st.p); prev = st.p; }
   if (ends.length && r.end) total += dist2(prev, r.end);
   const minefieldLegs = [S.raid.spawn, ...r.stops.map(st => st.p), ...(ends.length && r.end ? [r.end] : [])].reduce((n, p, i, arr) => n + (i && crossesMinefield(arr[i - 1], p) ? 1 : 0), 0);
-  const best = { stops: r.stops, total, extract: ends.length ? r.end : null, minefieldLegs };
-  routeCache = { sig, route: best };
+  const best = { stops: r.stops, total, extract: ends.length ? r.end : null, minefieldLegs, pending: navStatus[key] === 'ready' || navStatus[key] === 'loading' };
+  // Keep showing a finished walking route for this signature if the background job already delivered it.
+  if (routeCache.sig !== sig) routeCache = { sig: best.pending ? null : sig, route: best };
+  straightCache = { sig, route: best };
   return best;
 }
 
 function setSpawn(p) {
   pickingSpawn = false;
   S.raid.spawn = { x: Math.round(p.x * 10) / 10, z: Math.round(p.z * 10) / 10 };
+  if (typeof p.y === 'number') S.raid.spawn.y = Math.round(p.y * 10) / 10;
   update();
+}
+
+// Height for a clicked point (the walking route needs to know which floor): the floor being viewed, else street level.
+function clickHeight(key, p) {
+  const def = D.mapDefs[key];
+  if (hasFloors(def) && raidFloor !== GROUND) {
+    const l = def.layers.find(l => l.name === raidFloor);
+    if (l) { const [a, b] = l.height; return isFinite(a) && isFinite(b) && Math.abs(b) < 1000 && Math.abs(a) < 1000 ? (a + b) / 2 : isFinite(a) && Math.abs(a) < 1000 ? a + 1 : b - 2; }
+  }
+  return localGround(key, p);
 }
 
 function onRaidMapClick(e) {
@@ -2025,6 +2271,7 @@ function onRaidMapClick(e) {
   const spawns = (D.mapFeatures && D.mapFeatures[raidMapKey] && D.mapFeatures[raidMapKey].spawns) || [];
   let best = null, bd = 30; // snap to a known spawn within 30 m
   for (const sp of spawns) { const d = dist2(p, sp); if (d < bd) { bd = d; best = sp; } }
+  if (!best) { const y = clickHeight(raidMapKey, p); if (typeof y === 'number') p.y = y; }
   setSpawn(best || p);
 }
 
@@ -2035,10 +2282,13 @@ function drawRoute(key) {
     icon: L.divIcon({ className: 'map-label route-start', html: '<span class="dot"></span>Spawn', iconSize: null, iconAnchor: [7, 7] }) }));
   const r = raidRoute(key);
   if (!r) return;
-  const path = [S.raid.spawn, ...r.stops.map(st => st.p), ...(r.extract ? [r.extract] : [])];
-  raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#000', weight: 6, opacity: 0.5, interactive: false }));
-  raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#fff', weight: 3, opacity: 0.9, dashArray: '8 6', interactive: false }));
   const def = D.mapDefs[key];
+  const path = [S.raid.spawn, ...r.stops.map(st => st.p), ...(r.extract ? [r.extract] : [])];
+  if (r.walking) drawWalkingLegs(def, r, path);
+  else {
+    raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#000', weight: 6, opacity: 0.5, interactive: false }));
+    raidRouteLayer.addLayer(L.polyline(path.map(p => [p.z, p.x]), { color: '#fff', weight: 3, opacity: r.pending ? 0.45 : 0.9, dashArray: '8 6', interactive: false }));
+  }
   r.stops.forEach((st, i) => {
     const fl = hasFloors(def) ? floorOf(def, st.p) : GROUND;
     const place = placeText(placeOf(def, st.p));
@@ -2051,12 +2301,57 @@ function drawRoute(key) {
     icon: L.divIcon({ className: 'map-label route-end', html: `<span class="dot"></span>🏁 ${esc(r.extract.name)}`, iconSize: null, iconAnchor: [7, 7] }) }));
 }
 
+const MOVE_ICON = { 1: ['⤓', 'Drop down here'], 2: ['⤒', 'Climb up here'], 3: ['⤳', 'Vault over here'] };
+const floorOfPt = (def, p) => (hasFloors(def) ? floorOf(def, p) : GROUND);
+// Walking path legs: solid on the floor being shown, faded and dashed on other floors, with floor changes,
+// drops / climbs / vaults and locked doors marked.
+function drawWalkingLegs(def, r, path) {
+  r.legs.forEach((leg, i) => {
+    if (!leg || leg.blocked) {
+      // no walkable connection (e.g. only reachable by a jump the mesh doesn't know): straight line, red
+      const a = path[i], b = path[i + 1];
+      raidRouteLayer.addLayer(L.polyline([[a.z, a.x], [b.z, b.x]], { color: '#ff5050', weight: 3, opacity: 0.8, dashArray: '2 8', interactive: false }));
+      return;
+    }
+    const pts = leg.points.map(([x, y, z]) => ({ x, y, z }));
+    // runs of consecutive points on one floor
+    const runs = [];
+    for (let k = 0; k < pts.length; k++) {
+      const fl = floorOfPt(def, pts[k]);
+      if (!runs.length || runs[runs.length - 1].fl !== fl) runs.push({ fl, pts: runs.length ? [runs[runs.length - 1].pts.slice(-1)[0]] : [] });
+      runs[runs.length - 1].pts.push(pts[k]);
+    }
+    runs.forEach((run, ri) => {
+      const here = run.fl === raidFloor, ll = run.pts.map(p => [p.z, p.x]);
+      if (here) raidRouteLayer.addLayer(L.polyline(ll, { color: '#000', weight: 7, opacity: 0.55, interactive: false }));
+      raidRouteLayer.addLayer(L.polyline(ll, { color: '#fff', weight: here ? 3.5 : 2.5, opacity: here ? 0.95 : 0.45, dashArray: here ? null : '4 6', interactive: false }));
+      if (ri > 0) {
+        const p = run.pts[0], up = run.pts[run.pts.length - 1].y > runs[ri - 1].pts[0].y;
+        raidRouteLayer.addLayer(L.marker([p.z, p.x], { zIndexOffset: 800, icon: L.divIcon({ className: 'floor-tag here', html: `${up ? '↑' : '↓'} ${esc(shortFloor(run.fl))}`, iconSize: null, iconAnchor: [-4, 10] }) })
+          .bindTooltip(`Stairs / level change to ${esc(run.fl)} — click to show it`).on('click', () => { raidFloor = run.fl; render(); }));
+      }
+    });
+    for (const mv of leg.moves || []) {
+      const [glyph, tip] = MOVE_ICON[mv.kind] || [];
+      if (!glyph) continue;
+      raidRouteLayer.addLayer(L.marker([mv.z, mv.x], { zIndexOffset: 850, icon: L.divIcon({ className: 'map-icon', html: glyph, iconSize: null, iconAnchor: [8, 8] }) })
+        .bindTooltip(`${tip} (${esc(floorOfPt(def, mv))})`));
+    }
+    for (const d of leg.doors || []) {
+      if (d.state !== 1) continue;
+      const k = (D.keys || []).find(x => x.id === d.key);
+      raidRouteLayer.addLayer(L.marker([d.pos[2], d.pos[0]], { zIndexOffset: 860, icon: L.divIcon({ className: 'map-icon', html: '🔓', iconSize: null, iconAnchor: [8, 8] }) })
+        .bindTooltip(`Locked door — the route opens it with ${esc(k ? k.name : 'its key')}`));
+    }
+  });
+}
+
 const pointY = st => st.p.y || 0;
 
 function routePanel(key) {
   const options = raidExtractOptions(key);
   const select = `<select id="raidExtract"><option value="auto">Best PMC extract (auto)</option>${options.map(e =>
-    `<option value="${esc(e.name)}" ${S.raid.extract === e.name ? 'selected' : ''}>${esc(e.name)}${e.faction === 'shared' ? ' (co-op)' : ''}</option>`).join('')}</select>`;
+    `<option value="${esc(e.name)}" ${S.raid.extract === e.name ? 'selected' : ''}>${esc(e.name)}${e.faction === 'shared' ? ' (co-op)' : e.faction === 'transit' ? ' (transit)' : ''}</option>`).join('')}</select>`;
   const pick = `<button data-act="raidSpawnPick" class="${pickingSpawn ? 'primary' : ''}">${pickingSpawn ? 'Click your spawn on the map… (cancel)' : S.raid.spawn ? '📍 Change spawn' : '📍 Set spawn'}</button>`;
   let body;
   const r = raidRoute(key);
@@ -2064,16 +2359,34 @@ function routePanel(key) {
     body = '<div class="small muted">Press “Set spawn”, then click where you spawned (blue dots are PMC spawns). The tracker plans the shortest route through your objectives to the best extract.</div>';
   } else {
     let prev = S.raid.spawn;
+    const legLen = (i, a, b) => (r.walking && r.legs[i] && !r.legs[i].blocked ? r.legs[i].length : dist2(a, b));
+    const legNote = i => {
+      const leg = r.walking && r.legs[i];
+      if (leg && leg.blocked && leg.needs.length) {
+        const names = [...new Set(leg.needs.map(d => ((D.keys || []).find(k => k.id === d.key) || { name: d.key ? 'a key' : 'a lever / power switch' }).name))];
+        return ` <span class="badge lock" title="Behind a locked door: the route can't open it without the key">needs ${esc(names.join(' + '))}</span>`;
+      }
+      if (r.walking && (!leg || leg.blocked)) return ' <span class="badge lock" title="No walkable connection found — the spot may need a jump or a door this tracker treats as shut">no walking path</span>';
+      if (!leg) return '';
+      const n = k => (leg.moves || []).filter(m => m.kind === k).length;
+      const bits = [[1, 'drop'], [2, 'climb'], [3, 'vault']].filter(([k]) => n(k)).map(([k, w]) => `${n(k)} ${w}${n(k) > 1 ? 's' : ''}`);
+      const locked = (leg.doors || []).filter(d => d.state === 1).length;
+      if (locked) bits.push(`${locked} locked door${locked > 1 ? 's' : ''}`);
+      return bits.length ? ` <span class="muted">(${bits.join(', ')})</span>` : '';
+    };
     const steps = r.stops.map((st, i) => {
-      const d = dist2(prev, st.p); prev = st.p;
+      const d = legLen(i, prev, st.p); prev = st.p;
       const place = placeText(placeOf(D.mapDefs[key], st.p.y === undefined ? { ...st.p, y: pointY(st) } : st.p));
-      return `<div class="obj route-step" data-act="routeGo" data-id="${i}" title="Show on the map"><span class="route-num static">${i + 1}</span><div><div class="small"><span class="swatch" style="background:${st.g.color}"></span><b>${esc(st.g.t.name)}</b> <span class="muted">· ${Math.round(d)} m</span>${place ? ` <span class="badge">${esc(place)}</span>` : ''}</div>
+      return `<div class="obj route-step" data-act="routeGo" data-id="${i}" title="Show on the map"><span class="route-num static">${i + 1}</span><div><div class="small"><span class="swatch" style="background:${st.g.color}"></span><b>${esc(st.g.t.name)}</b> <span class="muted">· ${Math.round(d)} m</span>${legNote(i)}${place ? ` <span class="badge">${esc(place)}</span>` : ''}</div>
         <div class="detail">${esc(st.g.o.description)}</div></div></div>`;
     });
-    if (r.extract) steps.push(`<div class="obj"><span class="route-num static">🏁</span><div class="small"><b>Extract: ${esc(r.extract.name)}</b> <span class="muted">· ${Math.round(dist2(prev, r.extract))} m</span></div></div>`);
-    body = `<div class="small">~<b>${Math.round(r.total).toLocaleString()} m</b> straight-line · ~${Math.max(1, Math.round(r.total / ROUTE_SPEED / 60))} min of moving · ${r.stops.length} stops</div>${steps.join('')}
+    if (r.extract) steps.push(`<div class="obj"><span class="route-num static">🏁</span><div class="small"><b>Extract: ${esc(r.extract.name)}</b> <span class="muted">· ${Math.round(legLen(r.stops.length, prev, r.extract))} m</span>${legNote(r.stops.length)}</div></div>`);
+    const how = r.walking ? 'walking' : r.pending ? 'straight-line (working out the walking route…)' : 'straight-line';
+    body = `<div class="small">~<b>${Math.round(r.total).toLocaleString()} m</b> ${how} · ~${Math.max(1, Math.round(r.total / ROUTE_SPEED / 60))} min of moving · ${r.stops.length} stops</div>${steps.join('')}
       ${r.minefieldLegs ? `<div class="small" style="color:var(--bad)">⚠ ${r.minefieldLegs} leg${r.minefieldLegs > 1 ? 's' : ''} still cross a minefield — go around the red dashed area.</div>` : ''}
-      <div class="small muted">Straight-line distances, routed around minefields where possible: walls, fences and floors aren't accounted for. Objectives without a fixed spot (kills, anywhere-on-map) aren't on the route — do them along the way.</div>`;
+      <div class="small muted">${r.walking
+        ? 'Walking route on a navmesh built from the game\'s own collision geometry: walls, fences, stairs and floors, doors (locked ones only with a key you have or pick up), ledges to drop off (≤ 2.4 m), climb (≤ 1.5 m) or vault, minefields and sniper zones avoided. ↑/↓ mark level changes; dashed parts are on another floor.'
+        : 'Straight-line distances, routed around minefields where possible: walls, fences and floors aren\'t accounted for.'} Objectives without a fixed spot (kills, anywhere-on-map) aren't on the route — do them along the way.</div>`;
   }
   // Guaranteed keys with no exact spot (inside a container) can't be a route stop: list them as a first step.
   const loose = new Map();

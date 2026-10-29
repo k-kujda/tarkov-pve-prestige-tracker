@@ -1,0 +1,1226 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": 124.5,
+      "y": 18.6,
+      "z": -16.65
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": 122.87,
+      "y": 22.53,
+      "z": -18.01
+    },
+    "building": "Kilmov St.",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -125.43,
+      "y": 19.4,
+      "z": 266.34
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -125.58,
+      "y": 22.88,
+      "z": 265.56
+    },
+    "building": "Abandon Factory",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": 213.6,
+      "y": 18.68,
+      "z": 293.88
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": 212.1,
+      "y": 21.07,
+      "z": 294.1
+    },
+    "building": "Construction",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -178.95,
+      "y": 17.79,
+      "z": 461.19
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -178.1,
+      "y": 22.02,
+      "z": 462.8
+    },
+    "building": null,
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -42.5,
+      "y": 9.7,
+      "z": -101.38
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -45.22,
+      "y": 12.76,
+      "z": -98.5
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -44.03,
+      "y": 5.16,
+      "z": -64.83
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -43.33,
+      "y": 10.1,
+      "z": -64.93
+    },
+    "building": "Beluga",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -23.25,
+      "y": 7.35,
+      "z": -62.67
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -22.82,
+      "y": 10.08,
+      "z": -62.59
+    },
+    "building": "Beluga",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 41.83,
+      "y": 4.91,
+      "z": -121.17
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 41.95,
+      "y": 12.7,
+      "z": -119.6
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -113.05,
+      "y": 5.73,
+      "z": -23.93
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -111.63,
+      "y": 10.04,
+      "z": -23.43
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -46.03,
+      "y": 8.25,
+      "z": 54.43
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -44.2,
+      "y": 10.9,
+      "z": 54.33
+    },
+    "building": "Pinewood Hotel",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 124.95,
+      "y": 7.23,
+      "z": -18.7
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 126.39,
+      "y": 12.42,
+      "z": -17.2
+    },
+    "building": "Kilmov St.",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 47.55,
+      "y": 1.21,
+      "z": 65.78
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 47.37,
+      "y": 10.2,
+      "z": 67.47
+    },
+    "building": "Post Office",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -113.38,
+      "y": 8,
+      "z": 104.32
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -114.08,
+      "y": 10.92,
+      "z": 104.7
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -108.3,
+      "y": 8,
+      "z": 133.92
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -108.98,
+      "y": 10.9,
+      "z": 133.7
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 47.55,
+      "y": 1.26,
+      "z": 130.02
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 47.37,
+      "y": 11.23,
+      "z": 128.73
+    },
+    "building": "Pharmacy 1",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 129.77,
+      "y": 2.09,
+      "z": 144.05
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 127.87,
+      "y": 11.96,
+      "z": 144.5
+    },
+    "building": "Zmejskij Alley",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 49.07,
+      "y": 2.47,
+      "z": 158.85
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 51.5,
+      "y": 11.8,
+      "z": 158.9
+    },
+    "building": "Pharmacy 1",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 43.57,
+      "y": 6.99,
+      "z": 222.63
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 43.45,
+      "y": 12.3,
+      "z": 224.33
+    },
+    "building": "Prestigio Cafe",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 68.5,
+      "y": 3.45,
+      "z": 225.58
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 68.5,
+      "y": 12.3,
+      "z": 223.08
+    },
+    "building": "Tarbank",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 126.45,
+      "y": 7.68,
+      "z": 230.23
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 125.23,
+      "y": 10.07,
+      "z": 230.27
+    },
+    "building": "Chekannaya St.",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 136.18,
+      "y": 5.01,
+      "z": 223.75
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 135.85,
+      "y": 10.07,
+      "z": 222.08
+    },
+    "building": "Chekannaya St.",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 192.2,
+      "y": 7.43,
+      "z": 227.08
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 192.33,
+      "y": 11.52,
+      "z": 224.77
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 223.9,
+      "y": 7.46,
+      "z": 226.28
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 224.1,
+      "y": 11.78,
+      "z": 224.77
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -137.27,
+      "y": 7.45,
+      "z": 256.07
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -138.72,
+      "y": 11.78,
+      "z": 256.05
+    },
+    "building": "Abandon Factory",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -139.46,
+      "y": 4.09,
+      "z": 267.04
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -139.45,
+      "y": 13.12,
+      "z": 270.2
+    },
+    "building": "Abandon Factory",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -173.98,
+      "y": 9.62,
+      "z": 271.08
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -175.9,
+      "y": 12.15,
+      "z": 272.35
+    },
+    "building": "South Hotel",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -228.27,
+      "y": 3.53,
+      "z": 285.93
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -226.95,
+      "y": 11.3,
+      "z": 285.18
+    },
+    "building": "Family Market",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -175.56,
+      "y": 8.72,
+      "z": 382.88
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -176.55,
+      "y": 11.93,
+      "z": 383.82
+    },
+    "building": "Cinema",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -162.6,
+      "y": 8.7,
+      "z": 392.77
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -162.4,
+      "y": 12.45,
+      "z": 390.7
+    },
+    "building": "Cinema",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -181.71,
+      "y": 8.79,
+      "z": 400.14
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -179.89,
+      "y": 12.01,
+      "z": 400.21
+    },
+    "building": "Cinema",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -162.35,
+      "y": 8.7,
+      "z": 408.3
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -162.32,
+      "y": 12.46,
+      "z": 410.9
+    },
+    "building": "Cinema",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -178.37,
+      "y": 8.72,
+      "z": 415.92
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -178.19,
+      "y": 12.15,
+      "z": 415.2
+    },
+    "building": "Cinema",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -179.6,
+      "y": 8.78,
+      "z": 463.97
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -179.62,
+      "y": 11.58,
+      "z": 460.4
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 43.76,
+      "y": 14.16,
+      "z": -118.79
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 43.7,
+      "y": 16.7,
+      "z": -119.68
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 128.45,
+      "y": 12.4,
+      "z": -35.5
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 124.48,
+      "y": 18.6,
+      "z": -35.38
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 126.3,
+      "y": 12.42,
+      "z": -17.84
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 124.5,
+      "y": 18.6,
+      "z": -16.65
+    },
+    "building": "Kilmov St.",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 185,
+      "y": 12.49,
+      "z": 187.05
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 184.28,
+      "y": 15.65,
+      "z": 185.33
+    },
+    "building": "Vet Clinic",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 47.05,
+      "y": 14.24,
+      "z": 223.68
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 46.85,
+      "y": 16.51,
+      "z": 220.95
+    },
+    "building": "Prestigio Cafe",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 64.9,
+      "y": 13.8,
+      "z": 224.46
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 65.23,
+      "y": 16.78,
+      "z": 226.07
+    },
+    "building": "Tarbank",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 108.1,
+      "y": 12.94,
+      "z": 219.33
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 108.3,
+      "y": 15.6,
+      "z": 221.66
+    },
+    "building": "Chekannaya St.",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -174.18,
+      "y": 12.15,
+      "z": 270.88
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -176.27,
+      "y": 16.8,
+      "z": 272.53
+    },
+    "building": "South Hotel",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -172.17,
+      "y": 12.24,
+      "z": 385.26
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -173.24,
+      "y": 15.43,
+      "z": 385.34
+    },
+    "building": "Cinema",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -170.95,
+      "y": 11.92,
+      "z": 401.27
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -169.74,
+      "y": 15.39,
+      "z": 401.05
+    },
+    "building": "Cinema",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -172.58,
+      "y": 12.38,
+      "z": 414.94
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -173.06,
+      "y": 15.42,
+      "z": 415.27
+    },
+    "building": "Cinema",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -178.57,
+      "y": 11.58,
+      "z": 464.85
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -179.13,
+      "y": 17.79,
+      "z": 464.47
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Underground",
+      "x": 216.83,
+      "y": -8.19,
+      "z": 82
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 217.07,
+      "y": -0.8,
+      "z": 78.62
+    },
+    "building": "Kamchatskaya St.",
+    "fromFloor": "Underground",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "4th Floor",
+      "x": 122.82,
+      "y": 22.53,
+      "z": -17.31
+    },
+    "to": {
+      "floor": "5th Floor",
+      "x": 124.9,
+      "y": 26.4,
+      "z": -18.7
+    },
+    "building": "Kilmov St.",
+    "fromFloor": "4th Floor",
+    "toFloor": "5th Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "3rd Floor",
+      "x": 52.37,
+      "y": 18.7,
+      "z": 157.23
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": 51.33,
+      "y": 21.1,
+      "z": 155.03
+    },
+    "building": "Pharmacy 1",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "3rd Floor",
+      "x": 212.15,
+      "y": 19.1,
+      "z": 292.9
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": 210.62,
+      "y": 21.3,
+      "z": 293.28
+    },
+    "building": "Construction",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -147.64,
+      "y": 14.21,
+      "z": -5.17
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -149.12,
+      "y": 16.42,
+      "z": -9.27
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -134.1,
+      "y": 14.22,
+      "z": -7.6
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -138.27,
+      "y": 16.73,
+      "z": -10.22
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -88.69,
+      "y": 12.8,
+      "z": 128.93
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -87.22,
+      "y": 15.2,
+      "z": 130.3
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -20.64,
+      "y": 13.88,
+      "z": 162.56
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -22.65,
+      "y": 16.3,
+      "z": 161.58
+    },
+    "building": "Burger Spot",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 185.35,
+      "y": 14.41,
+      "z": 187.63
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 186.23,
+      "y": 16.63,
+      "z": 186.98
+    },
+    "building": "Vet Clinic",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 135.96,
+      "y": 13.04,
+      "z": 222.74
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 136.96,
+      "y": 15.42,
+      "z": 222.81
+    },
+    "building": "Chekannaya St.",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -176.24,
+      "y": 13.68,
+      "z": 271.03
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -175.72,
+      "y": 16.08,
+      "z": 273.2
+    },
+    "building": "South Hotel",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -175.15,
+      "y": 13.2,
+      "z": 381.25
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -176.25,
+      "y": 15.88,
+      "z": 382.95
+    },
+    "building": "Cinema",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -175.05,
+      "y": 13.18,
+      "z": 419.05
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -176.37,
+      "y": 15.95,
+      "z": 417.4
+    },
+    "building": "Cinema",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 70.51,
+      "y": 12.7,
+      "z": 451.37
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 69.73,
+      "y": 15.1,
+      "z": 450.78
+    },
+    "building": null,
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 42.95,
+      "y": 8.58,
+      "z": -121.44
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 43.07,
+      "y": 11.04,
+      "z": -120.16
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -104.3,
+      "y": 9.88,
+      "z": -39.05
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -103.54,
+      "y": 12.26,
+      "z": -39.14
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -137.27,
+      "y": 9.77,
+      "z": 256.07
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -138.52,
+      "y": 12.17,
+      "z": 257.1
+    },
+    "building": "Abandon Factory",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -173.98,
+      "y": 9.75,
+      "z": 271.08
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -172.93,
+      "y": 12,
+      "z": 273.23
+    },
+    "building": "South Hotel",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -137.9,
+      "y": 7.15,
+      "z": 270.2
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -139.45,
+      "y": 10.3,
+      "z": 270.2
+    },
+    "building": "Abandon Factory",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -165.83,
+      "y": 9.04,
+      "z": 409.17
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -165.5,
+      "y": 11.81,
+      "z": 408.86
+    },
+    "building": "Cinema",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -135.94,
+      "y": 14.2,
+      "z": -26.84
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -130.45,
+      "y": 16.73,
+      "z": -25.28
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -123.97,
+      "y": 14.2,
+      "z": -32.27
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -125.77,
+      "y": 16.75,
+      "z": -27.65
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "climb",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -148,
+      "y": 14.2,
+      "z": -9.6
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -143.02,
+      "y": 16.7,
+      "z": -9.82
+    },
+    "building": "Kilmov Shopping Mall",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  }
+]

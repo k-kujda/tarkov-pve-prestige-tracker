@@ -1,0 +1,1262 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 1.66,
+      "y": -6.71,
+      "z": -205.12
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 1.75,
+      "y": 2.31,
+      "z": -207.3
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -112.76,
+      "y": -4.7,
+      "z": -154.77
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -113.31,
+      "y": 2.9,
+      "z": -154.8
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 151.85,
+      "y": -5.17,
+      "z": -150.09
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 151.39,
+      "y": -1.29,
+      "z": -149.11
+    },
+    "building": "Train Station",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 192.74,
+      "y": -6.73,
+      "z": -258.74
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 192.07,
+      "y": 2.3,
+      "z": -259.16
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 176.4,
+      "y": -5.18,
+      "z": -156.65
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 177.65,
+      "y": -0.86,
+      "z": -155.94
+    },
+    "building": "Train Station",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -163,
+      "y": -6.08,
+      "z": -10.6
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -162.73,
+      "y": -3.08,
+      "z": -8.8
+    },
+    "building": "Black Bishop",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -135.68,
+      "y": -6.86,
+      "z": -129.01
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -136.1,
+      "y": -3.75,
+      "z": -130.15
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -72.73,
+      "y": -6.9,
+      "z": -33.78
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -71.87,
+      "y": -3.7,
+      "z": -32.08
+    },
+    "building": "White Bishop",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 5.71,
+      "y": -6.34,
+      "z": -24.52
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 5.7,
+      "y": -3.36,
+      "z": -25.27
+    },
+    "building": "Black Knight",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -134.45,
+      "y": -6.1,
+      "z": -17.62
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -134.1,
+      "y": -3.05,
+      "z": -15.73
+    },
+    "building": "Black Bishop",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 10.61,
+      "y": -6.66,
+      "z": -7.17
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 10.65,
+      "y": -3.23,
+      "z": -6.28
+    },
+    "building": "Black Knight",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 161.08,
+      "y": -5.97,
+      "z": -131.57
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 156.28,
+      "y": -1.29,
+      "z": -130.33
+    },
+    "building": "White Rook",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 16.52,
+      "y": -6.56,
+      "z": -27.52
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 18.02,
+      "y": -3.36,
+      "z": -25.73
+    },
+    "building": "Black Knight",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 89.42,
+      "y": -6.78,
+      "z": -29.13
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 89.34,
+      "y": -3.24,
+      "z": -29
+    },
+    "building": "White Knight",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 175.84,
+      "y": -6.04,
+      "z": -135.5
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 179.8,
+      "y": -1.3,
+      "z": -136.6
+    },
+    "building": "Train Station",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 191.81,
+      "y": -1.24,
+      "z": -129.28
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 189.14,
+      "y": 1.72,
+      "z": -129.69
+    },
+    "building": "Train Station",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 179.28,
+      "y": -6.73,
+      "z": -120.9
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 179.05,
+      "y": -1.23,
+      "z": -122.07
+    },
+    "building": "White Rook",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -164.07,
+      "y": -6.56,
+      "z": 36.92
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -166.02,
+      "y": -3.3,
+      "z": 37.66
+    },
+    "building": "Black Pawn",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -155.45,
+      "y": -6.53,
+      "z": 69.18
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -157.52,
+      "y": -3.29,
+      "z": 69.56
+    },
+    "building": "Black Pawn",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -49.84,
+      "y": -6.58,
+      "z": 4.86
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -49.35,
+      "y": -4.07,
+      "z": 6.22
+    },
+    "building": "White King",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -52.87,
+      "y": -6.5,
+      "z": 22.9
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -53.74,
+      "y": -3.6,
+      "z": 23.33
+    },
+    "building": "White King",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -43.47,
+      "y": -6.51,
+      "z": 16.17
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -43.33,
+      "y": -4.07,
+      "z": 17.87
+    },
+    "building": "White King",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -87.66,
+      "y": -6.46,
+      "z": 84.2
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -87.46,
+      "y": -3.29,
+      "z": 86.28
+    },
+    "building": "White Pawn",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -120.07,
+      "y": -6.52,
+      "z": 92.38
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -119.14,
+      "y": -3.3,
+      "z": 94.4
+    },
+    "building": "White Pawn",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": 271.88,
+      "y": -6.89,
+      "z": 25.9
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 273.37,
+      "y": 2.3,
+      "z": 25.47
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -5.85,
+      "y": 18.51,
+      "z": 167.4
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -8.8,
+      "y": 22.4,
+      "z": 166.93
+    },
+    "building": "Dome",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": 71.36,
+      "y": -6.89,
+      "z": -190.05
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 70.06,
+      "y": -3.52,
+      "z": -191.5
+    },
+    "building": "д - Warehouse Bunkers",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": 71.74,
+      "y": -6.88,
+      "z": -184.33
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 74.04,
+      "y": -2.42,
+      "z": -177.88
+    },
+    "building": "д - Warehouse Bunkers",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": 72.44,
+      "y": -6.9,
+      "z": -153.23
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 74.88,
+      "y": -4.2,
+      "z": -153.62
+    },
+    "building": "д - Warehouse Bunkers",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -264.9,
+      "y": -10.57,
+      "z": -54.38
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -264.97,
+      "y": -5.43,
+      "z": -53.11
+    },
+    "building": null,
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -126.45,
+      "y": -9.27,
+      "z": -29.95
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -124.44,
+      "y": -5.62,
+      "z": -30.5
+    },
+    "building": "Black Bishop",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -72.73,
+      "y": -9.79,
+      "z": -33.8
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -71.35,
+      "y": -6.9,
+      "z": -32.1
+    },
+    "building": "White Bishop",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": 121.97,
+      "y": -11.22,
+      "z": -88.5
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 118.77,
+      "y": -6.72,
+      "z": -87.57
+    },
+    "building": null,
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -163.33,
+      "y": -9.24,
+      "z": 38.23
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -162.22,
+      "y": -6.53,
+      "z": 37.78
+    },
+    "building": "Black Pawn",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -156.72,
+      "y": -9.2,
+      "z": 67.96
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -154.4,
+      "y": -6.52,
+      "z": 67.47
+    },
+    "building": "Black Pawn",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -55,
+      "y": -10.7,
+      "z": 24.5
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -57.44,
+      "y": -6.5,
+      "z": 25
+    },
+    "building": "White King",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -89.02,
+      "y": -9.22,
+      "z": 85.3
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -89.4,
+      "y": -6.43,
+      "z": 83.25
+    },
+    "building": "White Pawn",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -118.37,
+      "y": -9.2,
+      "z": 92.55
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -119.13,
+      "y": -6.49,
+      "z": 90.73
+    },
+    "building": "White Pawn",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": -23.83,
+      "y": 12.63,
+      "z": 182.6
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -26.4,
+      "y": 18.72,
+      "z": 182.6
+    },
+    "building": "White Queen",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Bunkers",
+      "x": 18.47,
+      "y": 16.72,
+      "z": 188.5
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": 18.86,
+      "y": 19.52,
+      "z": 188.98
+    },
+    "building": "Dome",
+    "fromFloor": "Bunkers",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -163,
+      "y": -3.08,
+      "z": -10.45
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -162.87,
+      "y": -0.09,
+      "z": -7.6
+    },
+    "building": "Black Bishop",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -53.38,
+      "y": -3.69,
+      "z": -35.6
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -55.03,
+      "y": -0.48,
+      "z": -34.73
+    },
+    "building": "White Bishop",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -134.57,
+      "y": -3.07,
+      "z": -17.9
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -135.28,
+      "y": -0.09,
+      "z": -15.02
+    },
+    "building": "Black Bishop",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": 4.38,
+      "y": -3.42,
+      "z": -18.67
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": 6.87,
+      "y": -0.89,
+      "z": -20.03
+    },
+    "building": "Black Knight",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -39.47,
+      "y": -4.1,
+      "z": -7.17
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -39.65,
+      "y": -0.61,
+      "z": -8.62
+    },
+    "building": "White King",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -164.12,
+      "y": -3.3,
+      "z": 36.95
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -166.02,
+      "y": -0.38,
+      "z": 37.66
+    },
+    "building": "Black Pawn",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -155.7,
+      "y": -3.29,
+      "z": 69.26
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -157.64,
+      "y": -0.39,
+      "z": 69.56
+    },
+    "building": "Black Pawn",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -45.13,
+      "y": -4.07,
+      "z": 18.17
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -45.78,
+      "y": -0.7,
+      "z": 16.13
+    },
+    "building": "White King",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -87.92,
+      "y": -3.29,
+      "z": 83.3
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -87.44,
+      "y": -0.39,
+      "z": 85.82
+    },
+    "building": "White Pawn",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -120.05,
+      "y": -3.3,
+      "z": 92.45
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -119.15,
+      "y": -0.39,
+      "z": 94.57
+    },
+    "building": "White Pawn",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -6.78,
+      "y": 22.4,
+      "z": 167.4
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -9.4,
+      "y": 25.9,
+      "z": 167.02
+    },
+    "building": "Dome",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": 93.68,
+      "y": -0.9,
+      "z": -27.3
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": 92.03,
+      "y": 2.3,
+      "z": -26.8
+    },
+    "building": "White Knight",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -164.07,
+      "y": -0.38,
+      "z": 36.92
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -166.02,
+      "y": 2.51,
+      "z": 37.66
+    },
+    "building": "Black Pawn",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -155.34,
+      "y": -0.39,
+      "z": 69.16
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -156.83,
+      "y": 2.5,
+      "z": 69.5
+    },
+    "building": "Black Pawn",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -87.98,
+      "y": -0.39,
+      "z": 83.34
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -87.62,
+      "y": 2.51,
+      "z": 85.98
+    },
+    "building": "White Pawn",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -120.05,
+      "y": -0.39,
+      "z": 92.45
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -119.15,
+      "y": 2.5,
+      "z": 94.55
+    },
+    "building": "White Pawn",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "4th Floor",
+      "x": -164.15,
+      "y": 2.51,
+      "z": 37
+    },
+    "to": {
+      "floor": "5th Floor",
+      "x": -166,
+      "y": 5.31,
+      "z": 37.7
+    },
+    "building": "Black Pawn",
+    "fromFloor": "4th Floor",
+    "toFloor": "5th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "4th Floor",
+      "x": -155.9,
+      "y": 2.5,
+      "z": 69.3
+    },
+    "to": {
+      "floor": "5th Floor",
+      "x": -157.58,
+      "y": 5.3,
+      "z": 69.48
+    },
+    "building": "Black Pawn",
+    "fromFloor": "4th Floor",
+    "toFloor": "5th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "4th Floor",
+      "x": -87.78,
+      "y": 2.51,
+      "z": 83.77
+    },
+    "to": {
+      "floor": "5th Floor",
+      "x": -87.52,
+      "y": 5.31,
+      "z": 85.88
+    },
+    "building": "White Pawn",
+    "fromFloor": "4th Floor",
+    "toFloor": "5th Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "4th Floor",
+      "x": -120,
+      "y": 2.5,
+      "z": 92.5
+    },
+    "to": {
+      "floor": "5th Floor",
+      "x": -119.22,
+      "y": 5.31,
+      "z": 94.67
+    },
+    "building": "White Pawn",
+    "fromFloor": "4th Floor",
+    "toFloor": "5th Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 1.66,
+      "y": 0,
+      "z": -205.12
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 0.69,
+      "y": 2.32,
+      "z": -205.35
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 195.02,
+      "y": -0.04,
+      "z": -255.74
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 193.82,
+      "y": 2.3,
+      "z": -255.47
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -157.26,
+      "y": -5.32,
+      "z": -16.69
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -157.36,
+      "y": -3.04,
+      "z": -14.36
+    },
+    "building": "Black Bishop",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -111.31,
+      "y": 0.57,
+      "z": -151.58
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -111.9,
+      "y": 2.9,
+      "z": -152.27
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -51.7,
+      "y": -6.6,
+      "z": -6.29
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -51.61,
+      "y": -4.07,
+      "z": -7.6
+    },
+    "building": "White King",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -41.85,
+      "y": -6.48,
+      "z": -7.36
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -45.42,
+      "y": -4,
+      "z": -8.8
+    },
+    "building": "White King",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -51.48,
+      "y": -6.08,
+      "z": 19.74
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -53.13,
+      "y": -3.79,
+      "z": 19.51
+    },
+    "building": "White King",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": 270.55,
+      "y": -0.08,
+      "z": 25.9
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": 271.93,
+      "y": 2.3,
+      "z": 24.48
+    },
+    "building": null,
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -161.98,
+      "y": -2.89,
+      "z": 57.31
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -162.58,
+      "y": -0.42,
+      "z": 58.18
+    },
+    "building": "Black Pawn",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "3rd Floor",
+      "x": -57.67,
+      "y": 0.1,
+      "z": 6.32
+    },
+    "to": {
+      "floor": "4th Floor",
+      "x": -60.4,
+      "y": 2.6,
+      "z": 4.52
+    },
+    "building": "White King",
+    "fromFloor": "3rd Floor",
+    "toFloor": "4th Floor"
+  }
+]

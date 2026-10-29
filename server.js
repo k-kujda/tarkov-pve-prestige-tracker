@@ -22,7 +22,7 @@ const MAP_DEFS = 'https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/
 const MODES = new Set(['pve', 'regular']);
 const DATASETS = ['tasks', 'hideout', 'maps', 'traders', 'items'];
 const CACHE_DIR = path.join(__dirname, 'cache');
-const CACHE_VERSION = 14;
+const CACHE_VERSION = 15;
 const TTL_MS = 6 * 60 * 60 * 1000;
 const CURRENCIES = {
   '5449016a4bdc2d6f028b456f': 'RUB',
@@ -230,12 +230,13 @@ async function getMapDefs() {
         transform: m.transform, coordinateRotation: m.coordinateRotation || 0, bounds: m.bounds, svgBounds: m.svgBounds || null,
         tilePath: m.tilePath || null, svgPath: m.svgPath || null, svgLayer: m.svgLayer || null, tileSize: m.tileSize || 256, minZoom: m.minZoom || 1, maxZoom: m.maxZoom || 6,
         heightRange: m.heightRange || null,
-        // Floors as height bands (e.g. Streets: 2nd floor = 10–15 m) and the SVG group that draws each one.
-        // A floor can have several height bands, each limited to named building areas (e.g. Customs 2nd floor:
-        // 2.7–6.5 m inside dorms, mechanic, scav checkpoint…). No areas = the band applies map-wide.
-        layers: (m.layers || []).filter(l => l.svgLayer && l.extents && l.extents.length && l.extents[0].height)
+        // Floors as height bands (e.g. Streets: 2nd floor = 10–15 m) and what draws each one: an SVG group and/or
+        // its own map tiles (Icebreaker's decks, the Lab's levels, Reserve's bunkers). A floor drawn by the base
+        // tiles is the ground floor. A floor can have several height bands, each limited to named building areas
+        // (e.g. Customs 2nd floor: 2.7–6.5 m inside dorms, mechanic, scav checkpoint…). No areas = map-wide.
+        layers: (m.layers || []).filter(l => (l.svgLayer || (l.tilePath && l.tilePath !== m.tilePath)) && l.extents && l.extents.length && l.extents[0].height)
           .map(l => ({
-            name: l.name, svgLayer: l.svgLayer, height: l.extents[0].height,
+            name: l.name, svgLayer: l.svgLayer || null, tilePath: l.tilePath || null, height: l.extents[0].height,
             extents: l.extents.filter(e => e.height).map(e => ({
               height: e.height,
               areas: (e.bounds || []).filter(b => Array.isArray(b) && b.length >= 2)
@@ -594,17 +595,151 @@ function send(req, res, code, type, body) {
   res.end(body);
 }
 
+// Local data in data/, laid over the downloaded data when it's served so a fix doesn't need a cache rebuild:
+// exact objective spots from the game's own quest zones (quest-locations.json, only entries marked verified) and
+// floors for maps tarkov.dev has none for (floors.json) and extracts it's missing (extracts.json, read from the game's
+// ExfiltrationPoint objects), floor areas and map projections that need fixing. Each file is reloaded when it changes.
+const DATA_DIR = path.join(__dirname, 'data');
+const localFiles = new Map();
+function localJson(name) {
+  const file = path.join(DATA_DIR, name);
+  let mtime = 0;
+  try { mtime = fs.statSync(file).mtimeMs; } catch (e) { return {}; }
+  const c = localFiles.get(name);
+  if (c && c.mtime === mtime) return c.json;
+  try {
+    const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+    localFiles.set(name, { mtime, json });
+    return json;
+  } catch (e) {
+    console.warn(`${name} unreadable: ${e.message}`);
+    return c ? c.json : {};
+  }
+}
+function withLocalData(data) {
+  const floors = localJson('floors.json');
+  const mapDefs = { ...data.mapDefs };
+  for (const [key, layers] of Object.entries(floors)) {
+    const def = mapDefs[key];
+    if (!def || !Array.isArray(layers) || (def.layers && def.layers.length)) continue;
+    mapDefs[key] = { ...def, layers: layers.map(l => ({ ...l, manual: true })) };
+  }
+  const extra = localJson('extracts.json');
+  const mapFeatures = { ...data.mapFeatures };
+  for (const [key, list] of Object.entries(extra)) {
+    const f = mapFeatures[key];
+    if (!f || !Array.isArray(list)) continue;
+    const have = new Set(f.extracts.map(e => e.name.toLowerCase()));
+    mapFeatures[key] = { ...f, extracts: [...f.extracts, ...list.filter(e => !have.has(e.name.toLowerCase()))] };
+  }
+  // Floors tarkov.dev gives as map-wide height bands, limited to the buildings they describe (floor-areas.json).
+  for (const [key, byFloor] of Object.entries(localJson('floor-areas.json'))) {
+    const def = mapDefs[key];
+    if (!def || typeof byFloor !== 'object') continue;
+    mapDefs[key] = { ...def, layers: def.layers.map(l => !byFloor[l.name] ? l : {
+      ...l, extents: (l.extents || [{ height: l.height, areas: [] }]).map(e => (e.areas.length ? e : { ...e, areas: byFloor[l.name].map(([x1, z1, x2, z2, name]) => ({ x1, z1, x2, z2, name })) })),
+    }) };
+  }
+  // Projections that don't line up with the game's coordinates (map-transforms.json, fitted against the navmesh).
+  for (const [key, fix] of Object.entries(localJson('map-transforms.json'))) {
+    if (!mapDefs[key]) continue;
+    const def = mapDefs[key], byLayer = fix.layers || {};
+    mapDefs[key] = { ...def, ...(fix.transform ? { transform: fix.transform } : {}), ...(fix.bounds ? { bounds: fix.bounds } : {}),
+      layers: def.layers.map(l => {
+        const f = byLayer[l.name];
+        if (!f) return l;
+        return { ...l, ...(f.offset ? { offset: f.offset } : {}), ...(f.height ? { height: f.height, extents: [{ height: f.height, areas: [] }] } : {}) };
+      }) };
+  }
+  return { ...withQuestLocations({ ...data, mapFeatures }), mapDefs, mapFeatures };
+}
+function withQuestLocations(data) {
+  const fixes = localJson('quest-locations.json');
+  // Boss kills without a zone go to the boss's spawn spots (guards spawn with their boss).
+  const bossSpots = {};
+  for (const [map, f] of Object.entries(data.mapFeatures || {})) {
+    for (const b of f.bosses || []) for (const p of b.points) (bossSpots[b.name] = bossSpots[b.name] || []).push({ map, x: p.x, y: p.y, z: p.z, kind: 'boss', zone: p.zone, chance: b.chance });
+  }
+  const bossPoints = o => {
+    if (o.type !== 'shoot' || (o.points && o.points.length) || !o.targetNames) return null;
+    const names = o.targetNames.map(n => n.replace(/ Guard\b.*$/, ''));
+    if (!names.every(n => bossSpots[n])) return null;
+    const maps = new Set((o.maps || []).map(m => m.normalizedName));
+    const pts = names.flatMap(n => bossSpots[n]).filter(p => !maps.size || maps.has(p.map));
+    return pts.length ? pts : null;
+  };
+  // "Use the transit from Streets of Tarkov to Interchange" objectives name the transit by its internal id (TRANSIT02).
+  const transitExit = o => {
+    if (o.type !== 'extract' || !o.exitName || !/^TRANSIT\d+$/i.test(o.exitName)) return null;
+    const to = (o.description.match(/transit from .+? to (.+?)(?: \(|$)/i) || [])[1];
+    const f = to && (o.maps || []).map(m => (data.mapFeatures || {})[m.normalizedName]).find(Boolean);
+    const t = f && f.transits.find(t => t.name.toLowerCase() === ('transit to ' + to).toLowerCase());
+    return t ? t.name : null;
+  };
+  const tasks = data.tasks.map(t => !t.objectives.some(o => (fixes[o.id] && fixes[o.id].verified) || bossPoints(o) || transitExit(o)) ? t : {
+    ...t,
+    objectives: t.objectives.map(o => {
+      const tx = transitExit(o);
+      if (tx) return { ...o, exitName: tx, exitTransit: true };
+      const f = fixes[o.id];
+      if (!f || !f.verified || !f.points || !f.points.length) {
+        const bp = bossPoints(o);
+        return bp ? { ...o, points: bp, locationNote: 'Boss spawn spots: the boss is at one of these' } : o;
+      }
+      const points = f.points.map(p => ({ map: p.map, x: p.x, y: p.y, z: p.z, kind: p.kind || 'zone', ...(p.floor ? { floor: p.floor } : {}), ...(p.outline ? { outline: p.outline } : {}), source: p.source || 'game' }));
+      return { ...o, points, ...(f.note ? { locationNote: f.note } : {}) };
+    }),
+  });
+  return { ...data, tasks };
+}
+
+// Navmesh files are several MB: gzip each once and keep it until the file changes.
+const NAV_DIR = path.join(__dirname, 'navmesh');
+const gzCache = new Map();
+function sendCached(req, res, file, type) {
+  const mtime = fs.statSync(file).mtimeMs;
+  let c = gzCache.get(file);
+  if (!c || c.mtime !== mtime) {
+    const raw = fs.readFileSync(file);
+    c = { mtime, raw, gz: zlib.gzipSync(raw, { level: 6 }) };
+    gzCache.set(file, c);
+  }
+  const gz = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', ...(gz ? { 'Content-Encoding': 'gzip' } : {}) });
+  res.end(gz ? c.gz : c.raw);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   try {
     if (url.pathname === '/' || url.pathname === '/index.html') {
       return send(req, res, 200, 'text/html; charset=utf-8', fs.readFileSync(path.join(__dirname, 'index.html')));
     }
+    if (url.pathname === '/nav.js' || url.pathname === '/nav-worker.js') {
+      return send(req, res, 200, 'text/javascript; charset=utf-8', fs.readFileSync(path.join(__dirname, url.pathname.slice(1))));
+    }
+    if (url.pathname === '/api/navmesh') {
+      // Walkable mesh of a map (built from the game files by tools/), or its door list with ?meta=1.
+      const map = url.searchParams.get('map') || '';
+      if (!/^[a-z0-9-]+$/.test(map)) return send(req, res, 400, 'text/plain', 'bad map');
+      const meta = url.searchParams.get('meta') === '1';
+      const file = path.join(NAV_DIR, map + (meta ? '.json' : '.bin'));
+      if (!fs.existsSync(file)) return send(req, res, 404, 'text/plain', 'no navmesh for ' + map);
+      return sendCached(req, res, file, meta ? 'application/json' : 'application/octet-stream');
+    }
     if (url.pathname === '/api/data') {
       const mode = MODES.has(url.searchParams.get('mode')) ? url.searchParams.get('mode') : 'pve';
       const { entry, status, warning } = await getData(mode, url.searchParams.get('refresh') === '1');
       console.log(`[${new Date().toLocaleTimeString()}] data ${mode}: ${status}${warning ? ` (${warning})` : ''}`);
-      return send(req, res, 200, 'application/json', JSON.stringify({ at: entry.at, status, warning, ...entry.data }));
+      return send(req, res, 200, 'application/json', JSON.stringify({ at: entry.at, status, warning, ...withLocalData(entry.data) }));
+    }
+    if (url.pathname === '/api/transitions') {
+      // Stairs, ramps, ladders and other level changes of a map (tools/build_transitions.mjs).
+      const map = url.searchParams.get('map') || '';
+      if (!/^[a-z0-9-]+$/.test(map)) return send(req, res, 400, 'text/plain', 'bad map');
+      const file = path.join(DATA_DIR, 'transitions', map + '.json');
+      if (!fs.existsSync(file)) return send(req, res, 404, 'text/plain', 'no transitions for ' + map);
+      return sendCached(req, res, file, 'application/json');
     }
     if (url.pathname === '/api/quest-images') {
       // Only wiki page titles are accepted (the server builds the wiki URL itself).
@@ -633,4 +768,4 @@ if (require.main === module) server.listen(PORT, '127.0.0.1', () => {
   }
 });
 
-module.exports = { normalize, build };
+module.exports = { normalize, build, withLocalData };

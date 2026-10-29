@@ -22,7 +22,7 @@
 | 🧭 **Next up** | Only the quests you can do *right now* (prerequisites, level, trader loyalty, story progress, and which traders and maps your Tour progress has unlocked), ordered for the fastest prestige: the required quest chain first, otherwise by XP. |
 | 🔄 **Sync from game** | Reads quest start/finish/fail events straight from Tarkov's own log files (read-only) and keeps the tracker in step every minute. Detects prestige and wipe resets automatically. |
 | 🗺️ **Raid planner** | Ranks every map by the quests you can finish there, then runs a live map with objective zones, extracts, transits, minefields, bosses, locked doors and loot. In raid, quests are split into *at a spot* and *anywhere on the map*, with pictures of the weapons and gear they require. |
-| 🛣️ **Route planning** | Click where you spawned and get the shortest route through your objectives to the best extract. Exact for typical raids, and it avoids minefields. |
+| 🛣️ **Route planning** | Click where you spawned and get the shortest *walking* route through your objectives to the best extract: around walls and fences, up and down stairs, through doors (locked ones only with a key you have or pick up on the way), over ledges you can drop off, climb or vault, and around minefields. Every floor has its own view (Icebreaker's 16 decks, the Lab's levels, Reserve's bunkers…) with the walls of that floor, and a *Level transitions* layer marks the stairs, ramps, ladders and drops between floors. Quests that need a named exit or transit end the route there. |
 | 🔑 **Keys & items** | A sidebar of everything your accepted quests need (FIR flags, counts, keys), and key checks next to each quest in the planner. Quests whose key you don't have start unticked, unless the key spawns on that map every raid: then the route picks it up first. |
 | 🔎 **Key lookup** | Search any key: whether a quest or story chapter still needs it, its flea price, and what's behind the lock, rated from trash to high-value. |
 | 🧭 **Profile setup** | One step-by-step form (☰ Menu) for everything the logs can't tell: level, trader loyalty and reputation, skills, hideout, story progress, stash and keys. |
@@ -66,6 +66,26 @@ Tarkov writes every quest event to its logs:
 
 The tracker only **reads** these files on your PC, and only quest IDs and timestamps are used. Nothing touches the game, its memory or its network traffic. The game folder is found automatically for BSG launcher and Steam installs (including extra Steam libraries), or a `Battlestate Games` folder on any drive. If yours isn't found, set the `TARKOV_LOGS` environment variable to your `Logs` folder.
 
+## 🧱 Walking routes (navmesh)
+
+Routes are planned on a walkable mesh of each map built from the game's own files on your PC, so they follow the real walls, floors and stairs:
+
+1. **Collision geometry**: every collider the player collides with (per the game's physics layer matrix: terrain, low-poly colliders, invisible level borders), from every scene the map loads. Interactive doors are left open and marked; locked ones (key or keycard) only open for keys you have or pick up on the route. Gates that never open stay shut.
+2. **Recast** turns that into a navmesh for a player-sized capsule (0.3 m radius, crouch height, 0.45 m steps, 50° slopes) on 10 cm voxels, the same algorithm Unity uses for the bots.
+3. **Movement links** where the mesh has a ledge: drops (up to 2.4 m, no fall damage), climbs (up to 1.5 m) and vaults over low obstacles. Each is checked with rays against the collision geometry.
+
+It's checked against the bots' own navmesh (walking distances agree to a median 0.93–1.00) and tarkov.dev's positions: every spawn on every map is on the mesh. Quest spots and extracts behind locked doors, or on a ledge you can't walk to, route to the nearest place you can reach, and the route says which key would open the way.
+
+**Quest locations** come from tarkov.dev, checked against the game's own quest triggers: of 533 zones with the same id in both, all sit at the same spot (median 0.00 m). Objectives tarkov.dev has no position for are filled from the game files (`tools/extract_zones.py` → `tools/build_quest_locations.js` → `data/quest-locations.json`): interactive quest spots name the objective they complete, e.g. *Wiring the Vessel*'s three repairs on Icebreaker. Boss kills route to the boss's spawn spots. Every in-raid objective that has a place now has an exact spot; only "anywhere on the map" kills and extracts don't.
+
+The built meshes live in `navmesh/`. After a game update, rebuild them (needs Python with `UnityPy numpy pillow` and `npm install recast-navigation` somewhere):
+
+```
+PY=<python> RECAST_DIR=<folder with node_modules/recast-navigation> tools/build_all.sh "F:\Games\Tarkov"
+```
+
+Without `navmesh/` files the planner falls back to straight lines.
+
 ## 👥 Raiding with friends
 
 Two ways to get a friend's progress into your Squad panel (Raid planner tab):
@@ -79,7 +99,7 @@ Either way, nobody has to run a script or program someone else sent them.
 
 - **Unlock data isn't perfect.** Tarkov 1.x unlocks many quests through server-side story and progress flags. The tracker combines several community sources and your own logs. For anything the data gets wrong, use **hide** on a quest; it reappears by itself once the game shows you accepted it.
 - **Quests you'll never do:** mark them **won't do**. They drop out of every list for good (kept across prestiges) until you undo it from *All quests → show won't do*.
-- **Routes are straight lines.** There's no public walkable-path data, so walls, fences and floors aren't accounted for. Read the route as the best *order*, not turn-by-turn directions.
+- **Routes need the navmesh files.** Without `navmesh/<map>.bin` (built from your game install, see above) routes fall back to straight lines that ignore walls and floors.
 - **Your stash isn't visible.** Item and key counts are entered by you.
 
 ## 🙏 Data sources & credits
@@ -98,6 +118,8 @@ Either way, nobody has to run a script or program someone else sent them.
 | `server.js` | Local server: serves the page and builds the combined game data (cached 6 h) |
 | `gamelogs.js` | Reads quest progress from the game's log files |
 | `start-tracker.bat` | Starts the server and opens your browser |
+| `data/` | Local fixes laid over the downloaded data: quest spots from the game files, floors and extracts tarkov.dev lacks, level transitions per map |
+| `tools/` | Builds the navmesh, quest zones and level transitions from your game install |
 
 ---
 

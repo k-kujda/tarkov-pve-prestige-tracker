@@ -1,2 +1,11 @@
 # Downloaded game data, rebuilt automatically by server.js
 cache/
+# Navmesh build intermediates (tools/build_all.sh); navmesh/<map>.bin + .json are the built meshes
+navmesh/geom/
+navmesh/v2/
+navmesh/ai/
+navmesh/tmp/
+navmesh/render/
+navmesh/logs/
+navmesh/zones/
+tools/__pycache__/

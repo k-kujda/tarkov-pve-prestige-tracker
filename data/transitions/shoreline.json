@@ -1,0 +1,344 @@
+[
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -257.8,
+      "y": -3.53,
+      "z": -149.25
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -257.45,
+      "y": -0.7,
+      "z": -146.77
+    },
+    "building": "Admin",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -246,
+      "y": -3.42,
+      "z": -150.13
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -245.97,
+      "y": -0.7,
+      "z": -147.37
+    },
+    "building": "Admin",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -252.52,
+      "y": -4.05,
+      "z": -135.37
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -252.92,
+      "y": -0.7,
+      "z": -134.56
+    },
+    "building": "Admin",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -299.76,
+      "y": -3.96,
+      "z": -101.11
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -298.93,
+      "y": -0.8,
+      "z": -101.07
+    },
+    "building": "East Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -357.75,
+      "y": -3.7,
+      "z": -86.77
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -358,
+      "y": -0.8,
+      "z": -83.44
+    },
+    "building": "East Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -302.15,
+      "y": -3.74,
+      "z": -84.25
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -301.43,
+      "y": -0.8,
+      "z": -86.17
+    },
+    "building": "East Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -201.55,
+      "y": -3.7,
+      "z": -84.3
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -201.52,
+      "y": -0.8,
+      "z": -86.1
+    },
+    "building": "West Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Ground floor",
+      "x": -145.95,
+      "y": -3.7,
+      "z": -87.47
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -145.95,
+      "y": -0.8,
+      "z": -85.5
+    },
+    "building": "West Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Underground",
+      "x": -248.05,
+      "y": -7.9,
+      "z": -162.42
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -247.93,
+      "y": -3.53,
+      "z": -163.46
+    },
+    "building": "Admin",
+    "fromFloor": "Underground",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Underground",
+      "x": -255.02,
+      "y": -7.65,
+      "z": -140.77
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -255.25,
+      "y": -3.75,
+      "z": -139.8
+    },
+    "building": "Admin",
+    "fromFloor": "Underground",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Underground",
+      "x": -242.24,
+      "y": -7.28,
+      "z": -143.2
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -241.85,
+      "y": -3.57,
+      "z": -145.62
+    },
+    "building": "Admin",
+    "fromFloor": "Underground",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "Underground",
+      "x": -145.22,
+      "y": -6.9,
+      "z": -88.85
+    },
+    "to": {
+      "floor": "Ground floor",
+      "x": -145.95,
+      "y": -3.7,
+      "z": -87.47
+    },
+    "building": "West Wing",
+    "fromFloor": "Underground",
+    "toFloor": "Ground floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -300.06,
+      "y": -0.8,
+      "z": -98.9
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -300.03,
+      "y": 2.1,
+      "z": -100.63
+    },
+    "building": "East Wing",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -357.75,
+      "y": -0.8,
+      "z": -86.77
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -357.98,
+      "y": 2.12,
+      "z": -83.07
+    },
+    "building": "East Wing",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -302.17,
+      "y": -0.8,
+      "z": -84.25
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -302.22,
+      "y": 2.1,
+      "z": -86.05
+    },
+    "building": "East Wing",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -201.55,
+      "y": -0.8,
+      "z": -84.32
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -201.7,
+      "y": 2.1,
+      "z": -86.85
+    },
+    "building": "West Wing",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "stairs",
+    "from": {
+      "floor": "2nd Floor",
+      "x": -145.95,
+      "y": -0.8,
+      "z": -86.2
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -145.63,
+      "y": 2.23,
+      "z": -85
+    },
+    "building": "West Wing",
+    "fromFloor": "2nd Floor",
+    "toFloor": "3rd Floor"
+  },
+  {
+    "kind": "drop",
+    "from": {
+      "floor": "Ground floor",
+      "x": -323.2,
+      "y": -3.23,
+      "z": -82.8
+    },
+    "to": {
+      "floor": "2nd Floor",
+      "x": -323.19,
+      "y": -0.8,
+      "z": -82.86
+    },
+    "building": "East Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "2nd Floor"
+  },
+  {
+    "kind": "ladder",
+    "from": {
+      "floor": "Ground floor",
+      "x": -359.3,
+      "y": -5.9,
+      "z": -87.17
+    },
+    "to": {
+      "floor": "3rd Floor",
+      "x": -359.05,
+      "y": 5,
+      "z": -84.65
+    },
+    "building": "East Wing",
+    "fromFloor": "Ground floor",
+    "toFloor": "3rd Floor"
+  }
+]
