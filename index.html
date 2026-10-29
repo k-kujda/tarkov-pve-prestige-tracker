@@ -698,7 +698,7 @@ function taskCard(t) {
       const done = !!S.objs[o.id];
       return `<div class="obj ${done ? 'done' : ''}">
         <input type="checkbox" data-act="obj" data-id="${o.id}" ${done ? 'checked' : ''}>
-        <div><div class="desc">${esc(o.description)}${o.optional ? ' <span class="badge">optional</span>' : ''}</div><div class="detail">${objectiveDetail(o)}</div></div>
+        <div><div class="desc">${esc(o.description)}${o.optional ? ' <span class="badge">optional</span>' : ''}${o.override ? ` <span class="badge" title="${esc(o.override.source || '')}">updated for patch ${esc((o.override.patch || '').split('.').slice(0, 2).join('.'))}</span>` : ''}</div><div class="detail">${objectiveDetail(o)}</div></div>
       </div>`;
     }).join('');
     const keys = (t.neededKeys || []).map(k => `<div>${esc(k.map ? k.map.name : '')}: ${k.keys.map(x => itemChip(x)).join(' or ')}</div>`).join('');
