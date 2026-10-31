@@ -15,6 +15,11 @@ cd "$(dirname "$0")/.."
 GAME="${1:-F:\\Games\\Tarkov}"; shift || true
 PY="${PY:-python}"
 MAPS="${*:-customs factory woods shoreline interchange the-lab reserve lighthouse streets-of-tarkov ground-zero the-labyrinth terminal icebreaker}"
+if [ ! -f "$GAME/EscapeFromTarkov_Data/globalgamemanagers" ]; then
+  echo "Tarkov game files not found in '$GAME' (no EscapeFromTarkov_Data/globalgamemanagers)." >&2
+  echo "Pass the game folder: tools/build_all.sh <game dir> [map ...]" >&2
+  exit 1
+fi
 mkdir -p navmesh/logs navmesh/ai
 JOBS="${JOBS:-4}"
 

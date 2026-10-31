@@ -39,6 +39,9 @@ WATER_ONLY = os.environ.get("WATER_ONLY") == "1"  # just refresh navmesh/geom/<m
 
 
 def scene_indices():
+    # UnityPy.load returns an empty environment for a missing file, so check first.
+    if not os.path.isfile(os.path.join(DATA, "globalgamemanagers")):
+        raise SystemExit(f"Tarkov game files not found: {DATA} has no globalgamemanagers")
     env = UnityPy.load(os.path.join(DATA, "globalgamemanagers"))
     for o in env.objects:
         if o.type.name == "BuildSettings":
@@ -46,10 +49,14 @@ def scene_indices():
             for i, s in enumerate(o.read_typetree()["scenes"]):
                 out.setdefault(s, i)
             return out
+    raise SystemExit("BuildSettings not found")
 
 
 def preset_scenes(name):
-    env = UnityPy.load(os.path.join(DATA, "StreamingAssets", "Windows", "maps", name + ".bundle"))
+    bundle = os.path.join(DATA, "StreamingAssets", "Windows", "maps", name + ".bundle")
+    if not os.path.isfile(bundle):
+        raise SystemExit(f"map bundle not found: {bundle}")
+    env = UnityPy.load(bundle)
     scenes = []
     for o in env.objects:
         if o.type.name != "MonoBehaviour":

@@ -287,6 +287,7 @@ async function build(key) {
   for (const d of doors) d.box = doorBox(d);
   const water = readWater(key);
   if (water.length) console.log(`  ${water.length} water triangles`);
+  if (!g.tris.length) throw new Error(`${key}: no collision geometry in navmesh/geom/${key}.bin, run tools/extract_geometry.py first`);
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (let i = 0; i < g.verts.length; i += 3) {
     const x = g.verts[i], y = g.verts[i + 1], z = g.verts[i + 2];
