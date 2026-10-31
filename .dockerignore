@@ -1,0 +1,11 @@
+# Allowlist: the images only need the server and the navmesh build deps.
+# The navmesh builder bind-mounts the repo, and navmesh/ + cache/ are mounted into the tracker.
+*
+!server.js
+!gamelogs.js
+!gunsmith.js
+!nav.js
+!nav-worker.js
+!index.html
+!data/
+!docker/

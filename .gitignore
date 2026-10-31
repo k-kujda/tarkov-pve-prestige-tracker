@@ -9,3 +9,5 @@ navmesh/render/
 navmesh/logs/
 navmesh/zones/
 tools/__pycache__/
+# Local Docker settings (docker-compose.yml, copy .env.example)
+.env

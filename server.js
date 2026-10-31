@@ -11,6 +11,8 @@ const gamelogs = require('./gamelogs');
 const gunsmith = require('./gunsmith');
 
 const PORT = Number(process.env.PORT) || 4747;
+// Local only by default; the Docker image sets HOST=0.0.0.0 and publishes the port on 127.0.0.1 instead.
+const HOST = process.env.HOST || '127.0.0.1';
 const UPSTREAM = 'https://json.tarkov.dev';
 // TarkovTracker serves the same quests with its community corrections applied: trader loyalty gates,
 // story-chapter gates, counters for the server-side unlock variables, and removal of retired quests.
@@ -843,7 +845,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-if (require.main === module) server.listen(PORT, '127.0.0.1', () => {
+if (require.main === module) server.listen(PORT, HOST, () => {
   const url = `http://localhost:${PORT}`;
   console.log(`Tarkov tracker running at ${url}  (Ctrl+C to stop)`);
   if (process.argv.includes('--open') && process.platform === 'win32') {

@@ -1,0 +1,16 @@
+# Python for the navmesh extractors (tools/*.py): UnityPy, numpy and pillow, plus everything they pull in,
+# pinned to the versions the committed meshes were built with
+UnityPy==1.25.4
+numpy==2.5.4
+pillow==13.0.0
+archspec==0.2.6
+astc-encoder-py==0.1.12
+attrs==26.1.0
+brotli==1.2.1
+etcpak==0.9.15
+fmod_toolkit==0.1.3
+fsspec==2026.9.0
+lz4==4.4.5
+pyfmodex==0.7.2
+texture2ddecoder==1.0.6
+tpk_ar==0.2.4

@@ -1,0 +1,10 @@
+{
+  "name": "recast",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Recast for tools/build_navmesh.mjs in the navmesh image (RECAST_DIR)",
+  "license": "ISC",
+  "dependencies": {
+    "recast-navigation": "^0.43.1"
+  }
+}
