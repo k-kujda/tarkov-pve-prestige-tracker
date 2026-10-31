@@ -180,6 +180,41 @@
   .setup-grid { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; align-items: center; }
   .setup-grid label { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
   .setup td { vertical-align: middle; }
+  /* gunsmith */
+  .gs-group { margin: 10px 0 4px; color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .gs-weapons { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+  .gs-weapon { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); cursor: pointer; }
+  .gs-weapon:hover, .gs-weapon.on { border-color: var(--accent); }
+  .gs-weapon img { width: 64px; height: 32px; object-fit: contain; }
+  .gs-head { display: flex; gap: 12px; align-items: center; }
+  .gs-head img { width: 96px; height: 48px; object-fit: contain; }
+  .gs-plot-wrap { position: relative; margin: 8px 0 4px; }
+  .gs-plot-wrap canvas { display: block; border-radius: 4px; }
+  .gs-tip { position: absolute; display: none; pointer-events: none; background: var(--bg); border: 1px solid var(--accent); border-radius: 4px; padding: 4px 8px; font-size: 12px; white-space: nowrap; }
+  .gs-build { background: radial-gradient(ellipse at top, #2a2822, var(--panel) 70%); }
+  .gs-build-head { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .gs-gun { flex: 1 1 320px; text-align: center; }
+  .gs-gun img { max-width: 100%; max-height: 220px; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+  .gs-stats { flex: 1 1 300px; }
+  .gs-stat { display: grid; grid-template-columns: 130px 1fr auto; gap: 8px; align-items: center; margin: 4px 0; }
+  .gs-stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+  .gs-bar { position: relative; height: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+  .gs-bar span { position: absolute; left: 0; top: 0; bottom: 0; }
+  .gs-bar .base { background: rgba(154,146,127,.35); }
+  .gs-bar .good { background: var(--good); opacity: .75; }
+  .gs-bar .bad { background: var(--bad); opacity: .75; }
+  .gs-stat-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .gs-tree { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .gs-node { display: flex; flex-direction: column; gap: 6px; }
+  .gs-children { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 10px; border-left: 2px solid var(--line); margin-left: 10px; }
+  .gs-slot { width: 92px; min-height: 104px; background: #181714; border: 1px solid #4a453a; border-radius: 3px; padding: 4px; text-align: center; box-shadow: inset 0 0 12px rgba(0,0,0,.6); }
+  .gs-slot.empty { opacity: .45; border-style: dashed; }
+  .gs-slot.empty.req { opacity: .8; border-color: var(--bad); }
+  .gs-slot-name { font-size: 9px; letter-spacing: .6px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gs-slot img { width: 64px; height: 48px; object-fit: contain; margin: 2px 0; }
+  .gs-item { font-size: 11px; line-height: 1.2; max-height: 2.4em; overflow: hidden; }
+  .gs-mods { font-size: 10px; margin-top: 2px; }
+  .gs-mods .up { color: var(--good); } .gs-mods .down { color: var(--bad); }
 </style>
 </head>
 <body>
@@ -217,6 +252,7 @@
     <button data-tab="hideout">Hideout</button>
     <button data-tab="items">Items needed</button>
     <button data-tab="keys">Keys</button>
+    <button data-tab="gunsmith">Gunsmith</button>
     <button data-tab="story">Story</button>
     <button data-tab="completed">Completed quests</button>
   </nav>
@@ -240,7 +276,7 @@ const MAP_ALIASES = { 'ground-zero-21': 'ground-zero', 'ground-zero-tutorial': '
 const defaultState = () => ({
   level: 1, faction: 'USEC', mode: 'pve', focus: 'prestige', prestige: 0,
   traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, skills: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
-  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true, folds: {}, keyFilter: 'all', setupStep: 0, setupBack: 'next' },
+  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true, folds: {}, keyFilter: 'all', setupStep: 0, setupBack: 'next', gsWeapon: null, gsKey: null },
 });
 let S = loadState();
 let D = null;
@@ -2660,6 +2696,244 @@ function viewKeys() {
     </div>${cards || '<div class="panel muted">No key matches.</div>'}`;
 }
 
+// ---------- gunsmith: every ergo / recoil a weapon can reach, and the build behind each ----------
+// The server (gunsmith.js) solves a weapon's whole attachment tree into the set of reachable
+// (ergonomics, vertical recoil) points, each with a conflict-free build. This tab plots them; clicking a
+// point shows that build on a simulated modding screen.
+const GS = { mode: null, weapons: null, listError: null, sol: null, solving: null, solveError: null, build: null, building: null, buildError: null, plot: null, hover: null };
+
+function gsFetch(path) {
+  return fetch(`/api/gunsmith/${path}${path.includes('?') ? '&' : '?'}mode=${S.mode}`).then(async r => {
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.error || `HTTP ${r.status}`);
+    return body;
+  });
+}
+
+// Start whatever the tab needs and re-render when it arrives.
+function gsEnsure() {
+  if (GS.mode !== S.mode) Object.assign(GS, { mode: S.mode, weapons: null, listError: null, sol: null, solving: null, build: null, plot: null });
+  if (!GS.weapons && !GS.listError && GS.weapons !== false) {
+    GS.weapons = false;
+    gsFetch('weapons').then(d => { GS.weapons = d.weapons; }, e => { GS.weapons = null; GS.listError = e.message; }).then(render);
+  }
+  const id = S.ui.gsWeapon;
+  if (id && (!GS.sol || GS.sol.weapon.id !== id) && GS.solving !== id) {
+    GS.solving = id; GS.solveError = null; GS.sol = null; GS.build = null; GS.plot = null;
+    gsFetch(`solve?weapon=${id}`).then(d => {
+      if (S.ui.gsWeapon !== id) return;
+      GS.sol = gsPrepare(d);
+      if (S.ui.gsKey != null && !GS.sol.byKey.has(S.ui.gsKey)) S.ui.gsKey = null;
+      if (S.ui.gsKey == null) S.ui.gsKey = GS.sol.balanced[2];
+      gsLoadBuild(S.ui.gsKey);
+    }, e => { if (S.ui.gsWeapon === id) GS.solveError = e.message; }).then(() => { if (GS.solving === id) GS.solving = null; render(); });
+  }
+}
+
+// Ranges, the best trade-offs (no other build has both more ergo and less recoil) and quick picks.
+function gsPrepare(d) {
+  const pts = d.points;
+  const byKey = new Map(pts.map(p => [p[2], p]));
+  const sorted = [...pts].sort((a, b) => a[1] - b[1] || b[0] - a[0]);
+  const front = [];
+  let best = -Infinity;
+  for (const p of sorted) if (p[0] > best) { front.push(p); best = p[0]; }
+  const e = pts.map(p => p[0]), r = pts.map(p => p[1]);
+  const range = { e0: Math.min(...e), e1: Math.max(...e), r0: Math.min(...r), r1: Math.max(...r) };
+  // Balanced: the front point closest to the ideal corner (most ergo, least recoil), both scaled 0..1.
+  const span = (a, b) => (b - a) || 1;
+  const dist = p => Math.hypot((range.e1 - p[0]) / span(range.e0, range.e1), (p[1] - range.r0) / span(range.r0, range.r1));
+  const balanced = front.reduce((a, b) => (dist(b) < dist(a) ? b : a), front[0]);
+  return { ...d, byKey, front, frontKeys: new Set(front.map(p => p[2])), range, balanced,
+    lowest: front[0], highest: front[front.length - 1] };
+}
+
+function gsLoadBuild(key) {
+  const id = S.ui.gsWeapon;
+  GS.building = key; GS.buildError = null;
+  gsFetch(`build?weapon=${id}&key=${key}`).then(b => { if (S.ui.gsWeapon === id && S.ui.gsKey === key) GS.build = b; },
+    e => { GS.buildError = e.message; }).then(() => { if (GS.building === key) GS.building = null; render(); });
+}
+
+function gsSelect(key) {
+  if (key == null || key === S.ui.gsKey) return;
+  S.ui.gsKey = key; save();
+  gsLoadBuild(key);
+  render();
+}
+
+const gsSigned = (n, unit = '') => `${n > 0 ? '+' : ''}${+n.toFixed(1)}${unit}`;
+const gsBig = s => (s.length > 15 ? `about 10<sup>${s.length - 1}</sup>` : Number(s).toLocaleString());
+
+function viewGunsmith() {
+  gsEnsure();
+  const q = S.ui.search.trim().toLowerCase();
+  const picked = S.ui.gsWeapon && (GS.weapons || []).find(w => w.id === S.ui.gsWeapon);
+  let picker = '';
+  if (!picked || q) {
+    const list = (GS.weapons || []).filter(w => !q || [w.name, w.short, w.cls, w.caliber].some(s => (s || '').toLowerCase().includes(q)));
+    const groups = new Map();
+    for (const w of list.slice(0, 120)) (groups.get(w.cls) || groups.set(w.cls, []).get(w.cls)).push(w);
+    const cards = [...groups].map(([cls, ws]) => `<div class="gs-group">${esc(cls)}</div><div class="gs-weapons">${ws.map(w => `
+      <div class="gs-weapon ${w.id === S.ui.gsWeapon ? 'on' : ''}" data-act="gsWeapon" data-id="${w.id}" title="${esc(w.name)}">
+        <img loading="lazy" src="${esc(w.icon || '')}" alt=""><div><div class="name">${esc(w.short)}</div>
+        <div class="small muted">${esc(w.caliber)} · ergo ${w.ergo} · recoil ${w.recoilV}</div></div></div>`).join('')}</div>`).join('');
+    picker = `<div class="panel">
+      <div class="row"><input class="search" id="search" placeholder="Search a weapon (e.g. M4A1, AK-74, MP5, 7.62x39)…" value="${esc(S.ui.search)}" style="flex:1">
+        <span class="small muted">${GS.weapons ? `${list.length} weapon${list.length === 1 ? '' : 's'}` : GS.listError ? '' : 'loading weapons…'}</span>
+        ${picked ? '<button data-act="gsClearSearch">Back to the build</button>' : ''}</div>
+      ${GS.listError ? `<div class="small" style="color:var(--bad)">Couldn't load weapons: ${esc(GS.listError)}</div>` : ''}
+      ${cards || (GS.weapons ? '<div class="muted">No weapon matches.</div>' : '')}
+    </div>`;
+  }
+  if (!picked) {
+    return picker + `<div class="panel small muted">Pick a weapon. Every attachment that fits it (and fits whatever it's mounted on) is combined, and each
+      ergonomics / vertical recoil that some conflict-free build reaches is plotted. Click a point to see that build. Data: tarkov.dev ${S.mode === 'pve' ? 'PvE' : 'PvP'}.</div>`;
+  }
+  const head = `<div class="panel gs-head">
+      <img src="${esc(picked.icon || '')}" alt="">
+      <div style="flex:1"><div class="name">${esc(picked.name)}</div>
+        <div class="small muted">${esc(picked.cls)} · ${esc(picked.caliber)} · base ergonomics ${picked.ergo} · base vertical recoil ${picked.recoilV}</div></div>
+      ${q ? '' : '<button data-act="gsChange">Change weapon</button>'}
+    </div>`;
+  let plot;
+  if (GS.solveError) plot = `<div class="panel" style="color:var(--bad)">Solving failed: ${esc(GS.solveError)}</div>`;
+  else if (!GS.sol) plot = `<div class="panel muted">Solving every attachment combination for the ${esc(picked.short)}… (AR-15s take up to ~15 s the first time)</div>`;
+  else {
+    const s = GS.sol;
+    const pick = (label, p, tip) => `<span class="chip ${p[2] === S.ui.gsKey ? 'on' : ''}" data-act="gsPick" data-id="${p[2]}" title="${esc(tip)}">${label}<span class="n">${p[0]} / ${p[1]}</span></span>`;
+    plot = `<div class="panel">
+      <div class="small muted">${gsBig(s.combinations)} attachment combinations (before conflicts) reach <b>${s.points.length.toLocaleString()}</b> different
+        ergonomics / vertical recoil values${s.conflictParts ? `; ${s.conflictParts} parts have conflicts and are only combined where they fit together` : ''}.
+        Solved in ${(s.ms / 1000).toFixed(1)} s. Ergonomics are the raw sum (the game caps what it shows at 100).</div>
+      <div class="chips">${pick('Lowest recoil', s.lowest, 'Least vertical recoil, then the most ergonomics')}${pick('Balanced', s.balanced, 'The best trade-off closest to max ergonomics + min recoil')}${pick('Highest ergo', s.highest, 'Most ergonomics, then the least recoil')}</div>
+      <div class="gs-plot-wrap"><canvas id="gsPlot"></canvas><div id="gsTip" class="gs-tip"></div></div>
+      <div class="small muted">Each dot is a reachable value pair; <span style="color:var(--accent)">gold</span> dots are the best trade-offs (no build has both more ergonomics and less recoil).
+        Hover to read a point, click to load its build.</div>
+    </div>`;
+  }
+  return picker + head + plot + gsBuildScreen();
+}
+
+// The simulated modding screen for the selected point.
+function gsBuildScreen() {
+  if (!GS.sol) return '';
+  if (GS.buildError) return `<div class="panel" style="color:var(--bad)">Couldn't load the build: ${esc(GS.buildError)}</div>`;
+  const b = GS.build;
+  if (!b || b.weapon.id !== S.ui.gsWeapon) return `<div class="panel muted">Loading the build…</div>`;
+  const t = b.totals, w = b.weapon;
+  const stat = (label, base, total, better, max, unit = '') => {
+    const pct = v => Math.max(0, Math.min(100, (v / max) * 100));
+    const good = better === 'up' ? total >= base : total <= base;
+    return `<div class="gs-stat"><div class="gs-stat-label">${label}</div>
+      <div class="gs-bar"><span style="width:${pct(base)}%" class="base"></span><span style="width:${pct(total)}%" class="${good ? 'good' : 'bad'}"></span></div>
+      <div class="gs-stat-val">${total}${unit} <span class="muted small">(${base}${unit} → ${gsSigned(total - base, unit)})</span></div></div>`;
+  };
+  const cell = n => `<div class="gs-node">
+      <div class="gs-slot ${n.item ? '' : 'empty'} ${n.required ? 'req' : ''}" title="${esc(n.item ? `${n.item.name}\n${gsSigned(n.item.ergo)} ergonomics, ${gsSigned(n.item.recoil, '%')} recoil${n.item.price ? `\n~${rub(n.item.price)}` : ''}` : `${n.slot} (empty)`)}">
+        <div class="gs-slot-name">${esc(n.slot.toUpperCase())}</div>
+        ${n.item ? `<img loading="lazy" src="${esc(n.item.icon || '')}" alt="">
+          <div class="gs-item">${esc(n.item.short)}</div>
+          <div class="gs-mods">${n.item.ergo ? `<span class="${n.item.ergo > 0 ? 'up' : 'down'}">${gsSigned(n.item.ergo)} E</span>` : ''}${n.item.recoil ? ` <span class="${n.item.recoil < 0 ? 'up' : 'down'}">${gsSigned(n.item.recoil, '%')} R</span>` : ''}</div>` : '<div class="gs-item muted">—</div>'}
+      </div>
+      ${n.children.some(c => c.item || c.required) ? `<div class="gs-children">${n.children.filter(c => c.item || c.required).map(cell).join('')}</div>` : ''}
+    </div>`;
+  const parts = [];
+  const walk = ns => ns.forEach(n => { if (n.item) { parts.push(n.item); walk(n.children); } });
+  walk(b.slots);
+  const empty = (() => { let n = 0; const c = ns => ns.forEach(x => { if (!x.item) n++; else c(x.children); }); c(b.slots); return n; })();
+  return `<div class="panel gs-build">
+      <div class="gs-build-head">
+        <div class="gs-gun"><img src="${esc(w.image || w.icon || '')}" alt=""><div class="small muted">${esc(w.name)}</div></div>
+        <div class="gs-stats">
+          ${stat('Ergonomics', w.ergo, t.ergo, 'up', 100)}
+          ${stat('Vertical recoil', w.recoilV, t.recoilV, 'down', Math.max(w.recoilV, 1) * 1.2)}
+          ${stat('Horizontal recoil', w.recoilH, t.recoilH, 'down', Math.max(w.recoilH, 1) * 1.2)}
+          <div class="small muted" style="margin-top:6px">Recoil modifiers ${gsSigned(t.recoilPct, '%')} · ${parts.length} parts · ${t.weight} kg${t.price ? ` · parts + gun ~${rub(t.price)} (flea average)` : ''}</div>
+        </div>
+      </div>
+      <div class="gs-tree">${b.slots.filter(n => n.item || n.required).map(cell).join('')}</div>
+      <div class="small muted">${empty} optional slot${empty === 1 ? '' : 's'} left empty. Hover a part for its name and price.</div>
+    </div>`;
+}
+
+// Draw the plot (cached offscreen) and wire hover / click.
+function attachGunsmith() {
+  const canvas = document.getElementById('gsPlot');
+  if (!canvas || !GS.sol) return;
+  const s = GS.sol;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth, H = Math.round(Math.min(560, Math.max(320, W * 0.55)));
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const m = { l: 58, r: 18, t: 14, b: 46 };
+  const padE = Math.max(1, (s.range.e1 - s.range.e0) * 0.03), padR = Math.max(1, (s.range.r1 - s.range.r0) * 0.04);
+  const ex = [s.range.e0 - padE, s.range.e1 + padE], ry = [s.range.r0 - padR, s.range.r1 + padR];
+  const X = e => m.l + (e - ex[0]) / (ex[1] - ex[0]) * (W - m.l - m.r);
+  const Y = r => H - m.b - (r - ry[0]) / (ry[1] - ry[0]) * (H - m.t - m.b);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const plotKey = `${s.weapon.id}|${W}|${H}|${dpr}`;
+  if (!GS.plot || GS.plot.key !== plotKey) {
+    const off = document.createElement('canvas');
+    off.width = canvas.width; off.height = canvas.height;
+    const g = off.getContext('2d');
+    g.scale(dpr, dpr);
+    g.fillStyle = css('--panel2'); g.fillRect(m.l, m.t, W - m.l - m.r, H - m.t - m.b);
+    const ticks = (a, b, n) => { const step = [1, 2, 5, 10, 20, 25, 50, 100].find(x => (b - a) / x <= n) || 100; const out = []; for (let v = Math.ceil(a / step) * step; v <= b; v += step) out.push(v); return out; };
+    g.strokeStyle = css('--line'); g.fillStyle = css('--muted'); g.font = '12px "Segoe UI", sans-serif'; g.lineWidth = 1;
+    for (const v of ticks(ex[0], ex[1], 12)) { g.beginPath(); g.moveTo(X(v), m.t); g.lineTo(X(v), H - m.b); g.stroke(); g.textAlign = 'center'; g.fillText(v, X(v), H - m.b + 16); }
+    for (const v of ticks(ry[0], ry[1], 8)) { g.beginPath(); g.moveTo(m.l, Y(v)); g.lineTo(W - m.r, Y(v)); g.stroke(); g.textAlign = 'right'; g.fillText(v, m.l - 6, Y(v) + 4); }
+    g.textAlign = 'center'; g.fillText('Ergonomics →', m.l + (W - m.l - m.r) / 2, H - 8);
+    g.save(); g.translate(14, m.t + (H - m.t - m.b) / 2); g.rotate(-Math.PI / 2); g.fillText('Vertical recoil →', 0, 0); g.restore();
+    g.fillStyle = 'rgba(154,146,127,0.45)';
+    for (const p of s.points) g.fillRect(X(p[0]) - 1.5, Y(p[1]) - 1.5, 3, 3);
+    g.strokeStyle = css('--accent'); g.lineWidth = 1.5; g.beginPath();
+    s.front.forEach((p, i) => (i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))));
+    g.stroke();
+    g.fillStyle = css('--accent');
+    for (const p of s.front) { g.beginPath(); g.arc(X(p[0]), Y(p[1]), 3, 0, 7); g.fill(); }
+    GS.plot = { key: plotKey, img: off };
+  }
+  const ctx = canvas.getContext('2d');
+  const draw = () => {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(GS.plot.img, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const ring = (p, color, r) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), r, 0, 7); ctx.stroke(); };
+    const h = GS.hover;
+    if (h) {
+      ctx.strokeStyle = 'rgba(230,224,212,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.beginPath();
+      ctx.moveTo(X(h[0]), m.t); ctx.lineTo(X(h[0]), H - m.b); ctx.moveTo(m.l, Y(h[1])); ctx.lineTo(W - m.r, Y(h[1])); ctx.stroke(); ctx.setLineDash([]);
+      ring(h, css('--text'), 6);
+    }
+    const sel = s.byKey.get(S.ui.gsKey);
+    if (sel) ring(sel, css('--good'), 8);
+  };
+  const nearest = ev => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    let best = null, bd = 18 * 18;
+    for (const p of s.points) { const dx = X(p[0]) - mx, dy = Y(p[1]) - my, d = dx * dx + dy * dy; if (d < bd || (d === bd && s.frontKeys.has(p[2]))) { bd = d; best = p; } }
+    return best;
+  };
+  const tip = document.getElementById('gsTip');
+  canvas.onmousemove = ev => {
+    const p = nearest(ev);
+    GS.hover = p;
+    draw();
+    if (!p) { tip.style.display = 'none'; canvas.style.cursor = 'default'; return; }
+    canvas.style.cursor = 'pointer';
+    tip.style.display = 'block';
+    tip.innerHTML = `ergo <b>${p[0]}</b> · vertical recoil <b>${p[1]}</b>${s.frontKeys.has(p[2]) ? '<br><span style="color:var(--accent)">best trade-off</span>' : ''}`;
+    tip.style.left = Math.min(X(p[0]) + 12, W - 170) + 'px';
+    tip.style.top = Math.max(Y(p[1]) - 44, 0) + 'px';
+  };
+  canvas.onmouseleave = () => { GS.hover = null; tip.style.display = 'none'; draw(); };
+  canvas.onclick = ev => { const p = nearest(ev); if (p) gsSelect(p[2]); };
+  GS.toPixel = p => [X(p[0]), Y(p[1])];   // for tools/ui_gunsmith_test.mjs
+  draw();
+}
+
 // ---------- profile setup (everything the game logs can't tell the tracker) ----------
 const SETUP_STEPS = [
   { id: 'basics', title: 'Character' }, { id: 'traders', title: 'Traders' }, { id: 'skills', title: 'Skills' },
@@ -2810,7 +3084,7 @@ function render() {
   document.getElementById('prestigeNo').textContent = `Prestige ${S.prestige} → ${S.prestige + 1}`;
   for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('on', b.dataset.tab === S.ui.tab);
   if (!D) return;
-  const v = { raid: viewRaid, next: viewNext, quests: viewQuests, prestige: viewPrestige, hideout: viewHideout, items: viewItems, keys: viewKeys, story: viewStory, completed: viewCompleted, setup: viewSetup }[S.ui.tab] || viewNext;
+  const v = { raid: viewRaid, next: viewNext, quests: viewQuests, prestige: viewPrestige, hideout: viewHideout, items: viewItems, keys: viewKeys, gunsmith: viewGunsmith, story: viewStory, completed: viewCompleted, setup: viewSetup }[S.ui.tab] || viewNext;
   const focused = document.activeElement && document.activeElement.id;
   const caret = focused === 'search' ? document.activeElement.selectionStart : null;
   document.getElementById('view').innerHTML = v();
@@ -2818,6 +3092,7 @@ function render() {
   renderSide();
   document.getElementById('raidTab').textContent = S.raid ? '● Raid in progress' : 'Raid planner';
   if (S.ui.tab === 'raid' && S.raid) attachRaidMap();
+  if (S.ui.tab === 'gunsmith') attachGunsmith();
   if (focused === 'search') {
     const el = document.getElementById('search');
     if (el) { el.focus(); el.setSelectionRange(caret, caret); }
@@ -3052,6 +3327,17 @@ document.getElementById('layout').addEventListener('click', e => {
     update();
   } else if (act === 'openSetup') {
     openSetup();
+  } else if (act === 'gsWeapon') {
+    if (S.ui.gsWeapon !== id) { S.ui.gsWeapon = id; S.ui.gsKey = null; GS.build = null; }
+    S.ui.search = '';
+    update();
+  } else if (act === 'gsChange') {
+    S.ui.gsWeapon = null; S.ui.gsKey = null; GS.sol = null; GS.build = null; GS.plot = null;
+    update();
+  } else if (act === 'gsClearSearch') {
+    S.ui.search = ''; update();
+  } else if (act === 'gsPick') {
+    gsSelect(Number(id));
   } else if (act === 'keyFilter') {
     S.ui.keyFilter = id;
     update();
