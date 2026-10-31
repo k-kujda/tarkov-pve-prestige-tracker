@@ -43,6 +43,9 @@ EXT = 0x8000
 
 
 def scene_indices():
+    # UnityPy.load returns an empty environment for a missing file, so check first.
+    if not os.path.isfile(os.path.join(DATA, "globalgamemanagers")):
+        raise SystemExit(f"Tarkov game files not found: {DATA} has no globalgamemanagers")
     env = UnityPy.load(os.path.join(DATA, "globalgamemanagers"))
     for o in env.objects:
         if o.type.name == "BuildSettings":

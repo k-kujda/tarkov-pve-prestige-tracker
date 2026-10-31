@@ -55,6 +55,15 @@
 
 Prefer a terminal? `node server.js --open`
 
+### 🐳 Docker
+
+To keep Node and Python off your PC, run it with [Docker Desktop](https://www.docker.com/products/docker-desktop/) instead:
+
+1. Copy `.env.example` to `.env` and set `TARKOV_DIR` to your game folder (the one with `EscapeFromTarkov_Data`).
+2. Double-click **`start-tracker-docker.bat`**, or run `docker compose up -d --build`. The tracker opens at <http://localhost:4747>.
+
+The game folder is mounted read-only, and the tracker only reads its `Logs` (set `TARKOV_LOGS_DIR` in `.env` if they're elsewhere, e.g. `build/Logs` on some Steam installs). Downloaded data goes to `cache/` and the meshes are read from `navmesh/`, both in this folder.
+
 ## 🔄 How game sync works
 
 Tarkov writes every quest event to its logs:
@@ -81,13 +90,20 @@ It's checked against the bots' own navmesh (walking distances agree to a median 
 
 **After a game patch** json.tarkov.dev (and tarkovtracker.org's corrections) can lag the game by days, while the wiki is usually updated within hours. `python tools/quest_wiki_check.py` lists quests whose wiki objectives name other maps than tarkov.dev, newest edit first, with both texts side by side. Real changes go into `data/quest-overrides.json` (objective id → new description, count and/or maps, applied once marked `verified`); the quest shows an "updated for patch" badge. Patch 1.3.0 (29 Oct 2026) moved *Job for a Patriot* from Lighthouse/Customs/Reserve to Streets of Tarkov, Shoreline and Ground Zero.
 
-The built meshes live in `navmesh/`. After a game update, rebuild them (needs Python with `UnityPy numpy pillow` and `npm install recast-navigation` somewhere):
+The built meshes live in `navmesh/`. Build them once, and again after a game update. With Docker everything the build needs (Python with UnityPy, Node with Recast) lives in the `navmesh` image:
 
 ```
-PY=<python> RECAST_DIR=<folder with node_modules/recast-navigation> tools/build_all.sh "F:\Games\Tarkov"
+docker compose run --rm --build navmesh            # every map
+docker compose run --rm navmesh customs factory    # just these
 ```
 
-Without `navmesh/` files the planner falls back to straight lines.
+Without Docker, it needs Python with `UnityPy numpy pillow` and `npm install recast-navigation` somewhere:
+
+```
+PY=<python> RECAST_DIR=<folder with node_modules/recast-navigation> tools/build_all.sh "<game folder>"
+```
+
+A full build takes a while and several GB of RAM per map (lower `JOBS` in `.env` if Docker runs out of memory; Docker Desktop gets half your RAM by default). Logs are in `navmesh/logs/`. Without `navmesh/` files the planner falls back to straight lines.
 
 ## 🔧 How the gunsmith solves a weapon
 
@@ -130,6 +146,7 @@ Either way, nobody has to run a script or program someone else sent them.
 | `gamelogs.js` | Reads quest progress from the game's log files |
 | `gunsmith.js` | Weapon / attachment catalogue and the solver behind the Gunsmith tab (runs in a worker thread) |
 | `start-tracker.bat` | Starts the server and opens your browser |
+| `start-tracker-docker.bat`, `docker-compose.yml`, `Dockerfile` | The same in Docker, plus the `navmesh` build image (`docker/navmesh/` pins its Python and npm packages) |
 | `data/` | Local fixes laid over the downloaded data: quest spots from the game files, floors and extracts tarkov.dev lacks, level transitions per map, and objectives a patch changed before tarkov.dev caught up (`quest-overrides.json`) |
 | `tools/` | Builds the navmesh, quest zones and level transitions from your game install |
 

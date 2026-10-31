@@ -15,7 +15,16 @@ cd "$(dirname "$0")/.."
 GAME="${1:-F:\\Games\\Tarkov}"; shift || true
 PY="${PY:-python}"
 MAPS="${*:-customs factory woods shoreline interchange the-lab reserve lighthouse streets-of-tarkov ground-zero the-labyrinth terminal icebreaker}"
+if [ ! -f "$GAME/EscapeFromTarkov_Data/globalgamemanagers" ]; then
+  echo "Tarkov game files not found in '$GAME' (no EscapeFromTarkov_Data/globalgamemanagers)." >&2
+  echo "Pass the game folder: tools/build_all.sh <game dir> [map ...]" >&2
+  exit 1
+fi
 mkdir -p navmesh/logs navmesh/ai
+# Transitions and quest zones need the tracker's game data (cache/pve-v*.json), which a fresh clone doesn't have yet
+if ! ls cache/pve-v*.json > /dev/null 2>&1; then
+  echo "== game data"; node -e "require('./server.js').getData('pve').then(() => console.log('  cache/ ready'))" || exit 1
+fi
 JOBS="${JOBS:-4}"
 
 run_parallel() { # cmd-prefix maps...

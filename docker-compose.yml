@@ -1,0 +1,34 @@
+# Run the tracker:        docker compose up -d --build     -> http://localhost:4747
+# Build walking routes:   docker compose run --rm --build navmesh [map ...]
+# Settings (game folder, port) go in .env, see .env.example.
+name: tarkov-tracker
+
+services:
+  tracker:
+    build:
+      context: .
+      target: tracker
+    image: tarkov-tracker:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PORT:-4747}:4747"
+    environment:
+      # Quest sync reads the game's logs
+      TARKOV_LOGS: /tarkov/${TARKOV_LOGS_DIR:-Logs}
+    volumes:
+      - ./cache:/app/cache
+      - ./navmesh:/app/navmesh:ro
+      - ${TARKOV_DIR:?Set TARKOV_DIR in .env to your Escape from Tarkov folder (see .env.example)}:/tarkov:ro
+
+  # Only runs on demand (profile), for the walkable meshes in navmesh/ after a game update
+  navmesh:
+    build:
+      context: .
+      target: navmesh
+    image: tarkov-tracker-navmesh:local
+    profiles: [build]
+    environment:
+      JOBS: ${JOBS:-4}
+    volumes:
+      - .:/app
+      - ${TARKOV_DIR:?Set TARKOV_DIR in .env to your Escape from Tarkov folder (see .env.example)}:/game:ro
