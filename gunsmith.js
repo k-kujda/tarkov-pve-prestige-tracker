@@ -14,12 +14,19 @@
 // fingerprints don't clash, and a point keeps up to ALTERNATIVES ways with different fingerprints. So
 // every point the solver returns has a real conflict-free build, rebuilt by following the recorded
 // choices. (A point can only be missed when a bucket runs out of room for fingerprints.)
+//
+// Required parts (a quest's parts, "any suppressor") work the same way: each requirement is a group of
+// parts and gets a bit, every way carries the bits its parts meet (has), and a point is one (ergo, recoil,
+// has) bucket so builds with and without a required part don't compete for room. Only the points that
+// meet every requirement are returned.
 
 const MOD_TYPES = new Set(['ItemPropertiesWeaponMod', 'ItemPropertiesScope', 'ItemPropertiesMagazine', 'ItemPropertiesBarrel']);
 const ERGO_STEP = 0.5;       // bucket size, ergonomics points
 const RECOIL_STEP = 0.5;     // bucket size, percent of vertical recoil
 const ALTERNATIVES = 6;      // ways (with different conflict fingerprints) kept per point
 const MAX_DEPTH = 14;        // mods on mods on mods...
+const MAX_NEEDS = 10;        // requirements per solve (a quest has up to 8 parts and a magazine)
+const SUPPRESSOR = '550aa4cd4bdc2dd8348b456c';   // item category "Silencer"
 
 const prettySlot = nameId => {
   const s = String(nameId || '').replace(/^mod_/, '').replace(/_\d+$/, '').replace(/_/g, ' ');
@@ -55,6 +62,7 @@ function buildCatalog(itemsData, dict) {
       id: it.id, name: name(it), short: shortName(it), icon: it.iconLink, image: it.gridImageLink,
       ergo: Number(p.ergonomics) || 0, recoil: Number(it.recoilModifier) || 0,
       weight: it.weight || 0, price: price(it), conflicts: it.conflictingItems || [], slots: slotsOf(it),
+      cats: it.categories || [], ...(p.capacity ? { capacity: p.capacity } : {}),
     };
   }
   const weapons = {};
@@ -69,16 +77,17 @@ function buildCatalog(itemsData, dict) {
       weight: it.weight || 0, price: price(it), slots: slotsOf(it),
     };
   }
-  return { weapons, parts };
+  return { weapons, parts, catNames };
 }
 
-const keyOf = (e, r) => (Math.round(e / ERGO_STEP) + 4000) * 100000 + (Math.round(r / RECOIL_STEP) + 50000);
+// Bucket key: ergo and recoil buckets, then the requirement bits met (exact: well under 2^53).
+const keyOf = (e, r, has) => ((Math.round(e / ERGO_STEP) + 4000) * 100000 + (Math.round(r / RECOIL_STEP) + 50000)) * (1 << MAX_NEEDS) + has;
 
 // A way of reaching a point: its exact stats (e, r), how it was made (keys and way indices in the sets
 // it came from), its fingerprint (fp: conflict-prone parts used) and the parts it rules out (no), both
 // BigInt bitmasks. A point is a bucket of ways; its first way stands for it.
 function addWay(set, way) {
-  const k = keyOf(way.e, way.r);
+  const k = keyOf(way.e, way.r, way.has);
   const p = set.get(k);
   if (!p) { set.set(k, { ways: [way] }); return; }
   if (p.ways.length >= ALTERNATIVES) return;
@@ -91,14 +100,15 @@ function sum(a, b) {
   const out = new Map();
   for (const [ka, pa] of a) {
     for (const [kb, pb] of b) {
-      const head = out.get(keyOf(pa.ways[0].e + pb.ways[0].e, pa.ways[0].r + pb.ways[0].r));
+      const has = pa.ways[0].has | pb.ways[0].has;
+      const head = out.get(keyOf(pa.ways[0].e + pb.ways[0].e, pa.ways[0].r + pb.ways[0].r, has));
       if (head && head.ways.length >= ALTERNATIVES) continue;
       for (let i = 0; i < pa.ways.length; i++) {
         const wa = pa.ways[i];
         for (let j = 0; j < pb.ways.length; j++) {
           const wb = pb.ways[j];
           if ((wa.fp & wb.no) || (wb.fp & wa.no)) continue;
-          addWay(out, { e: wa.e + wb.e, r: wa.r + wb.r, a: ka, ai: i, b: kb, bi: j, fp: wa.fp | wb.fp, no: wa.no | wb.no });
+          addWay(out, { e: wa.e + wb.e, r: wa.r + wb.r, has, a: ka, ai: i, b: kb, bi: j, fp: wa.fp | wb.fp, no: wa.no | wb.no });
         }
       }
     }
@@ -106,8 +116,8 @@ function sum(a, b) {
   return out;
 }
 
-// Parts that conflict with another part that fits the same weapon get a bit each.
-function conflictBits(catalog, weapon) {
+// Every part that fits the weapon, or fits a part that does.
+function reachable(catalog, weapon) {
   const reach = new Set();
   const walk = (slots, depth) => {
     if (depth > MAX_DEPTH) return;
@@ -117,6 +127,126 @@ function conflictBits(catalog, weapon) {
     }
   };
   walk(weapon.slots, 0);
+  return reach;
+}
+
+// Requirements as sent by the browser: a part id, "cat:<category id>" for any part of a category, or
+// "mag:<n>" for a magazine of at least n rounds. Each gets the parts of this weapon's tree that meet it
+// (none: no build can).
+function parseNeeds(catalog, weapon, needs) {
+  const reach = [...reachable(catalog, weapon)];
+  return [...new Set(needs || [])].slice(0, MAX_NEEDS).map(token => {
+    const [kind, arg] = token.includes(':') ? token.split(':') : ['part', token];
+    if (kind === 'cat') return { token, cat: arg, name: catalog.catNames[arg] || arg, parts: reach.filter(id => catalog.parts[id].cats.includes(arg)) };
+    if (kind === 'mag') return { token, mag: Number(arg), name: `Magazine of ${arg}+ rounds`, parts: reach.filter(id => (catalog.parts[id].capacity || 0) >= Number(arg)) };
+    return { token, name: (catalog.parts[token] || {}).name || token, parts: reach.includes(token) ? [token] : [] };
+  });
+}
+
+// Pruning for requirements. can: the bits a slot's or part's subtree can still meet. must: the bits it
+// dominates, i.e. every part meeting that requirement sits below it however it's mounted, so a way of
+// it without the bit can never be completed (and if it isn't installed at all, nothing meets the bit
+// either). Both hold in every place a part or slot is used, so pruning its memoised set is safe.
+function needBits(catalog, weapon, meets, all) {
+  const kids = new Map();            // node -> child nodes; nodes are 'w', 's<slot id>', 'p<part id>'
+  const partNode = id => 'p' + id;
+  const addPart = id => {
+    const n = partNode(id);
+    if (kids.has(n)) return;
+    kids.set(n, catalog.parts[id].slots.map(s => 's' + s.id));
+    for (const s of catalog.parts[id].slots) addSlot(s);
+  };
+  const addSlot = s => {
+    const ids = s.allowed.filter(id => catalog.parts[id]);
+    kids.set('s' + s.id, ids.map(partNode));
+    for (const id of ids) addPart(id);
+  };
+  kids.set('w', weapon.slots.map(s => 's' + s.id));
+  for (const s of weapon.slots) addSlot(s);
+  const parents = new Map([...kids.keys()].map(n => [n, []]));
+  for (const [n, cs] of kids) for (const c of cs) parents.get(c).push(n);
+  // Dominators (iterative; null = every node), then can as a fixed point (mods can nest in cycles).
+  const dom = new Map([...kids.keys()].map(n => [n, null]));
+  dom.set('w', new Set(['w']));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const n of kids.keys()) {
+      if (n === 'w') continue;
+      let d = null;
+      for (const p of parents.get(n)) {
+        const dp = dom.get(p);
+        if (!dp) continue;
+        d = d ? new Set([...d].filter(x => dp.has(x))) : new Set(dp);
+      }
+      if (!d) continue;
+      d.add(n);
+      const old = dom.get(n);
+      if (!old || old.size !== d.size) { dom.set(n, d); changed = true; }
+    }
+  }
+  const can = new Map([...kids.keys()].map(n => [n, n[0] === 'p' ? meets.get(n.slice(1)) || 0 : 0]));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [n, cs] of kids) {
+      let b = can.get(n);
+      for (const c of cs) b |= can.get(c);
+      if (b !== can.get(n)) { can.set(n, b); changed = true; }
+    }
+  }
+  const must = new Map();
+  for (const [id, bits] of meets) {
+    for (let i = 0; 1 << i <= bits; i++) {
+      if (!(bits & (1 << i))) continue;
+      must.set('need' + i, [...(must.get('need' + i) || []), partNode(id)]);
+    }
+  }
+  const mustOf = new Map();
+  for (const [k, nodes] of must) {
+    const bit = 1 << Number(k.slice(4));
+    let common = null;
+    for (const n of nodes) {
+      const d = dom.get(n) || new Set();
+      common = common ? new Set([...common].filter(x => d.has(x))) : new Set(d);
+    }
+    for (const n of common || []) mustOf.set(n, (mustOf.get(n) || 0) | bit);
+  }
+  // Pushed down the tree: a part must meet what every slot it can sit in must, and a slot must meet what its
+  // part must but the part itself doesn't and no other slot of the part can.
+  mustOf.set('w', all);
+  const meetsOf = n => (n[0] === 'p' ? meets.get(n.slice(1)) || 0 : 0);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [n, cs] of kids) {
+      let m = mustOf.get(n) || 0;
+      if (n[0] === 'p') {
+        const ps = parents.get(n);
+        if (ps.length) m |= ps.reduce((b, p) => b & (mustOf.get(p) || 0), ~0);
+      }
+      if (m !== (mustOf.get(n) || 0)) { mustOf.set(n, m); changed = true; }
+      const left = m & ~meetsOf(n);
+      if (n[0] === 's' || !left) continue;
+      for (const c of cs) {
+        let only = left & can.get(c);
+        for (const o of cs) if (o !== c) only &= ~can.get(o);
+        const mc = (mustOf.get(c) || 0) | only;
+        if (mc !== (mustOf.get(c) || 0)) { mustOf.set(c, mc); changed = true; }
+      }
+    }
+  }
+  return { can: n => can.get(n) || 0, must: n => mustOf.get(n) || 0 };
+}
+
+// Ways that lack a bit in need (the bits that can't be met anywhere else any more).
+const prune = (set, need) => {
+  if (!need) return set;
+  const out = new Map();
+  for (const [k, p] of set) if ((p.ways[0].has & need) === need) out.set(k, p);
+  return out;
+};
+
+// Parts that conflict with another part that fits the same weapon get a bit each.
+function conflictBits(catalog, weapon) {
+  const reach = reachable(catalog, weapon);
   const bit = new Map();
   for (const id of reach) for (const c of catalog.parts[id].conflicts) {
     if (!reach.has(c)) continue;
@@ -129,11 +259,16 @@ function conflictBits(catalog, weapon) {
   return { bit, no };
 }
 
-function solve(catalog, weaponId) {
+function solve(catalog, weaponId, needTokens) {
   const weapon = catalog.weapons[weaponId];
   if (!weapon) throw new Error('unknown weapon');
   const started = Date.now();
   const { bit, no } = conflictBits(catalog, weapon);
+  const needs = parseNeeds(catalog, weapon, needTokens);
+  const meets = new Map();     // part id -> requirement bits it meets
+  needs.forEach((n, i) => { for (const id of n.parts) meets.set(id, (meets.get(id) || 0) | (1 << i)); });
+  const all = (1 << needs.length) - 1;
+  const nb = needs.length ? needBits(catalog, weapon, meets, all) : { can: () => 0, must: () => 0 };
   const items = new Map();     // item id -> { part, stages: [set after 0..n of its slots], count }
   const slots = new Map();     // slot id -> { set, count }
   const busy = new Set();
@@ -141,13 +276,17 @@ function solve(catalog, weaponId) {
   function itemSet(part, depth) {
     if (items.has(part.id)) return items.get(part.id);
     let set = new Map();
-    addWay(set, { e: part.ergo || 0, r: part.recoil || 0, fp: bit.get(part.id) || 0n, no: no.get(part.id) || 0n });
+    addWay(set, { e: part.ergo || 0, r: part.recoil || 0, has: meets.get(part.id) || 0, fp: bit.get(part.id) || 0n, no: no.get(part.id) || 0n });
     const stages = [set];
     let count = 1n;
     busy.add(part.id);
-    for (const slot of part.slots) {
-      const s = slotSet(slot, depth + 1);
-      set = sum(set, s.set);
+    // Bits only this part's subtree can meet: once its remaining slots can't meet one, drop the ways without it.
+    const node = depth === 0 ? 'w' : 'p' + part.id;
+    const must = depth === 0 ? all : nb.must(node);
+    const rest = part.slots.map((_, j) => part.slots.slice(j + 1).reduce((b, s) => b | nb.can('s' + s.id), 0));
+    for (let j = 0; j < part.slots.length; j++) {
+      const s = slotSet(part.slots[j], depth + 1);
+      set = prune(sum(set, s.set), must & ~rest[j]);
       stages.push(set);
       count *= s.count;
     }
@@ -162,27 +301,27 @@ function solve(catalog, weaponId) {
     const set = new Map();
     let count = 0n;
     const options = depth > MAX_DEPTH ? [] : slot.allowed.map(id => catalog.parts[id]).filter(p => p && !busy.has(p.id));
-    if (!slot.required || !options.length) { addWay(set, { e: 0, r: 0, item: null, fp: 0n, no: 0n }); count += 1n; }
+    if (!slot.required || !options.length) { addWay(set, { e: 0, r: 0, has: 0, item: null, fp: 0n, no: 0n }); count += 1n; }
     for (const part of options) {
       const it = itemSet(part, depth);
       count += it.count;
       for (const [k, p] of it.stages[it.stages.length - 1]) {
-        p.ways.forEach((w, i) => addWay(set, { e: w.e, r: w.r, item: part.id, k, i, fp: w.fp, no: w.no }));
+        p.ways.forEach((w, i) => addWay(set, { e: w.e, r: w.r, has: w.has, item: part.id, k, i, fp: w.fp, no: w.no }));
       }
     }
-    const entry = { set, count };
+    const entry = { set: prune(set, nb.must('s' + slot.id)), count };
     slots.set(slot.id, entry);
     return entry;
   }
 
   const root = itemSet({ ...weapon, ergo: 0, recoil: 0 }, 0);
-  const final = root.stages[root.stages.length - 1];
+  const final = prune(root.stages[root.stages.length - 1], all);
   const points = [];
   for (const [k, p] of final) {
     const w = p.ways[0];
     points.push([+(weapon.ergo + w.e).toFixed(1), Math.round(weapon.recoilV * (1 + w.r / 100)), k]);
   }
-  return { weaponId, weapon, items, slots, final, points, combinations: root.count, conflictParts: bit.size, ms: Date.now() - started };
+  return { weaponId, weapon, needs, items, slots, final, points, combinations: root.count, conflictParts: bit.size, ms: Date.now() - started };
 }
 
 // The build behind a point: follow the recorded ways back down the tree.
@@ -209,13 +348,14 @@ function describe(catalog, sol, key) {
   const tree = rebuild(sol, key);
   if (!tree) return null;
   const w = sol.weapon;
-  let ergo = w.ergo, recoil = 0, weight = w.weight, price = w.price || 0;
+  let ergo = w.ergo, recoil = 0, weight = w.weight, price = w.price || 0, magazine = 0;
+  const needed = new Set(sol.needs.flatMap(n => n.parts));
   const node = n => {
     const part = n.item && catalog.parts[n.item];
-    if (part) { ergo += part.ergo; recoil += part.recoil; weight += part.weight; price += part.price || 0; }
+    if (part) { ergo += part.ergo; recoil += part.recoil; weight += part.weight; price += part.price || 0; magazine = Math.max(magazine, part.capacity || 0); }
     return {
       slot: n.slot.name, slotId: n.slot.nameId, required: n.slot.required,
-      item: part ? { id: part.id, name: part.name, short: part.short, icon: part.icon, image: part.image, ergo: part.ergo, recoil: part.recoil, price: part.price } : null,
+      item: part ? { id: part.id, name: part.name, short: part.short, icon: part.icon, image: part.image, ergo: part.ergo, recoil: part.recoil, price: part.price, needed: needed.has(part.id) } : null,
       children: n.children.map(node),
     };
   };
@@ -226,7 +366,7 @@ function describe(catalog, sol, key) {
     totals: {
       ergo: +ergo.toFixed(1), recoilPct: +recoil.toFixed(1),
       recoilV: Math.round(w.recoilV * (1 + recoil / 100)), recoilH: Math.round(w.recoilH * (1 + recoil / 100)),
-      weight: +weight.toFixed(2), price: Math.round(price),
+      weight: +weight.toFixed(2), price: Math.round(price), magazine,
     },
   };
 }
@@ -238,7 +378,18 @@ function summary(sol) {
     weapon: { id: w.id, name: w.name, short: w.short, image: w.image, icon: w.icon, cls: w.cls, caliber: w.caliber, ergo: w.ergo, recoilV: w.recoilV, recoilH: w.recoilH },
     points: sol.points, combinations: String(sol.combinations), conflictParts: sol.conflictParts, ms: sol.ms,
     ergoStep: ERGO_STEP, recoilStep: RECOIL_STEP,
+    needs: sol.needs.map(n => ({ token: n.token, cat: n.cat, mag: n.mag, name: n.name, parts: n.parts.length })),
   };
+}
+
+// The parts that fit a weapon, for picking required ones in the browser (no solving needed).
+function partsFor(catalog, weaponId) {
+  const weapon = catalog.weapons[weaponId];
+  if (!weapon) throw new Error('unknown weapon');
+  const parts = [...reachable(catalog, weapon)].map(id => catalog.parts[id])
+    .map(p => ({ id: p.id, name: p.name, short: p.short, icon: p.icon, ergo: p.ergo, recoil: p.recoil, suppressor: p.cats.includes(SUPPRESSOR) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return { weapon: weaponId, parts, suppressor: SUPPRESSOR };
 }
 
 // ---------- solving runs in a worker thread so the server stays responsive ----------
@@ -258,19 +409,20 @@ if (!isMainThread && workerData && workerData.gunsmithWorker) {
     catalogs.set(file, { mtime, catalog });
     return catalog;
   };
-  const solutionOf = (file, catalog, weapon) => {
-    const k = file + '|' + weapon;
+  const solutionOf = (file, catalog, weapon, needs) => {
+    const k = file + '|' + weapon + '|' + needs.join(',');
     let sol = solved.get(k);
     if (sol) solved.delete(k);
-    else sol = solve(catalog, weapon);
+    else sol = solve(catalog, weapon, needs);
     solved.set(k, sol);
     while (solved.size > KEEP_SOLVED) solved.delete(solved.keys().next().value);
     return sol;
   };
-  parentPort.on('message', ({ id, op, file, weapon, key }) => {
+  parentPort.on('message', ({ id, op, file, weapon, key, needs = [] }) => {
     try {
       const catalog = catalogOf(file);
-      const sol = solutionOf(file, catalog, weapon);
+      if (op === 'parts') { parentPort.postMessage({ id, result: partsFor(catalog, weapon) }); return; }
+      const sol = solutionOf(file, catalog, weapon, needs);
       parentPort.postMessage({ id, result: op === 'solve' ? summary(sol) : describe(catalog, sol, Number(key)) });
     } catch (e) {
       parentPort.postMessage({ id, error: e.message });
@@ -281,7 +433,7 @@ if (!isMainThread && workerData && workerData.gunsmithWorker) {
 let worker = null;
 let nextJob = 0;
 const jobs = new Map();
-// Run { op: 'solve' | 'build', file, weapon, key } in the worker; resolves with its result.
+// Run { op: 'solve' | 'build' | 'parts', file, weapon, key, needs } in the worker; resolves with its result.
 function inWorker(msg) {
   if (!worker) {
     worker = new Worker(__filename, { workerData: { gunsmithWorker: true } });
@@ -306,4 +458,4 @@ function inWorker(msg) {
   });
 }
 
-module.exports = { buildCatalog, solve, describe, summary, inWorker, ERGO_STEP, RECOIL_STEP };
+module.exports = { buildCatalog, solve, describe, summary, partsFor, inWorker, ERGO_STEP, RECOIL_STEP, SUPPRESSOR, MAX_NEEDS };
