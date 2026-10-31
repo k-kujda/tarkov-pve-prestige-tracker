@@ -851,4 +851,4 @@ if (require.main === module) server.listen(PORT, '127.0.0.1', () => {
   }
 });
 
-module.exports = { normalize, build, withLocalData };
+module.exports = { normalize, build, withLocalData, getData };

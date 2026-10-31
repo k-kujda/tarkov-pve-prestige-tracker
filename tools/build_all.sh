@@ -21,6 +21,10 @@ if [ ! -f "$GAME/EscapeFromTarkov_Data/globalgamemanagers" ]; then
   exit 1
 fi
 mkdir -p navmesh/logs navmesh/ai
+# Transitions and quest zones need the tracker's game data (cache/pve-v*.json), which a fresh clone doesn't have yet
+if ! ls cache/pve-v*.json > /dev/null 2>&1; then
+  echo "== game data"; node -e "require('./server.js').getData('pve').then(() => console.log('  cache/ ready'))" || exit 1
+fi
 JOBS="${JOBS:-4}"
 
 run_parallel() { # cmd-prefix maps...
