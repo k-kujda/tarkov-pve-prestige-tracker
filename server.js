@@ -562,7 +562,7 @@ function normalize(raw) {
 // ---------- gunsmith ----------
 // Weapons and attachments (gunsmith.js) get their own catalogue file, built from the raw items dataset and
 // refreshed with the same TTL. Solving runs in a worker thread that reads this file.
-const GUNSMITH_VERSION = 2;
+const GUNSMITH_VERSION = 3;
 const gunsmithFile = mode => path.join(CACHE_DIR, `gunsmith-${mode}-v${GUNSMITH_VERSION}.json`);
 const gunsmithBuilding = new Map();
 function gunsmithCatalog(mode) {
@@ -572,7 +572,9 @@ function gunsmithCatalog(mode) {
     gunsmithBuilding.set(mode, (async () => {
       try {
         const [base, en] = await Promise.all([getJson(`${UPSTREAM}/${mode}/items`), getJson(`${UPSTREAM}/${mode}/items_en`)]);
-        const catalog = gunsmith.buildCatalog(base.data, en.data || {});
+        let tactical = {};
+        try { tactical = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'tactical-devices.json'), 'utf8')); } catch (e) { /* optional */ }
+        const catalog = gunsmith.buildCatalog(base.data, en.data || {}, tactical);
         fs.mkdirSync(CACHE_DIR, { recursive: true });
         fs.writeFileSync(file, JSON.stringify({ at: Date.now(), catalog }));
         return file;
@@ -825,20 +827,23 @@ const server = http.createServer(async (req, res) => {
       if (op === 'weapons') return send(req, res, 200, 'application/json', gunsmithWeapons(file));
       const weapon = url.searchParams.get('weapon') || '';
       if (!/^[0-9a-f]{24}$/.test(weapon)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad weapon id' }));
-      // Required parts: part ids, cat:<category id> or mag:<rounds>, comma-separated
+      // Required parts: part ids, cat:<category id>, mag:<rounds>, cap:<rounds> or feat:light|laser, comma-separated
       const needs = (url.searchParams.get('need') || '').split(',').filter(Boolean).sort();
-      if (needs.length > gunsmith.MAX_NEEDS || needs.some(n => !/^((cat:)?[0-9a-f]{24}|mag:\d{1,3})$/.test(n))) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad required parts' }));
+      if (needs.length > gunsmith.MAX_NEEDS || needs.some(n => !/^((cat:)?[0-9a-f]{24}|(mag|cap):\d{1,3}|feat:(light|laser))$/.test(n))) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad required parts' }));
+      // Parts the player can't get, left out of every build
+      const excluded = (url.searchParams.get('exclude') || '').split(',').filter(Boolean);
+      if (excluded.length > 500 || excluded.some(n => !/^[0-9a-f]{24}$/.test(n))) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad excluded parts' }));
       if (op === 'parts') return send(req, res, 200, 'application/json', JSON.stringify(await gunsmith.inWorker({ op: 'parts', file, weapon })));
       if (op === 'solve') {
         const started = Date.now();
-        const result = await gunsmith.inWorker({ op: 'solve', file, weapon, needs });
-        console.log(`[${new Date().toLocaleTimeString()}] gunsmith ${mode}: ${result.weapon.name}${needs.length ? ` with ${needs.length} required` : ''}, ${result.points.length} points in ${Date.now() - started} ms`);
+        const result = await gunsmith.inWorker({ op: 'solve', file, weapon, needs, excluded });
+        console.log(`[${new Date().toLocaleTimeString()}] gunsmith ${mode}: ${result.weapon.name}${needs.length ? ` with ${needs.length} required` : ''}${result.excluded ? `, ${result.excluded} excluded` : ''}, ${result.points.length} points in ${Date.now() - started} ms`);
         return send(req, res, 200, 'application/json', JSON.stringify(result));
       }
       if (op === 'build') {
         const key = url.searchParams.get('key') || '';
         if (!/^\d+$/.test(key)) return send(req, res, 400, 'application/json', JSON.stringify({ error: 'bad key' }));
-        const result = await gunsmith.inWorker({ op: 'build', file, weapon, key, needs });
+        const result = await gunsmith.inWorker({ op: 'build', file, weapon, key, needs, excluded });
         if (!result) return send(req, res, 404, 'application/json', JSON.stringify({ error: 'no such point' }));
         return send(req, res, 200, 'application/json', JSON.stringify(result));
       }
