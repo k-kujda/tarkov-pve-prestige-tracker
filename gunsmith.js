@@ -27,6 +27,8 @@ const ALTERNATIVES = 6;      // ways (with different conflict fingerprints) kept
 const MAX_DEPTH = 14;        // mods on mods on mods...
 const MAX_NEEDS = 10;        // requirements per solve (a quest has up to 8 parts and a magazine)
 const SUPPRESSOR = '550aa4cd4bdc2dd8348b456c';   // item category "Silencer"
+const FLASHLIGHT = '55818b084bdc2d5b648b4571';   // item category "Flashlight"
+const COMBO_DEVICE = '55818b164bdc2ddc698b456c'; // item category "Comb. tact. device"
 
 const prettySlot = nameId => {
   const s = String(nameId || '').replace(/^mod_/, '').replace(/_\d+$/, '').replace(/_/g, ' ');
@@ -34,7 +36,8 @@ const prettySlot = nameId => {
 };
 
 // Compact catalogue of weapons and attachments from json.tarkov.dev items + the English dictionary.
-function buildCatalog(itemsData, dict) {
+// tactical: data/tactical-devices.json, which devices have a visible flashlight / laser (the data doesn't say).
+function buildCatalog(itemsData, dict, tactical = {}) {
   const items = itemsData.items;
   const all = Object.values(items);
   const name = it => dict[it.name] || it.normalizedName;
@@ -54,15 +57,27 @@ function buildCatalog(itemsData, dict) {
     allowed = [...new Set(allowed)].filter(id => !excluded.has(id));
     return { id: s.id, nameId: s.nameId, name: prettySlot(s.nameId), required: !!s.required, allowed };
   });
+  // Visible flashlight / laser: from the list, else a pure flashlight, or a combo device named "... with laser"
+  const modes = it => {
+    const cats = it.categories || [];
+    const known = tactical[it.id];
+    if (known) return { light: !!known.light, laser: !!known.laser };
+    if (cats.includes(FLASHLIGHT)) return { light: true, laser: false };
+    if (!cats.includes(COMBO_DEVICE)) return {};
+    const n = name(it).toLowerCase();
+    return { light: /flashlight|light\b/.test(n), laser: /laser/.test(n) && !/\bir\b/.test(n) };
+  };
   const parts = {};
   for (const it of all) {
     const p = it.properties || {};
     if (!MOD_TYPES.has(p.propertiesType)) continue;
+    const m = modes(it);
     parts[it.id] = {
       id: it.id, name: name(it), short: shortName(it), icon: it.iconLink, image: it.gridImageLink,
       ergo: Number(p.ergonomics) || 0, recoil: Number(it.recoilModifier) || 0,
       weight: it.weight || 0, price: price(it), conflicts: it.conflictingItems || [], slots: slotsOf(it),
       cats: it.categories || [], ...(p.capacity ? { capacity: p.capacity } : {}),
+      ...(m.light ? { light: true } : {}), ...(m.laser ? { laser: true } : {}),
     };
   }
   const weapons = {};
@@ -96,11 +111,18 @@ function addWay(set, way) {
 }
 
 // Every point of A plus every point of B, through ways whose parts don't conflict.
-function sum(a, b) {
+// need: requirement bits the sum must have; B's points are grouped by their bits so pairs that can't
+// have them are never looked at.
+function sum(a, b, need = 0) {
   const out = new Map();
+  const groups = new Map();
+  for (const e of b) { const h = e[1].ways[0].has; (groups.get(h) || groups.set(h, []).get(h)).push(e); }
+  const pairs = new Map();      // A's bits -> B's points that can be added to them
   for (const [ka, pa] of a) {
-    for (const [kb, pb] of b) {
-      const has = pa.ways[0].has | pb.ways[0].has;
+    const ha = pa.ways[0].has;
+    if (!pairs.has(ha)) pairs.set(ha, [...groups].filter(([hb]) => ((ha | hb) & need) === need).flatMap(([, es]) => es));
+    for (const [kb, pb] of pairs.get(ha)) {
+      const has = ha | pb.ways[0].has;
       const head = out.get(keyOf(pa.ways[0].e + pb.ways[0].e, pa.ways[0].r + pb.ways[0].r, has));
       if (head && head.ways.length >= ALTERNATIVES) continue;
       for (let i = 0; i < pa.ways.length; i++) {
@@ -116,29 +138,32 @@ function sum(a, b) {
   return out;
 }
 
-// Every part that fits the weapon, or fits a part that does.
-function reachable(catalog, weapon) {
+// Every part that fits the weapon, or fits a part that does (leaving out excluded parts and what only fits them).
+function reachable(catalog, weapon, excluded = new Set()) {
   const reach = new Set();
   const walk = (slots, depth) => {
     if (depth > MAX_DEPTH) return;
     for (const s of slots) for (const id of s.allowed) {
       const part = catalog.parts[id];
-      if (part && !reach.has(id)) { reach.add(id); walk(part.slots, depth + 1); }
+      if (part && !reach.has(id) && !excluded.has(id)) { reach.add(id); walk(part.slots, depth + 1); }
     }
   };
   walk(weapon.slots, 0);
   return reach;
 }
 
-// Requirements as sent by the browser: a part id, "cat:<category id>" for any part of a category, or
-// "mag:<n>" for a magazine of at least n rounds. Each gets the parts of this weapon's tree that meet it
-// (none: no build can).
-function parseNeeds(catalog, weapon, needs) {
-  const reach = [...reachable(catalog, weapon)];
+// Requirements as sent by the browser: a part id, "cat:<category id>" for any part of a category,
+// "mag:<n>" for a magazine of at least n rounds, "cap:<n>" for one of exactly n, or "feat:light" /
+// "feat:laser" for a visible flashlight / laser (one combo device can meet both). Each gets the parts of
+// this weapon's tree that meet it (none: no build can).
+function parseNeeds(catalog, weapon, needs, excluded) {
+  const reach = [...reachable(catalog, weapon, excluded)];
   return [...new Set(needs || [])].slice(0, MAX_NEEDS).map(token => {
     const [kind, arg] = token.includes(':') ? token.split(':') : ['part', token];
     if (kind === 'cat') return { token, cat: arg, name: catalog.catNames[arg] || arg, parts: reach.filter(id => catalog.parts[id].cats.includes(arg)) };
     if (kind === 'mag') return { token, mag: Number(arg), name: `Magazine of ${arg}+ rounds`, parts: reach.filter(id => (catalog.parts[id].capacity || 0) >= Number(arg)) };
+    if (kind === 'cap') return { token, mag: Number(arg), name: `${arg}-round magazine`, parts: reach.filter(id => catalog.parts[id].capacity === Number(arg)) };
+    if (kind === 'feat') return { token, name: arg === 'light' ? 'Flashlight' : 'Laser', parts: reach.filter(id => catalog.parts[id][arg]) };
     return { token, name: (catalog.parts[token] || {}).name || token, parts: reach.includes(token) ? [token] : [] };
   });
 }
@@ -147,7 +172,7 @@ function parseNeeds(catalog, weapon, needs) {
 // dominates, i.e. every part meeting that requirement sits below it however it's mounted, so a way of
 // it without the bit can never be completed (and if it isn't installed at all, nothing meets the bit
 // either). Both hold in every place a part or slot is used, so pruning its memoised set is safe.
-function needBits(catalog, weapon, meets, all) {
+function needBits(catalog, weapon, meets, all, excluded) {
   const kids = new Map();            // node -> child nodes; nodes are 'w', 's<slot id>', 'p<part id>'
   const partNode = id => 'p' + id;
   const addPart = id => {
@@ -157,7 +182,7 @@ function needBits(catalog, weapon, meets, all) {
     for (const s of catalog.parts[id].slots) addSlot(s);
   };
   const addSlot = s => {
-    const ids = s.allowed.filter(id => catalog.parts[id]);
+    const ids = s.allowed.filter(id => catalog.parts[id] && !excluded.has(id));
     kids.set('s' + s.id, ids.map(partNode));
     for (const id of ids) addPart(id);
   };
@@ -245,8 +270,8 @@ const prune = (set, need) => {
 };
 
 // Parts that conflict with another part that fits the same weapon get a bit each.
-function conflictBits(catalog, weapon) {
-  const reach = reachable(catalog, weapon);
+function conflictBits(catalog, weapon, excluded) {
+  const reach = reachable(catalog, weapon, excluded);
   const bit = new Map();
   for (const id of reach) for (const c of catalog.parts[id].conflicts) {
     if (!reach.has(c)) continue;
@@ -259,16 +284,18 @@ function conflictBits(catalog, weapon) {
   return { bit, no };
 }
 
-function solve(catalog, weaponId, needTokens) {
+// excludedIds: parts the player can't get; they're left out of every slot.
+function solve(catalog, weaponId, needTokens, excludedIds) {
   const weapon = catalog.weapons[weaponId];
   if (!weapon) throw new Error('unknown weapon');
   const started = Date.now();
-  const { bit, no } = conflictBits(catalog, weapon);
-  const needs = parseNeeds(catalog, weapon, needTokens);
+  const excluded = new Set(excludedIds || []);
+  const { bit, no } = conflictBits(catalog, weapon, excluded);
+  const needs = parseNeeds(catalog, weapon, needTokens, excluded);
   const meets = new Map();     // part id -> requirement bits it meets
   needs.forEach((n, i) => { for (const id of n.parts) meets.set(id, (meets.get(id) || 0) | (1 << i)); });
   const all = (1 << needs.length) - 1;
-  const nb = needs.length ? needBits(catalog, weapon, meets, all) : { can: () => 0, must: () => 0 };
+  const nb = needs.length ? needBits(catalog, weapon, meets, all, excluded) : { can: () => 0, must: () => 0 };
   const items = new Map();     // item id -> { part, stages: [set after 0..n of its slots], count }
   const slots = new Map();     // slot id -> { set, count }
   const busy = new Set();
@@ -286,7 +313,7 @@ function solve(catalog, weaponId, needTokens) {
     const rest = part.slots.map((_, j) => part.slots.slice(j + 1).reduce((b, s) => b | nb.can('s' + s.id), 0));
     for (let j = 0; j < part.slots.length; j++) {
       const s = slotSet(part.slots[j], depth + 1);
-      set = prune(sum(set, s.set), must & ~rest[j]);
+      set = sum(set, s.set, must & ~rest[j]);
       stages.push(set);
       count *= s.count;
     }
@@ -300,8 +327,10 @@ function solve(catalog, weaponId, needTokens) {
     if (slots.has(slot.id)) return slots.get(slot.id);
     const set = new Map();
     let count = 0n;
-    const options = depth > MAX_DEPTH ? [] : slot.allowed.map(id => catalog.parts[id]).filter(p => p && !busy.has(p.id));
-    if (!slot.required || !options.length) { addWay(set, { e: 0, r: 0, has: 0, item: null, fp: 0n, no: 0n }); count += 1n; }
+    const fits = depth > MAX_DEPTH ? [] : slot.allowed.map(id => catalog.parts[id]).filter(p => p && !busy.has(p.id));
+    const options = fits.filter(p => !excluded.has(p.id));
+    // A required slot whose every option is excluded can't be filled, so nothing is mounted on its part
+    if (!slot.required || !fits.length) { addWay(set, { e: 0, r: 0, has: 0, item: null, fp: 0n, no: 0n }); count += 1n; }
     for (const part of options) {
       const it = itemSet(part, depth);
       count += it.count;
@@ -321,7 +350,7 @@ function solve(catalog, weaponId, needTokens) {
     const w = p.ways[0];
     points.push([+(weapon.ergo + w.e).toFixed(1), Math.round(weapon.recoilV * (1 + w.r / 100)), k]);
   }
-  return { weaponId, weapon, needs, items, slots, final, points, combinations: root.count, conflictParts: bit.size, ms: Date.now() - started };
+  return { weaponId, weapon, needs, excluded: excluded.size, items, slots, final, points, combinations: root.count, conflictParts: bit.size, ms: Date.now() - started };
 }
 
 // The build behind a point: follow the recorded ways back down the tree.
@@ -386,7 +415,7 @@ function summary(catalog, sol) {
     weapon: { id: w.id, name: w.name, short: w.short, image: w.image, icon: w.icon, cls: w.cls, caliber: w.caliber, ergo: w.ergo, recoilV: w.recoilV, recoilH: w.recoilH },
     points: sol.points.map(p => [...p, weightOf(catalog, sol, p[2])]), combinations: String(sol.combinations), conflictParts: sol.conflictParts, ms: sol.ms,
     ergoStep: ERGO_STEP, recoilStep: RECOIL_STEP,
-    needs: sol.needs.map(n => ({ token: n.token, cat: n.cat, mag: n.mag, name: n.name, parts: n.parts.length })),
+    needs: sol.needs.map(n => ({ token: n.token, cat: n.cat, mag: n.mag, name: n.name, parts: n.parts.length })), excluded: sol.excluded,
   };
 }
 
@@ -395,7 +424,8 @@ function partsFor(catalog, weaponId) {
   const weapon = catalog.weapons[weaponId];
   if (!weapon) throw new Error('unknown weapon');
   const parts = [...reachable(catalog, weapon)].map(id => catalog.parts[id])
-    .map(p => ({ id: p.id, name: p.name, short: p.short, icon: p.icon, ergo: p.ergo, recoil: p.recoil, suppressor: p.cats.includes(SUPPRESSOR) }))
+    .map(p => ({ id: p.id, name: p.name, short: p.short, icon: p.icon, ergo: p.ergo, recoil: p.recoil, price: p.price, suppressor: p.cats.includes(SUPPRESSOR),
+      ...(p.capacity ? { capacity: p.capacity } : {}), ...(p.light ? { light: true } : {}), ...(p.laser ? { laser: true } : {}) }))
     .sort((a, b) => a.name.localeCompare(b.name));
   return { weapon: weaponId, parts, suppressor: SUPPRESSOR };
 }
@@ -417,20 +447,24 @@ if (!isMainThread && workerData && workerData.gunsmithWorker) {
     catalogs.set(file, { mtime, catalog });
     return catalog;
   };
-  const solutionOf = (file, catalog, weapon, needs) => {
-    const k = file + '|' + weapon + '|' + needs.join(',');
+  const solutionOf = (file, catalog, weapon, needs, excluded) => {
+    // Only exclusions of parts that fit this weapon change its solution
+    const w = catalog.weapons[weapon];
+    const reach = w ? reachable(catalog, w) : new Set();
+    const ex = excluded.filter(id => reach.has(id)).sort();
+    const k = file + '|' + weapon + '|' + needs.join(',') + '|' + ex.join(',');
     let sol = solved.get(k);
     if (sol) solved.delete(k);
-    else sol = solve(catalog, weapon, needs);
+    else sol = solve(catalog, weapon, needs, ex);
     solved.set(k, sol);
     while (solved.size > KEEP_SOLVED) solved.delete(solved.keys().next().value);
     return sol;
   };
-  parentPort.on('message', ({ id, op, file, weapon, key, needs = [] }) => {
+  parentPort.on('message', ({ id, op, file, weapon, key, needs = [], excluded = [] }) => {
     try {
       const catalog = catalogOf(file);
       if (op === 'parts') { parentPort.postMessage({ id, result: partsFor(catalog, weapon) }); return; }
-      const sol = solutionOf(file, catalog, weapon, needs);
+      const sol = solutionOf(file, catalog, weapon, needs, excluded);
       parentPort.postMessage({ id, result: op === 'solve' ? summary(catalog, sol) : describe(catalog, sol, Number(key)) });
     } catch (e) {
       parentPort.postMessage({ id, error: e.message });
@@ -441,7 +475,7 @@ if (!isMainThread && workerData && workerData.gunsmithWorker) {
 let worker = null;
 let nextJob = 0;
 const jobs = new Map();
-// Run { op: 'solve' | 'build' | 'parts', file, weapon, key, needs } in the worker; resolves with its result.
+// Run { op: 'solve' | 'build' | 'parts', file, weapon, key, needs, excluded } in the worker; resolves with its result.
 function inWorker(msg) {
   if (!worker) {
     worker = new Worker(__filename, { workerData: { gunsmithWorker: true } });
