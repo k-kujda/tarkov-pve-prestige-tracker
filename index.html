@@ -60,6 +60,7 @@
   .badge.fir { color: var(--warn); border-color: var(--warn); }
   .badge.lock { color: var(--bad); border-color: var(--bad); }
   .badge.ok { color: var(--good); border-color: var(--good); }
+  .badge.bad { color: var(--bad); border-color: var(--bad); }
   .badge.gate { color: var(--warn); border-color: var(--warn); }
   .task { border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); margin-bottom: 6px; }
   .task.done { opacity: .55; }
@@ -210,6 +211,14 @@
   .gs-slot { width: 92px; min-height: 104px; background: #181714; border: 1px solid #4a453a; border-radius: 3px; padding: 4px; text-align: center; box-shadow: inset 0 0 12px rgba(0,0,0,.6); }
   .gs-slot.empty { opacity: .45; border-style: dashed; }
   .gs-slot.empty.req { opacity: .8; border-color: var(--bad); }
+  .gs-slot.need { border-color: var(--accent); box-shadow: inset 0 0 12px rgba(0,0,0,.6), 0 0 0 1px var(--accent); }
+  .gs-part-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px; margin-top: 8px; }
+  .gs-part { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel2); cursor: pointer; font-size: 13px; }
+  .gs-part:hover { border-color: var(--accent); }
+  .gs-part img { width: 40px; height: 30px; object-fit: contain; }
+  .gs-part span:nth-child(2) { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gs-checks { margin-top: 6px; }
+  .gs-checks .badge { margin: 2px 4px 0 0; font-size: 12px; }
   .gs-slot-name { font-size: 9px; letter-spacing: .6px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .gs-slot img { width: 64px; height: 48px; object-fit: contain; margin: 2px 0; }
   .gs-item { font-size: 11px; line-height: 1.2; max-height: 2.4em; overflow: hidden; }
@@ -276,7 +285,7 @@ const MAP_ALIASES = { 'ground-zero-21': 'ground-zero', 'ground-zero-tutorial': '
 const defaultState = () => ({
   level: 1, faction: 'USEC', mode: 'pve', focus: 'prestige', prestige: 0,
   traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, skills: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
-  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true, folds: {}, keyFilter: 'all', setupStep: 0, setupBack: 'next', gsWeapon: null, gsKey: null },
+  ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true, folds: {}, keyFilter: 'all', setupStep: 0, setupBack: 'next', gsWeapon: null, gsKey: null, gsNeeds: [], gsQuest: null, gsPartQ: '' },
 });
 let S = loadState();
 let D = null;
@@ -684,7 +693,10 @@ function objectiveDetail(o) {
   if (o.skillLevel) b.push(`Skill: ${esc(o.skillLevel.name)} ${o.skillLevel.level}`);
   if (o.trader && o.level) b.push(`${esc(o.trader.name)} LL${o.level}`);
   if (o.playerLevel) b.push(`Reach level ${o.playerLevel}`);
-  if (o.item && o.type === 'buildWeapon') b.push(`Build: <b>${esc(o.item.name)}</b> (see wiki for required parts)`);
+  if (o.item && o.type === 'buildWeapon') {
+    const with_ = [...(o.containsAll || []).map(i => i.shortName || i.name), ...(o.containsCategory || []).map(c => `any ${c.name.toLowerCase()}`)];
+    b.push(`Build: <b>${esc(o.item.name)}</b>${with_.length ? ` with ${esc(with_.join(', '))}` : ''} (Gunsmith tab → Gunsmith quest finds the builds)`);
+  }
   if (o.requiredKeys && o.requiredKeys.length) b.push(`Keys: ${esc(o.requiredKeys.flat().map(k => k.name).join(', '))}`);
   if (o.maps && o.maps.length) b.push(`Map: ${o.maps.map(m => `<a href="https://tarkov.dev/map/${esc(m.normalizedName)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join(', ')}`);
   return b.join(' · ');
@@ -2700,7 +2712,48 @@ function viewKeys() {
 // The server (gunsmith.js) solves a weapon's whole attachment tree into the set of reachable
 // (ergonomics, vertical recoil) points, each with a conflict-free build. This tab plots them; clicking a
 // point shows that build on a simulated modding screen.
-const GS = { mode: null, weapons: null, listError: null, sol: null, solving: null, solveError: null, build: null, building: null, buildError: null, plot: null, hover: null };
+const GS = { mode: null, weapons: null, listError: null, sol: null, solving: null, solveError: null, build: null, building: null, buildError: null, plot: null, hover: null, parts: null, partsFor: null };
+const GS_SUPPRESSOR = 'cat:550aa4cd4bdc2dd8348b456c';   // item category "Silencer"
+
+// Required parts: part ids, cat:<category id> (any suppressor) or mag:<rounds>, as the server takes them.
+const gsSolveKey = () => S.ui.gsWeapon && `${S.ui.gsWeapon}|${[...(S.ui.gsNeeds || [])].sort().join(',')}`;
+const gsNeedParam = () => ((S.ui.gsNeeds || []).length ? `&need=${[...S.ui.gsNeeds].sort().join(',')}` : '');
+function gsNeedName(token) {
+  if (token === GS_SUPPRESSOR) return 'Suppressor';
+  const n = GS.sol && GS.sol.needs.find(x => x.token === token);
+  if (n) return n.name;
+  if (token.startsWith('mag:')) return `Magazine of ${token.slice(4)}+ rounds`;
+  const p = (GS.parts || []).find(x => x.id === token);
+  return p ? p.name : token.startsWith('cat:') ? 'Any part of a category' : 'Part';
+}
+
+// Gunsmith quests (buildWeapon objectives): the weapon, its required parts and the stat limits the game checks.
+function gsQuests() {
+  const out = [];
+  for (const t of (D && D.tasks) || []) for (const o of t.objectives) if (o.type === 'buildWeapon' && o.item) out.push({ t, o });
+  return out.sort((a, b) => a.t.name.localeCompare(b.t.name, undefined, { numeric: true }));
+}
+const gsLimit = (o, name) => (o.buildAttributes || []).find(a => a.name === name);
+function gsQuestNeeds(o) {
+  const needs = [...(o.containsAll || []).map(i => i.id), ...(o.containsCategory || []).map(c => 'cat:' + c.id)];
+  const mag = gsLimit(o, 'magazineCapacity');
+  if (mag && mag.compareMethod === '>=') needs.push('mag:' + mag.value);
+  return [...new Set(needs)];
+}
+// The selected quest's limits for this weapon. The game's "recoil" is the sum of vertical and horizontal recoil,
+// which scale together, so a recoil sum limit is a vertical recoil limit on the plot.
+function gsQuestLimits(w) {
+  const q = S.ui.gsQuest && gsQuests().find(x => x.o.id === S.ui.gsQuest);
+  if (!q || !w || q.o.item.id !== w.id) return null;
+  const at = name => gsLimit(q.o, name);
+  const recoil = at('recoil'), ergo = at('ergonomics');
+  return { quest: q, ergo: ergo && ergo.value, recoilSum: recoil && recoil.value,
+    recoilV: recoil && w.recoilV ? recoil.value * w.recoilV / (w.recoilV + w.recoilH) : null,
+    weight: at('weight'), magazine: at('magazineCapacity'),
+    other: (q.o.buildAttributes || []).filter(a => !['ergonomics', 'recoil', 'weight', 'magazineCapacity'].includes(a.name)) };
+}
+const gsMeets = (lim, p) => lim && (lim.ergo == null || p[0] >= lim.ergo) && (lim.recoilV == null || p[1] <= lim.recoilV)
+  && (!lim.weight || p[3] == null || (lim.weight.compareMethod === '<=' ? p[3] <= lim.weight.value : p[3] >= lim.weight.value));
 
 function gsFetch(path) {
   return fetch(`/api/gunsmith/${path}${path.includes('?') ? '&' : '?'}mode=${S.mode}`).then(async r => {
@@ -2718,22 +2771,43 @@ function gsEnsure() {
     gsFetch('weapons').then(d => { GS.weapons = d.weapons; }, e => { GS.weapons = null; GS.listError = e.message; }).then(render);
   }
   const id = S.ui.gsWeapon;
-  if (id && (!GS.sol || GS.sol.weapon.id !== id) && GS.solving !== id) {
-    GS.solving = id; GS.solveError = null; GS.sol = null; GS.build = null; GS.plot = null;
-    gsFetch(`solve?weapon=${id}`).then(d => {
-      if (S.ui.gsWeapon !== id) return;
-      GS.sol = gsPrepare(d);
-      if (S.ui.gsKey != null && !GS.sol.byKey.has(S.ui.gsKey)) S.ui.gsKey = null;
-      if (S.ui.gsKey == null) S.ui.gsKey = GS.sol.balanced[2];
-      gsLoadBuild(S.ui.gsKey);
-    }, e => { if (S.ui.gsWeapon === id) GS.solveError = e.message; }).then(() => { if (GS.solving === id) GS.solving = null; render(); });
+  if (id && GS.partsFor !== id) {
+    GS.partsFor = id; GS.parts = null;
+    gsFetch(`parts?weapon=${id}`).then(d => { if (GS.partsFor === id) GS.parts = d.parts; }, () => {}).then(render);
   }
+  const key = gsSolveKey();
+  if (id && (!GS.sol || GS.sol.solveKey !== key) && GS.solving !== key) {
+    GS.solving = key; GS.solveError = null; GS.sol = null; GS.build = null; GS.plot = null;
+    gsFetch(`solve?weapon=${id}${gsNeedParam()}`).then(d => {
+      if (gsSolveKey() !== key) return;
+      GS.sol = gsPrepare(d);
+      GS.sol.solveKey = key;
+      if (S.ui.gsKey != null && !GS.sol.byKey.has(S.ui.gsKey)) S.ui.gsKey = null;
+      if (!GS.sol.points.length) return;
+      const lim = gsQuestLimits(GS.sol.weapon);
+      if (S.ui.gsKey == null) S.ui.gsKey = ((lim && gsQuestPick(GS.sol, lim)) || GS.sol.balanced)[2];
+      gsLoadBuild(S.ui.gsKey);
+    }, e => { if (gsSolveKey() === key) GS.solveError = e.message; }).then(() => { if (GS.solving === key) GS.solving = null; render(); });
+  }
+}
+
+// The build that clears the quest's ergonomics and recoil limits by the widest margin (both scaled 0..1).
+function gsQuestPick(s, lim) {
+  const span = (a, b) => (b - a) || 1;
+  let best = null, bm = -Infinity;
+  for (const p of s.points) {
+    if (!gsMeets(lim, p)) continue;
+    const m = Math.min(lim.ergo == null ? 1 : (p[0] - lim.ergo) / span(s.range.e0, s.range.e1), lim.recoilV == null ? 1 : (lim.recoilV - p[1]) / span(s.range.r0, s.range.r1));
+    if (m > bm) { bm = m; best = p; }
+  }
+  return best;
 }
 
 // Ranges, the best trade-offs (no other build has both more ergo and less recoil) and quick picks.
 function gsPrepare(d) {
   const pts = d.points;
   const byKey = new Map(pts.map(p => [p[2], p]));
+  if (!pts.length) return { ...d, byKey, front: [], frontKeys: new Set(), range: null, balanced: null, lowest: null, highest: null };
   const sorted = [...pts].sort((a, b) => a[1] - b[1] || b[0] - a[0]);
   const front = [];
   let best = -Infinity;
@@ -2751,7 +2825,7 @@ function gsPrepare(d) {
 function gsLoadBuild(key) {
   const id = S.ui.gsWeapon;
   GS.building = key; GS.buildError = null;
-  gsFetch(`build?weapon=${id}&key=${key}`).then(b => { if (S.ui.gsWeapon === id && S.ui.gsKey === key) GS.build = b; },
+  gsFetch(`build?weapon=${id}&key=${key}${gsNeedParam()}`).then(b => { if (S.ui.gsWeapon === id && S.ui.gsKey === key) GS.build = b; },
     e => { GS.buildError = e.message; }).then(() => { if (GS.building === key) GS.building = null; render(); });
 }
 
@@ -2796,28 +2870,67 @@ function viewGunsmith() {
         <div class="small muted">${esc(picked.cls)} · ${esc(picked.caliber)} · base ergonomics ${picked.ergo} · base vertical recoil ${picked.recoilV}</div></div>
       ${q ? '' : '<button data-act="gsChange">Change weapon</button>'}
     </div>`;
+  const lim = gsQuestLimits(picked);
   let plot;
   if (GS.solveError) plot = `<div class="panel" style="color:var(--bad)">Solving failed: ${esc(GS.solveError)}</div>`;
   else if (!GS.sol) plot = `<div class="panel muted">Solving every attachment combination for the ${esc(picked.short)}… (AR-15s take up to ~15 s the first time)</div>`;
-  else {
+  else if (!GS.sol.points.length) {
+    const none = GS.sol.needs.filter(n => !n.parts);
+    plot = `<div class="panel" style="color:var(--bad)">No build of the ${esc(picked.short)} has all the required parts.
+      ${none.length ? `${esc(none.map(n => n.name).join(', '))} ${none.length === 1 ? "doesn't" : "don't"} fit it${none.some(n => n.token === GS_SUPPRESSOR) ? ' (integrally suppressed guns like the VSS count as suppressed in game)' : ''}.` : 'They fit, but not all together (they take the same slot or conflict).'}</div>`;
+  } else {
     const s = GS.sol;
     const pick = (label, p, tip) => `<span class="chip ${p[2] === S.ui.gsKey ? 'on' : ''}" data-act="gsPick" data-id="${p[2]}" title="${esc(tip)}">${label}<span class="n">${p[0]} / ${p[1]}</span></span>`;
+    const questPick = lim && (lim.ergo != null || lim.recoilV != null || lim.weight) && gsQuestPick(s, lim);
+    const meeting = lim ? s.points.filter(p => gsMeets(lim, p)).length : 0;
     plot = `<div class="panel">
       <div class="small muted">${gsBig(s.combinations)} attachment combinations (before conflicts) reach <b>${s.points.length.toLocaleString()}</b> different
-        ergonomics / vertical recoil values${s.conflictParts ? `; ${s.conflictParts} parts have conflicts and are only combined where they fit together` : ''}.
+        ergonomics / vertical recoil values${s.needs.length ? ' with every required part' : ''}${s.conflictParts ? `; ${s.conflictParts} parts have conflicts and are only combined where they fit together` : ''}.
         Solved in ${(s.ms / 1000).toFixed(1)} s. Ergonomics are the raw sum (the game caps what it shows at 100).</div>
-      <div class="chips">${pick('Lowest recoil', s.lowest, 'Least vertical recoil, then the most ergonomics')}${pick('Balanced', s.balanced, 'The best trade-off closest to max ergonomics + min recoil')}${pick('Highest ergo', s.highest, 'Most ergonomics, then the least recoil')}</div>
+      <div class="chips">${questPick ? pick('Meets quest', questPick, `Meets ${lim.quest.t.name}'s ergonomics, recoil and weight limits, clearing ergonomics and recoil by the widest margin`) : ''}${pick('Lowest recoil', s.lowest, 'Least vertical recoil, then the most ergonomics')}${pick('Balanced', s.balanced, 'The best trade-off closest to max ergonomics + min recoil')}${pick('Highest ergo', s.highest, 'Most ergonomics, then the least recoil')}</div>
+      ${lim && (lim.ergo != null || lim.recoilV != null) ? `<div class="small ${meeting ? 'muted' : ''}" ${meeting ? '' : 'style="color:var(--bad)"'}>${meeting ? `${meeting.toLocaleString()} of them meet the quest's ergonomics and recoil limits (inside the dashed lines)${lim.weight ? ' and its weight limit' : ''}.` : `No build reaches the quest's ergonomics and recoil limits${lim.weight ? ' and its weight limit' : ''} together.`}</div>` : ''}
       <div class="gs-plot-wrap"><canvas id="gsPlot"></canvas><div id="gsTip" class="gs-tip"></div></div>
       <div class="small muted">Each dot is a reachable value pair; <span style="color:var(--accent)">gold</span> dots are the best trade-offs (no build has both more ergonomics and less recoil).
         Hover to read a point, click to load its build.</div>
     </div>`;
   }
-  return picker + head + plot + gsBuildScreen();
+  return picker + head + gsNeedsPanel(picked, lim) + plot + gsBuildScreen(lim);
+}
+
+// Requirements: suppressed, a Gunsmith quest's build, or any part that fits.
+function gsNeedsPanel(w, lim) {
+  const needs = S.ui.gsNeeds || [];
+  const hasSuppressor = !GS.parts || GS.parts.some(p => p.suppressor);
+  const q = S.ui.gsPartQ.trim().toLowerCase();
+  const matches = q && GS.parts ? GS.parts.filter(p => !needs.includes(p.id) && [p.name, p.short].some(s => (s || '').toLowerCase().includes(q))).slice(0, 12) : [];
+  const limitText = a => {
+    const label = { ergonomics: 'Ergonomics', recoil: 'Recoil sum', weight: 'Weight', magazineCapacity: 'Magazine', effectiveDistance: 'Effective distance', durability: 'Durability',
+      accuracy: 'Accuracy', muzzleVelocity: 'Muzzle velocity', width: 'Width', height: 'Height' }[a.name] || a.name;
+    const unit = { weight: ' kg', effectiveDistance: ' m', durability: '%', width: ' cells', height: ' cells' }[a.name] || '';
+    return `${label} ${a.compareMethod === '>=' ? '≥' : a.compareMethod === '<=' ? '≤' : a.compareMethod} ${a.value}${unit}`;
+  };
+  const questOpts = gsQuests().map(({ t, o }) => `<option value="${esc(o.id)}" ${o.id === S.ui.gsQuest ? 'selected' : ''}>${S.tasks[t.id] === 'done' ? '✓ ' : ''}${esc(t.name)} (${esc(o.item.shortName || o.item.name)})</option>`).join('');
+  return `<div class="panel gs-needs">
+      <div class="row" style="gap:14px;flex-wrap:wrap">
+        <label title="${hasSuppressor ? 'Only builds with a suppressor (any part in the Silencer category)' : 'No detachable suppressor fits this weapon (integrally suppressed guns like the VSS count as suppressed in game)'}">
+          <input type="checkbox" id="gsSuppressed" ${needs.includes(GS_SUPPRESSOR) ? 'checked' : ''} ${hasSuppressor || needs.includes(GS_SUPPRESSOR) ? '' : 'disabled'}> Suppressed</label>
+        <select id="gsQuest" title="Fill in a Gunsmith quest's weapon and required parts, and show its limits">
+          <option value="">Gunsmith quest…</option>${questOpts}</select>
+        <input class="search" id="gsPartSearch" placeholder="Require a part (search parts that fit)…" value="${esc(S.ui.gsPartQ)}" style="flex:1;min-width:220px">
+      </div>
+      ${matches.length ? `<div class="gs-part-list">${matches.map(p => `<div class="gs-part" data-act="gsNeedAdd" data-id="${p.id}" title="${esc(p.name)}">
+          <img loading="lazy" src="${esc(p.icon || '')}" alt=""><span>${esc(p.name)}</span>
+          <span class="small muted">${p.ergo ? gsSigned(p.ergo) + ' E ' : ''}${p.recoil ? gsSigned(p.recoil, '%') + ' R' : ''}</span></div>`).join('')}</div>`
+        : q && GS.parts ? '<div class="small muted">No part that fits this weapon matches.</div>' : ''}
+      ${needs.length ? `<div class="chips">${needs.map(t => `<span class="chip on" data-act="gsNeedDel" data-id="${esc(t)}" title="Remove this requirement">${esc(gsNeedName(t))} ✕</span>`).join('')}
+        <span class="chip" data-act="gsNeedClear" title="Remove every requirement">Clear all</span></div>` : '<div class="small muted">Every build is shown. Tick Suppressed, pick a Gunsmith quest or search a part to only show builds that have it.</div>'}
+      ${lim ? `<div class="small">${esc(lim.quest.t.name)}: ${(lim.quest.o.buildAttributes || []).map(limitText).map(esc).join(' · ') || 'no stat limits'}${lim.recoilV != null ? ` <span class="muted">(recoil sum ${lim.recoilSum} = vertical recoil ${Math.floor(lim.recoilV)} on this plot)</span>` : ''}${lim.other.length ? "<br><span class=\"muted\">Durability, size and distance limits aren't modelled here: check them on the modding screen in game.</span>" : ''}</div>` : ''}
+    </div>`;
 }
 
 // The simulated modding screen for the selected point.
-function gsBuildScreen() {
-  if (!GS.sol) return '';
+function gsBuildScreen(lim) {
+  if (!GS.sol || !GS.sol.points.length) return '';
   if (GS.buildError) return `<div class="panel" style="color:var(--bad)">Couldn't load the build: ${esc(GS.buildError)}</div>`;
   const b = GS.build;
   if (!b || b.weapon.id !== S.ui.gsWeapon) return `<div class="panel muted">Loading the build…</div>`;
@@ -2830,7 +2943,7 @@ function gsBuildScreen() {
       <div class="gs-stat-val">${total}${unit} <span class="muted small">(${base}${unit} → ${gsSigned(total - base, unit)})</span></div></div>`;
   };
   const cell = n => `<div class="gs-node">
-      <div class="gs-slot ${n.item ? '' : 'empty'} ${n.required ? 'req' : ''}" title="${esc(n.item ? `${n.item.name}\n${gsSigned(n.item.ergo)} ergonomics, ${gsSigned(n.item.recoil, '%')} recoil${n.item.price ? `\n~${rub(n.item.price)}` : ''}` : `${n.slot} (empty)`)}">
+      <div class="gs-slot ${n.item ? '' : 'empty'} ${n.required ? 'req' : ''} ${n.item && n.item.needed ? 'need' : ''}" title="${esc(n.item ? `${n.item.name}\n${gsSigned(n.item.ergo)} ergonomics, ${gsSigned(n.item.recoil, '%')} recoil${n.item.price ? `\n~${rub(n.item.price)}` : ''}` : `${n.slot} (empty)`)}">
         <div class="gs-slot-name">${esc(n.slot.toUpperCase())}</div>
         ${n.item ? `<img loading="lazy" src="${esc(n.item.icon || '')}" alt="">
           <div class="gs-item">${esc(n.item.short)}</div>
@@ -2849,11 +2962,17 @@ function gsBuildScreen() {
           ${stat('Ergonomics', w.ergo, t.ergo, 'up', 100)}
           ${stat('Vertical recoil', w.recoilV, t.recoilV, 'down', Math.max(w.recoilV, 1) * 1.2)}
           ${stat('Horizontal recoil', w.recoilH, t.recoilH, 'down', Math.max(w.recoilH, 1) * 1.2)}
-          <div class="small muted" style="margin-top:6px">Recoil modifiers ${gsSigned(t.recoilPct, '%')} · ${parts.length} parts · ${t.weight} kg${t.price ? ` · parts + gun ~${rub(t.price)} (flea average)` : ''}</div>
+          <div class="small muted" style="margin-top:6px">Recoil modifiers ${gsSigned(t.recoilPct, '%')} · ${parts.length} parts · ${t.weight} kg${t.magazine ? ` · ${t.magazine}-round magazine` : ''}${t.price ? ` · parts + gun ~${rub(t.price)} (flea average)` : ''}</div>
+          ${lim ? `<div class="gs-checks">${[
+            lim.ergo != null && ['Ergonomics', t.ergo >= lim.ergo, `${t.ergo} ≥ ${lim.ergo}`],
+            lim.recoilSum != null && ['Recoil sum', t.recoilV + t.recoilH <= lim.recoilSum, `${t.recoilV + t.recoilH} ≤ ${lim.recoilSum}`],
+            lim.weight && ['Weight', lim.weight.compareMethod === '<=' ? t.weight <= lim.weight.value : t.weight >= lim.weight.value, `${t.weight} ${lim.weight.compareMethod === '<=' ? '≤' : '≥'} ${lim.weight.value} kg`],
+            lim.magazine && ['Magazine', lim.magazine.compareMethod === '<=' ? t.magazine <= lim.magazine.value : t.magazine >= lim.magazine.value, `${t.magazine} ${lim.magazine.compareMethod === '<=' ? '≤' : '≥'} ${lim.magazine.value}`],
+          ].filter(Boolean).map(([k, ok, v]) => `<span class="badge ${ok ? 'ok' : 'bad'}">${k} ${v} ${ok ? '✓' : '✗'}</span>`).join(' ')}</div>` : ''}
         </div>
       </div>
       <div class="gs-tree">${b.slots.filter(n => n.item || n.required).map(cell).join('')}</div>
-      <div class="small muted">${empty} optional slot${empty === 1 ? '' : 's'} left empty. Hover a part for its name and price.</div>
+      <div class="small muted">${empty} optional slot${empty === 1 ? '' : 's'} left empty. Hover a part for its name and price.${GS.sol.needs.length ? ' Required parts are outlined in gold.' : ''}</div>
     </div>`;
 }
 
@@ -2867,12 +2986,15 @@ function attachGunsmith() {
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   canvas.width = W * dpr; canvas.height = H * dpr;
   const m = { l: 58, r: 18, t: 14, b: 46 };
-  const padE = Math.max(1, (s.range.e1 - s.range.e0) * 0.03), padR = Math.max(1, (s.range.r1 - s.range.r0) * 0.04);
-  const ex = [s.range.e0 - padE, s.range.e1 + padE], ry = [s.range.r0 - padR, s.range.r1 + padR];
+  const lim = gsQuestLimits(s.weapon);
+  const e0 = Math.min(s.range.e0, lim && lim.ergo != null ? lim.ergo : Infinity), e1 = Math.max(s.range.e1, lim && lim.ergo != null ? lim.ergo : -Infinity);
+  const r0 = Math.min(s.range.r0, lim && lim.recoilV != null ? lim.recoilV : Infinity), r1 = Math.max(s.range.r1, lim && lim.recoilV != null ? lim.recoilV : -Infinity);
+  const padE = Math.max(1, (e1 - e0) * 0.03), padR = Math.max(1, (r1 - r0) * 0.04);
+  const ex = [e0 - padE, e1 + padE], ry = [r0 - padR, r1 + padR];
   const X = e => m.l + (e - ex[0]) / (ex[1] - ex[0]) * (W - m.l - m.r);
   const Y = r => H - m.b - (r - ry[0]) / (ry[1] - ry[0]) * (H - m.t - m.b);
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const plotKey = `${s.weapon.id}|${W}|${H}|${dpr}`;
+  const plotKey = `${s.solveKey}|${lim ? lim.quest.o.id : ''}|${W}|${H}|${dpr}`;
   if (!GS.plot || GS.plot.key !== plotKey) {
     const off = document.createElement('canvas');
     off.width = canvas.width; off.height = canvas.height;
@@ -2892,6 +3014,13 @@ function attachGunsmith() {
     g.stroke();
     g.fillStyle = css('--accent');
     for (const p of s.front) { g.beginPath(); g.arc(X(p[0]), Y(p[1]), 3, 0, 7); g.fill(); }
+    if (lim && (lim.ergo != null || lim.recoilV != null)) {
+      // The quest's limits: builds right of the ergonomics line and below the recoil line qualify.
+      g.strokeStyle = css('--good'); g.fillStyle = css('--good'); g.lineWidth = 1.5; g.setLineDash([6, 4]); g.font = '11px "Segoe UI", sans-serif';
+      if (lim.ergo != null) { g.beginPath(); g.moveTo(X(lim.ergo), m.t); g.lineTo(X(lim.ergo), H - m.b); g.stroke(); g.textAlign = 'left'; g.fillText(`ergo ≥ ${lim.ergo}`, X(lim.ergo) + 4, m.t + 12); }
+      if (lim.recoilV != null) { g.beginPath(); g.moveTo(m.l, Y(lim.recoilV)); g.lineTo(W - m.r, Y(lim.recoilV)); g.stroke(); g.textAlign = 'right'; g.fillText(`recoil sum ≤ ${lim.recoilSum}`, W - m.r - 4, Y(lim.recoilV) - 4); }
+      g.setLineDash([]);
+    }
     GS.plot = { key: plotKey, img: off };
   }
   const ctx = canvas.getContext('2d');
@@ -2924,7 +3053,7 @@ function attachGunsmith() {
     if (!p) { tip.style.display = 'none'; canvas.style.cursor = 'default'; return; }
     canvas.style.cursor = 'pointer';
     tip.style.display = 'block';
-    tip.innerHTML = `ergo <b>${p[0]}</b> · vertical recoil <b>${p[1]}</b>${s.frontKeys.has(p[2]) ? '<br><span style="color:var(--accent)">best trade-off</span>' : ''}`;
+    tip.innerHTML = `ergo <b>${p[0]}</b> · vertical recoil <b>${p[1]}</b>${p[3] != null ? ` · ${p[3]} kg` : ''}${s.frontKeys.has(p[2]) ? '<br><span style="color:var(--accent)">best trade-off</span>' : ''}${gsMeets(lim, p) ? '<br><span style="color:var(--good)">meets the quest limits</span>' : ''}`;
     tip.style.left = Math.min(X(p[0]) + 12, W - 170) + 'px';
     tip.style.top = Math.max(Y(p[1]) - 44, 0) + 'px';
   };
@@ -3086,15 +3215,15 @@ function render() {
   if (!D) return;
   const v = { raid: viewRaid, next: viewNext, quests: viewQuests, prestige: viewPrestige, hideout: viewHideout, items: viewItems, keys: viewKeys, gunsmith: viewGunsmith, story: viewStory, completed: viewCompleted, setup: viewSetup }[S.ui.tab] || viewNext;
   const focused = document.activeElement && document.activeElement.id;
-  const caret = focused === 'search' ? document.activeElement.selectionStart : null;
+  const caret = focused === 'search' || focused === 'gsPartSearch' ? document.activeElement.selectionStart : null;
   document.getElementById('view').innerHTML = v();
   document.documentElement.style.setProperty('--hdr', document.querySelector('header').offsetHeight + 'px');
   renderSide();
   document.getElementById('raidTab').textContent = S.raid ? '● Raid in progress' : 'Raid planner';
   if (S.ui.tab === 'raid' && S.raid) attachRaidMap();
   if (S.ui.tab === 'gunsmith') attachGunsmith();
-  if (focused === 'search') {
-    const el = document.getElementById('search');
+  if (focused === 'search' || focused === 'gsPartSearch') {
+    const el = document.getElementById(focused);
     if (el) { el.focus(); el.setSelectionRange(caret, caret); }
   }
 }
@@ -3118,7 +3247,7 @@ function acceptedNeeds() {
         add(o.items[0], o.count || 1, o.foundInRaid, t.name, [o.type === 'plantItem' ? 'plant' : '', o.items.length > 1 ? 'alternatives ok' : ''].filter(Boolean).join(', '));
       }
       if (o.type === 'mark' && o.markerItem) add(o.markerItem, 1, false, t.name, 'mark');
-      if (o.type === 'buildWeapon' && o.item) add(o.item, 1, false, t.name, 'build — see wiki for parts');
+      if (o.type === 'buildWeapon' && o.item) add(o.item, 1, false, t.name, 'build — see the Gunsmith tab');
     }
     for (const k of t.neededKeys || []) {
       const id = k.keys.map(x => x.id).join('|');
@@ -3328,11 +3457,23 @@ document.getElementById('layout').addEventListener('click', e => {
   } else if (act === 'openSetup') {
     openSetup();
   } else if (act === 'gsWeapon') {
-    if (S.ui.gsWeapon !== id) { S.ui.gsWeapon = id; S.ui.gsKey = null; GS.build = null; }
+    // A new weapon keeps "suppressed" but not parts of the old one, or a quest for another gun
+    if (S.ui.gsWeapon !== id) {
+      S.ui.gsWeapon = id; S.ui.gsKey = null; GS.build = null; S.ui.gsPartQ = '';
+      S.ui.gsNeeds = (S.ui.gsNeeds || []).filter(t => t === GS_SUPPRESSOR);
+      S.ui.gsQuest = null;
+    }
     S.ui.search = '';
     update();
   } else if (act === 'gsChange') {
     S.ui.gsWeapon = null; S.ui.gsKey = null; GS.sol = null; GS.build = null; GS.plot = null;
+    update();
+  } else if (act === 'gsNeedAdd' || act === 'gsNeedDel' || act === 'gsNeedClear') {
+    const needs = S.ui.gsNeeds || [];
+    S.ui.gsNeeds = act === 'gsNeedClear' ? [] : act === 'gsNeedAdd' ? [...needs.filter(t => t !== id), id] : needs.filter(t => t !== id);
+    if (act === 'gsNeedAdd') S.ui.gsPartQ = '';
+    if (act === 'gsNeedClear') S.ui.gsQuest = null;
+    S.ui.gsKey = null;
     update();
   } else if (act === 'gsClearSearch') {
     S.ui.search = ''; update();
@@ -3366,6 +3507,20 @@ document.getElementById('layout').addEventListener('change', e => {
   const flags = ['showDone', 'showLocked', 'showSkipped', 'hideoutNextOnly', 'hideoutPrestigeOnly', 'itemsHideDone', 'ignoreGates'];
   if (flags.includes(el.id)) { S.ui[el.id] = el.checked; update(); }
   if (el.id === 'traderFilter') { S.ui.trader = el.value; update(); }
+  if (el.id === 'gsSuppressed') {
+    const needs = (S.ui.gsNeeds || []).filter(t => t !== GS_SUPPRESSOR);
+    S.ui.gsNeeds = el.checked ? [...needs, GS_SUPPRESSOR] : needs;
+    S.ui.gsKey = null; update();
+  }
+  if (el.id === 'gsQuest') {
+    const q = gsQuests().find(x => x.o.id === el.value);
+    S.ui.gsQuest = q ? q.o.id : null;
+    if (q) {
+      if (S.ui.gsWeapon !== q.o.item.id) { S.ui.gsWeapon = q.o.item.id; GS.build = null; }
+      S.ui.gsNeeds = gsQuestNeeds(q.o); S.ui.gsPartQ = '';
+    }
+    S.ui.gsKey = null; update();
+  }
   if (el.id === 'itemsHideout') { S.ui.itemsHideout = el.value; update(); }
   if (el.id === 'sortSel') { S.ui.sort = el.value; update(); }
   if (el.id === 'raidExtract' && S.raid) { S.raid.extract = el.value; update(); }
@@ -3387,6 +3542,7 @@ document.getElementById('layout').addEventListener('toggle', e => {
 document.getElementById('layout').addEventListener('input', e => {
   if (e.target.id === 'friendName') { friendNameDraft = e.target.value; return; }
   if (e.target.id === 'search') { S.ui.search = e.target.value; update(); }
+  if (e.target.id === 'gsPartSearch') { S.ui.gsPartQ = e.target.value; render(); }
 });
 
 document.getElementById('tabs').addEventListener('click', e => {
