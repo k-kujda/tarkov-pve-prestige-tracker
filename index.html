@@ -211,6 +211,12 @@
   .gs-slot { width: 92px; min-height: 104px; background: #181714; border: 1px solid #4a453a; border-radius: 3px; padding: 4px; text-align: center; box-shadow: inset 0 0 12px rgba(0,0,0,.6); }
   .gs-slot.empty { opacity: .45; border-style: dashed; }
   .gs-slot.empty.req { opacity: .8; border-color: var(--bad); }
+  .gs-slot { position: relative; }
+  .gs-x { position: absolute; top: 1px; right: 3px; font-size: 11px; color: var(--muted); cursor: pointer; display: none; }
+  .gs-slot:hover .gs-x { display: block; }
+  .gs-x:hover { color: var(--bad); }
+  .gs-part button { padding: 1px 8px; font-size: 12px; }
+  .chip.ex { border-style: dashed; color: var(--muted); }
   .gs-slot.need { border-color: var(--accent); box-shadow: inset 0 0 12px rgba(0,0,0,.6), 0 0 0 1px var(--accent); }
   .gs-part-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px; margin-top: 8px; }
   .gs-part { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel2); cursor: pointer; font-size: 13px; }
@@ -284,7 +290,7 @@ const MAP_ALIASES = { 'ground-zero-21': 'ground-zero', 'ground-zero-tutorial': '
 // ---------- state ----------
 const defaultState = () => ({
   level: 1, faction: 'USEC', mode: 'pve', focus: 'prestige', prestige: 0,
-  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, skills: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [],
+  traders: {}, tasks: {}, objs: {}, hideout: {}, have: {}, pchecks: {}, gates: {}, snoozed: {}, skipped: {}, story: {}, storyStarted: {}, rep: {}, skills: {}, active: {}, logSync: null, raid: null, friends: {}, squad: [], myName: '', history: [], gsExcluded: [],
   ui: { sideOpen: true, tab: 'next', map: 'all', sort: 'fastest', search: '', trader: 'all', showDone: false, showLocked: false, hideoutNextOnly: true, hideoutPrestigeOnly: false, ignoreGates: false, itemsHideout: 'prestige', itemsHideDone: true, folds: {}, keyFilter: 'all', setupStep: 0, setupBack: 'next', gsWeapon: null, gsKey: null, gsNeeds: [], gsQuest: null, gsPartQ: '' },
 });
 let S = loadState();
@@ -2716,10 +2722,17 @@ const GS = { mode: null, weapons: null, listError: null, sol: null, solving: nul
 const GS_SUPPRESSOR = 'cat:550aa4cd4bdc2dd8348b456c';   // item category "Silencer"
 
 // Required parts: part ids, cat:<category id> (any suppressor) or mag:<rounds>, as the server takes them.
-const gsSolveKey = () => S.ui.gsWeapon && `${S.ui.gsWeapon}|${[...(S.ui.gsNeeds || [])].sort().join(',')}`;
-const gsNeedParam = () => ((S.ui.gsNeeds || []).length ? `&need=${[...S.ui.gsNeeds].sort().join(',')}` : '');
+// Excluded parts (S.gsExcluded) are the ones the player can't get; the server ignores those that don't fit the weapon.
+const gsSolveKey = () => S.ui.gsWeapon && `${S.ui.gsWeapon}|${[...(S.ui.gsNeeds || [])].sort().join(',')}|${[...(S.gsExcluded || [])].sort().join(',')}`;
+const gsNeedParam = () => ((S.ui.gsNeeds || []).length ? `&need=${[...S.ui.gsNeeds].sort().join(',')}` : '')
+  + ((S.gsExcluded || []).length ? `&exclude=${[...S.gsExcluded].sort().join(',')}` : '');
+const GS_FEATURES = { 'feat:light': 'Flashlight', 'feat:laser': 'Laser' };
+const gsKeepOnWeaponChange = t => t === GS_SUPPRESSOR || t in GS_FEATURES;
+const gsPartName = id => { const p = (GS.parts || []).find(x => x.id === id); return p ? p.name : 'Part'; };
 function gsNeedName(token) {
   if (token === GS_SUPPRESSOR) return 'Suppressor';
+  if (GS_FEATURES[token]) return GS_FEATURES[token];
+  if (token.startsWith('cap:')) return `${token.slice(4)}-round magazine`;
   const n = GS.sol && GS.sol.needs.find(x => x.token === token);
   if (n) return n.name;
   if (token.startsWith('mag:')) return `Magazine of ${token.slice(4)}+ rounds`;
@@ -2777,7 +2790,13 @@ function gsEnsure() {
   }
   const key = gsSolveKey();
   if (id && (!GS.sol || GS.sol.solveKey !== key) && GS.solving !== key) {
-    GS.solving = key; GS.solveError = null; GS.sol = null; GS.build = null; GS.plot = null;
+    GS.solving = key; GS.solveError = null; GS.sol = null; GS.build = null; GS.plot = null; GS.solveStarted = Date.now();
+    clearInterval(GS.tick);
+    GS.tick = setInterval(() => {
+      const el = document.getElementById('gsElapsed');
+      if (!GS.solving) { clearInterval(GS.tick); return; }
+      if (el) el.textContent = `${Math.round((Date.now() - GS.solveStarted) / 1000)} s`;
+    }, 1000);
     gsFetch(`solve?weapon=${id}${gsNeedParam()}`).then(d => {
       if (gsSolveKey() !== key) return;
       GS.sol = gsPrepare(d);
@@ -2873,11 +2892,13 @@ function viewGunsmith() {
   const lim = gsQuestLimits(picked);
   let plot;
   if (GS.solveError) plot = `<div class="panel" style="color:var(--bad)">Solving failed: ${esc(GS.solveError)}</div>`;
-  else if (!GS.sol) plot = `<div class="panel muted">Solving every attachment combination for the ${esc(picked.short)}… (AR-15s take up to ~15 s the first time)</div>`;
+  else if (!GS.sol) plot = `<div class="panel muted">Solving every attachment combination for the ${esc(picked.short)}… <span id="gsElapsed"></span>
+    (AR-15s take up to ~15 s, and up to a minute with flashlight, laser and suppressor all required)</div>`;
   else if (!GS.sol.points.length) {
     const none = GS.sol.needs.filter(n => !n.parts);
-    plot = `<div class="panel" style="color:var(--bad)">No build of the ${esc(picked.short)} has all the required parts.
-      ${none.length ? `${esc(none.map(n => n.name).join(', '))} ${none.length === 1 ? "doesn't" : "don't"} fit it${none.some(n => n.token === GS_SUPPRESSOR) ? ' (integrally suppressed guns like the VSS count as suppressed in game)' : ''}.` : 'They fit, but not all together (they take the same slot or conflict).'}</div>`;
+    const why = GS.sol.excluded ? ` ${GS.sol.excluded} part${GS.sol.excluded === 1 ? '' : 's'} that fit${GS.sol.excluded === 1 ? 's' : ''} it ${GS.sol.excluded === 1 ? 'is' : 'are'} excluded, which can leave a required slot (receiver, charging handle…) with nothing to go in it.` : '';
+    plot = `<div class="panel" style="color:var(--bad)">No build of the ${esc(picked.short)} ${GS.sol.needs.length ? 'has all the required parts' : 'can be put together'}.
+      ${!GS.sol.needs.length ? '' : none.length ? `${esc(none.map(n => n.name).join(', '))} ${none.length === 1 ? "doesn't" : "don't"} fit it${GS.sol.excluded ? ' (or only excluded ones do)' : ''}${none.some(n => n.token === GS_SUPPRESSOR) ? ' (integrally suppressed guns like the VSS count as suppressed in game)' : ''}.` : 'They fit, but not all together (they take the same slot or conflict).'}${why}</div>`;
   } else {
     const s = GS.sol;
     const pick = (label, p, tip) => `<span class="chip ${p[2] === S.ui.gsKey ? 'on' : ''}" data-act="gsPick" data-id="${p[2]}" title="${esc(tip)}">${label}<span class="n">${p[0]} / ${p[1]}</span></span>`;
@@ -2902,7 +2923,15 @@ function gsNeedsPanel(w, lim) {
   const needs = S.ui.gsNeeds || [];
   const hasSuppressor = !GS.parts || GS.parts.some(p => p.suppressor);
   const q = S.ui.gsPartQ.trim().toLowerCase();
-  const matches = q && GS.parts ? GS.parts.filter(p => !needs.includes(p.id) && [p.name, p.short].some(s => (s || '').toLowerCase().includes(q))).slice(0, 12) : [];
+  const excluded = new Set(S.gsExcluded || []);
+  const matches = q && GS.parts ? GS.parts.filter(p => !needs.includes(p.id) && !excluded.has(p.id) && [p.name, p.short].some(s => (s || '').toLowerCase().includes(q))).slice(0, 12) : [];
+  const has = f => !GS.parts || GS.parts.some(p => p[f] && !excluded.has(p.id));
+  const sizes = [...new Set((GS.parts || []).filter(p => p.capacity && !excluded.has(p.id)).map(p => p.capacity))].sort((a, b) => a - b);
+  const cap = needs.find(t => t.startsWith('cap:'));
+  const exHere = (GS.parts || []).filter(p => excluded.has(p.id));
+  const exElsewhere = excluded.size - exHere.length;
+  const toggle = (id, token, label, tip, ok) => `<label title="${esc(ok ? tip : `Nothing that fits this weapon has one${excluded.size ? ' (or it is excluded)' : ''}`)}">
+          <input type="checkbox" id="${id}" ${needs.includes(token) ? 'checked' : ''} ${ok || needs.includes(token) ? '' : 'disabled'}> ${label}</label>`;
   const limitText = a => {
     const label = { ergonomics: 'Ergonomics', recoil: 'Recoil sum', weight: 'Weight', magazineCapacity: 'Magazine', effectiveDistance: 'Effective distance', durability: 'Durability',
       accuracy: 'Accuracy', muzzleVelocity: 'Muzzle velocity', width: 'Width', height: 'Height' }[a.name] || a.name;
@@ -2914,16 +2943,24 @@ function gsNeedsPanel(w, lim) {
       <div class="row" style="gap:14px;flex-wrap:wrap">
         <label title="${hasSuppressor ? 'Only builds with a suppressor (any part in the Silencer category)' : 'No detachable suppressor fits this weapon (integrally suppressed guns like the VSS count as suppressed in game)'}">
           <input type="checkbox" id="gsSuppressed" ${needs.includes(GS_SUPPRESSOR) ? 'checked' : ''} ${hasSuppressor || needs.includes(GS_SUPPRESSOR) ? '' : 'disabled'}> Suppressed</label>
+        ${toggle('gsLight', 'feat:light', 'Flashlight', 'A visible flashlight: a light, or a tactical device with one (IR-only devices don\'t count). One device can count for both light and laser.', has('light'))}
+        ${toggle('gsLaser', 'feat:laser', 'Laser', 'A visible laser (IR-only devices don\'t count). One device can count for both light and laser.', has('laser'))}
+        <select id="gsMag" title="Only builds with a magazine of exactly this size: the solver finds the best one">
+          <option value="">Any magazine</option>${sizes.map(n => `<option value="cap:${n}" ${cap === 'cap:' + n ? 'selected' : ''}>${n}-round magazine</option>`).join('')}</select>
         <select id="gsQuest" title="Fill in a Gunsmith quest's weapon and required parts, and show its limits">
           <option value="">Gunsmith quest…</option>${questOpts}</select>
         <input class="search" id="gsPartSearch" placeholder="Require a part (search parts that fit)…" value="${esc(S.ui.gsPartQ)}" style="flex:1;min-width:220px">
       </div>
-      ${matches.length ? `<div class="gs-part-list">${matches.map(p => `<div class="gs-part" data-act="gsNeedAdd" data-id="${p.id}" title="${esc(p.name)}">
+      ${matches.length ? `<div class="gs-part-list">${matches.map(p => `<div class="gs-part" data-act="gsNeedAdd" data-id="${p.id}" title="Click to require ${esc(p.name)}">
           <img loading="lazy" src="${esc(p.icon || '')}" alt=""><span>${esc(p.name)}</span>
-          <span class="small muted">${p.ergo ? gsSigned(p.ergo) + ' E ' : ''}${p.recoil ? gsSigned(p.recoil, '%') + ' R' : ''}</span></div>`).join('')}</div>`
+          <span class="small muted">${p.ergo ? gsSigned(p.ergo) + ' E ' : ''}${p.recoil ? gsSigned(p.recoil, '%') + ' R' : ''}</span>
+          <button data-act="gsExclude" data-id="${p.id}" title="I can't get this part: leave it out of every build">Exclude</button></div>`).join('')}</div>`
         : q && GS.parts ? '<div class="small muted">No part that fits this weapon matches.</div>' : ''}
       ${needs.length ? `<div class="chips">${needs.map(t => `<span class="chip on" data-act="gsNeedDel" data-id="${esc(t)}" title="Remove this requirement">${esc(gsNeedName(t))} ✕</span>`).join('')}
-        <span class="chip" data-act="gsNeedClear" title="Remove every requirement">Clear all</span></div>` : '<div class="small muted">Every build is shown. Tick Suppressed, pick a Gunsmith quest or search a part to only show builds that have it.</div>'}
+        <span class="chip" data-act="gsNeedClear" title="Remove every requirement">Clear all</span></div>` : '<div class="small muted">Every build is shown. Tick Suppressed, Flashlight or Laser, pick a magazine size or a Gunsmith quest, or search a part to only show builds that have it.</div>'}
+      ${excluded.size ? `<div class="chips"><span class="small muted">Excluded (can't get):</span>${exHere.map(p => `<span class="chip ex" data-act="gsUnexclude" data-id="${p.id}" title="Allow ${esc(p.name)} again">${esc(p.short || p.name)} ↺</span>`).join('')}
+        ${exElsewhere ? `<span class="small muted">${exElsewhere} more for other weapons</span>` : ''}<span class="chip" data-act="gsUnexcludeAll" title="Allow every excluded part again, for every weapon">Restore all</span></div>`
+        : '<div class="small muted">Can\'t buy a part? Hover it in the build and click ✕ (or Exclude in the part search) to leave it out of every build.</div>'}
       ${lim ? `<div class="small">${esc(lim.quest.t.name)}: ${(lim.quest.o.buildAttributes || []).map(limitText).map(esc).join(' · ') || 'no stat limits'}${lim.recoilV != null ? ` <span class="muted">(recoil sum ${lim.recoilSum} = vertical recoil ${Math.floor(lim.recoilV)} on this plot)</span>` : ''}${lim.other.length ? "<br><span class=\"muted\">Durability, size and distance limits aren't modelled here: check them on the modding screen in game.</span>" : ''}</div>` : ''}
     </div>`;
 }
@@ -2945,6 +2982,7 @@ function gsBuildScreen(lim) {
   const cell = n => `<div class="gs-node">
       <div class="gs-slot ${n.item ? '' : 'empty'} ${n.required ? 'req' : ''} ${n.item && n.item.needed ? 'need' : ''}" title="${esc(n.item ? `${n.item.name}\n${gsSigned(n.item.ergo)} ergonomics, ${gsSigned(n.item.recoil, '%')} recoil${n.item.price ? `\n~${rub(n.item.price)}` : ''}` : `${n.slot} (empty)`)}">
         <div class="gs-slot-name">${esc(n.slot.toUpperCase())}</div>
+        ${n.item ? `<span class="gs-x" data-act="gsExclude" data-id="${n.item.id}" title="I can't get this part: leave it out of every build">✕</span>` : ''}
         ${n.item ? `<img loading="lazy" src="${esc(n.item.icon || '')}" alt="">
           <div class="gs-item">${esc(n.item.short)}</div>
           <div class="gs-mods">${n.item.ergo ? `<span class="${n.item.ergo > 0 ? 'up' : 'down'}">${gsSigned(n.item.ergo)} E</span>` : ''}${n.item.recoil ? ` <span class="${n.item.recoil < 0 ? 'up' : 'down'}">${gsSigned(n.item.recoil, '%')} R</span>` : ''}</div>` : '<div class="gs-item muted">—</div>'}
@@ -3460,13 +3498,19 @@ document.getElementById('layout').addEventListener('click', e => {
     // A new weapon keeps "suppressed" but not parts of the old one, or a quest for another gun
     if (S.ui.gsWeapon !== id) {
       S.ui.gsWeapon = id; S.ui.gsKey = null; GS.build = null; S.ui.gsPartQ = '';
-      S.ui.gsNeeds = (S.ui.gsNeeds || []).filter(t => t === GS_SUPPRESSOR);
+      S.ui.gsNeeds = (S.ui.gsNeeds || []).filter(gsKeepOnWeaponChange);
       S.ui.gsQuest = null;
     }
     S.ui.search = '';
     update();
   } else if (act === 'gsChange') {
     S.ui.gsWeapon = null; S.ui.gsKey = null; GS.sol = null; GS.build = null; GS.plot = null;
+    update();
+  } else if (act === 'gsExclude' || act === 'gsUnexclude' || act === 'gsUnexcludeAll') {
+    const ex = S.gsExcluded || [];
+    S.gsExcluded = act === 'gsUnexcludeAll' ? [] : act === 'gsExclude' ? [...ex.filter(x => x !== id), id] : ex.filter(x => x !== id);
+    if (act === 'gsExclude') { S.ui.gsNeeds = (S.ui.gsNeeds || []).filter(t => t !== id); S.ui.gsPartQ = ''; toast(`${gsPartName(id)} excluded`); }
+    S.ui.gsKey = null;
     update();
   } else if (act === 'gsNeedAdd' || act === 'gsNeedDel' || act === 'gsNeedClear') {
     const needs = S.ui.gsNeeds || [];
@@ -3510,6 +3554,16 @@ document.getElementById('layout').addEventListener('change', e => {
   if (el.id === 'gsSuppressed') {
     const needs = (S.ui.gsNeeds || []).filter(t => t !== GS_SUPPRESSOR);
     S.ui.gsNeeds = el.checked ? [...needs, GS_SUPPRESSOR] : needs;
+    S.ui.gsKey = null; update();
+  }
+  if (el.id === 'gsLight' || el.id === 'gsLaser') {
+    const token = el.id === 'gsLight' ? 'feat:light' : 'feat:laser';
+    const needs = (S.ui.gsNeeds || []).filter(t => t !== token);
+    S.ui.gsNeeds = el.checked ? [...needs, token] : needs;
+    S.ui.gsKey = null; update();
+  }
+  if (el.id === 'gsMag') {
+    S.ui.gsNeeds = [...(S.ui.gsNeeds || []).filter(t => !t.startsWith('cap:')), ...(el.value ? [el.value] : [])];
     S.ui.gsKey = null; update();
   }
   if (el.id === 'gsQuest') {
