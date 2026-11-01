@@ -592,7 +592,7 @@ function gunsmithWeapons(file) {
   if (gunsmithList && gunsmithList.file === file && gunsmithList.mtime === mtime) return gunsmithList.body;
   const { at, catalog } = JSON.parse(fs.readFileSync(file, 'utf8'));
   const weapons = Object.values(catalog.weapons)
-    .map(w => ({ id: w.id, name: w.name, short: w.short, icon: w.icon, cls: w.cls, caliber: w.caliber, ergo: w.ergo, recoilV: w.recoilV, slots: w.slots.length }))
+    .map(w => ({ id: w.id, name: w.name, short: w.short, icon: w.icon, cls: w.cls, caliber: w.caliber, ergo: w.ergo, recoilV: w.recoilV, recoilH: w.recoilH, slots: w.slots.length }))
     .sort((a, b) => a.cls.localeCompare(b.cls) || a.name.localeCompare(b.name));
   gunsmithList = { file, mtime, body: JSON.stringify({ at, weapons }) };
   return gunsmithList.body;

@@ -371,12 +371,20 @@ function describe(catalog, sol, key) {
   };
 }
 
-// What the browser gets for a solved weapon: every reachable point as [ergo, vertical recoil, key].
-function summary(sol) {
+// Total weight of the build behind a point (quests limit it, and it isn't one of the solved dimensions).
+function weightOf(catalog, sol, key) {
+  let kg = sol.weapon.weight;
+  const walk = ns => ns.forEach(n => { if (n.item) { kg += catalog.parts[n.item].weight; walk(n.children); } });
+  walk(rebuild(sol, key));
+  return +kg.toFixed(2);
+}
+
+// What the browser gets for a solved weapon: every reachable point as [ergo, vertical recoil, key, weight kg].
+function summary(catalog, sol) {
   const w = sol.weapon;
   return {
     weapon: { id: w.id, name: w.name, short: w.short, image: w.image, icon: w.icon, cls: w.cls, caliber: w.caliber, ergo: w.ergo, recoilV: w.recoilV, recoilH: w.recoilH },
-    points: sol.points, combinations: String(sol.combinations), conflictParts: sol.conflictParts, ms: sol.ms,
+    points: sol.points.map(p => [...p, weightOf(catalog, sol, p[2])]), combinations: String(sol.combinations), conflictParts: sol.conflictParts, ms: sol.ms,
     ergoStep: ERGO_STEP, recoilStep: RECOIL_STEP,
     needs: sol.needs.map(n => ({ token: n.token, cat: n.cat, mag: n.mag, name: n.name, parts: n.parts.length })),
   };
@@ -423,7 +431,7 @@ if (!isMainThread && workerData && workerData.gunsmithWorker) {
       const catalog = catalogOf(file);
       if (op === 'parts') { parentPort.postMessage({ id, result: partsFor(catalog, weapon) }); return; }
       const sol = solutionOf(file, catalog, weapon, needs);
-      parentPort.postMessage({ id, result: op === 'solve' ? summary(sol) : describe(catalog, sol, Number(key)) });
+      parentPort.postMessage({ id, result: op === 'solve' ? summary(catalog, sol) : describe(catalog, sol, Number(key)) });
     } catch (e) {
       parentPort.postMessage({ id, error: e.message });
     }
