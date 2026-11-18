@@ -1056,7 +1056,24 @@ function mapPlan(key) {
   }
   const score = q => q.reduce((n, t) => n + (S.active[t.id] ? 3 : S.tasks[t.id] ? 0 : 1) + 2 * squadWith(t).length, 0);
   const squad = [...finish, ...progress].reduce((n, t) => n + squadWith(t).length, 0);
-  return { key, finish, progress, objectives, squad, score: score(finish) * 2 + score(progress) };
+  return { key, finish, progress, objectives, squad, score: score(finish) * 2 + score(progress), opens: questsOpenedBy(finish) };
+}
+
+// Quests you could take right after finishing these: their prerequisites, unlock counters and trader unlocks are met
+// then, but not now. Trader loyalty gained from the finished quests isn't counted (it depends on rep and money).
+function questsOpenedBy(done) {
+  const ids = done.filter(t => !S.tasks[t.id]).map(t => t.id);
+  if (!ids.length) return [];
+  const open = () => new Set(D.tasks.filter(t => !S.tasks[t.id] && !S.active[t.id] && factionOk(t) && !isSkipped(t) && taskState(t).status === 'available').map(t => t.id));
+  const saved = memo, before = open();
+  try {
+    for (const id of ids) S.tasks[id] = 'done';
+    memo = new Map();
+    return [...open()].filter(id => !before.has(id)).map(id => D.byId[id]);
+  } finally {
+    for (const id of ids) delete S.tasks[id];
+    memo = saved;
+  }
 }
 
 function rankedMaps() {
@@ -1064,7 +1081,7 @@ function rankedMaps() {
   // Maps the Tour hasn't unlocked go last: they're only reachable by transit.
   const locked = tourLocks().maps;
   return keys.map(mapPlan).filter(p => p.finish.length || p.progress.length)
-    .sort((a, b) => locked.has(a.key) - locked.has(b.key) || b.score - a.score);
+    .sort((a, b) => locked.has(a.key) - locked.has(b.key) || b.opens.length - a.opens.length || b.score - a.score);
 }
 const mapName = key => (D.maps.find(m => m.normalizedName === key) || { name: key }).name;
 
@@ -1270,6 +1287,7 @@ function viewRaidPlanner() {
       <td><b>${p.finish.length}</b> <span class="muted small">(${p.finish.filter(t => S.active[t.id]).length} accepted)</span></td>
       <td>${p.progress.length}</td><td>${p.objectives}</td>${squadMembers().length ? `<td>${p.squad}</td>` : ''}
       <td>${p.finish.reduce((n, t) => n + (t.experience || 0), 0).toLocaleString()}</td>
+      <td>${p.opens.length ? `<b>${p.opens.length}</b> <span class="muted small" title="${esc(p.opens.map(t => t.name).join(', '))}">${esc(p.opens.slice(0, 3).map(t => t.name).join(', '))}${p.opens.length > 3 ? '…' : ''}</span>` : '<span class="muted">—</span>'}</td>
       <td><button data-act="raidPick" data-id="${esc(p.key)}" ${p.key === S.ui.raidMap ? 'class="primary"' : ''}>Plan</button></td></tr>`).join('');
   let plan = '';
   const key = S.ui.raidMap;
@@ -1303,13 +1321,14 @@ function viewRaidPlanner() {
         <button class="primary" data-act="raidStart" ${raidSelection.ids.size ? '' : 'disabled'}>Start raid with ${raidSelection.ids.size} quest${raidSelection.ids.size === 1 ? '' : 's'}</button></div>
       <div class="small muted">Accepted quests are pre-selected, except ones that need a key you haven't ticked (and that doesn't spawn here every raid).
         “Can finish” = every remaining in-raid objective can be done on this map. Tick objectives you've already done — the game logs only record whole quests, not single objectives.</div>
+      ${p.opens.length ? `<div class="sec small">🔓 Finishing this map's “can finish” quests opens <b>${p.opens.length}</b> new quest${p.opens.length === 1 ? '' : 's'}: ${p.opens.map(t => `<b>${esc(t.name)}</b> <span class="muted">${esc(t.trader.name)}</span>`).join(' · ')}</div>` : ''}
       <div class="sec"><h4>Accepted (${accepted.length})</h4>${accepted.map(row).join('') || '<div class="muted small">No accepted quests on this map.</div>'}</div>
       ${foldSection('planNotAccepted', `Not accepted yet — pick up at the trader (${notAccepted.length})`, notAccepted.map(row).join(''), true)}
       ${foldSection('planBlocked', `Can't accept yet — trader locked or loyalty too low (${blocked.length})`, blocked.map(blockedRow).join(''), false)}
       ${bringList(key, [...raidSelection.ids].map(id => D.byId[id]).filter(Boolean))}</div>`;
   }
-  return `${setupNudge()}${squadPanel()}<div class="panel"><b>Best maps right now</b> <span class="small muted">— accepted quests count triple; quests you can finish count double.</span>
-      <table class="rank"><thead><tr><th>Map</th><th>Can finish</th><th>Can progress</th><th>Objectives</th>${squadMembers().length ? '<th>Squad quests</th>' : ''}<th>XP (finishable)</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="muted">No quest objectives on any map — sync from game or accept quests.</td></tr>'}</tbody></table></div>
+  return `${setupNudge()}${squadPanel()}<div class="panel"><b>Best maps right now</b> <span class="small muted">— maps whose finishable quests open the most new quests come first, then accepted quests count triple and quests you can finish count double.</span>
+      <table class="rank"><thead><tr><th>Map</th><th>Can finish</th><th>Can progress</th><th>Objectives</th>${squadMembers().length ? '<th>Squad quests</th>' : ''}<th>XP (finishable)</th><th title="Quests you can take right after finishing this map's finishable quests">Opens</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="muted">No quest objectives on any map — sync from game or accept quests.</td></tr>'}</tbody></table></div>
     ${plan}`;
 }
 
